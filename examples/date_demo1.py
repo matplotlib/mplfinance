@@ -14,7 +14,7 @@ yahoo finance to get the data for plotting
 """
 
 import matplotlib.pyplot as plt
-from matplotlib.finance import quotes_historical_yahoo_ochl
+from mpl_finance import quotes_historical_yahoo_ochl
 from matplotlib.dates import YearLocator, MonthLocator, DateFormatter
 import datetime
 date1 = datetime.date(1995, 1, 1)

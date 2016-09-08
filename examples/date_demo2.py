@@ -8,7 +8,7 @@ from __future__ import print_function
 import datetime
 import matplotlib.pyplot as plt
 from matplotlib.dates import MONDAY
-from matplotlib.finance import quotes_historical_yahoo_ochl
+from mpl_finance import quotes_historical_yahoo_ochl
 from matplotlib.dates import MonthLocator, WeekdayLocator, DateFormatter
 
 

@@ -1,7 +1,7 @@
 import datetime
 import numpy as np
 import matplotlib.colors as colors
-import matplotlib.finance as finance
+import mpl_finance as finance
 import matplotlib.dates as mdates
 import matplotlib.ticker as mticker
 import matplotlib.mlab as mlab
