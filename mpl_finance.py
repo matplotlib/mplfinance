@@ -1115,14 +1115,14 @@ def candlestick2_ohlc(ax, opens, highs, lows, closes, width=4,
     useAA = 0,  # use tuple here
     lw = 0.5,   # and here
     rangeCollection = LineCollection(rangeSegments,
-                                     colors=((0, 0, 0, 1), ),
+                                     colors=colors,
                                      linewidths=lw,
                                      antialiaseds=useAA,
                                      )
 
     barCollection = PolyCollection(barVerts,
                                    facecolors=colors,
-                                   edgecolors=((0, 0, 0, 1), ),
+                                   edgecolors=colors,
                                    antialiaseds=useAA,
                                    linewidths=lw,
                                    )
