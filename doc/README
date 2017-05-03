@@ -1,0 +1,4 @@
+The module documentation is generated with Sphinx.
+
+Run "make html" to generate HTML. Then view build/index.html.
+
