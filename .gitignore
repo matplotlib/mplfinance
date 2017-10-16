@@ -1,1 +1,5 @@
 build
+_as_gen
+__pycache__
+*.pyc
+*.egg-info
