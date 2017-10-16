@@ -4,19 +4,6 @@ mpl_finance module
 .. automodule:: mpl_finance
     :no-members:
 
-Historical Data
----------------
-
-.. autosummary::
-   :toctree: _as_gen
-   :nosignatures:
-
-   fetch_historical_yahoo
-   quotes_historical_yahoo_ochl
-   quotes_historical_yahoo_ohlc
-   parse_yahoo_historical_ochl
-   parse_yahoo_historical_ohlc
-
 
 Daily Summary
 -------------
@@ -66,3 +53,21 @@ Other
    :nosignatures:
 
    index_bar
+
+
+Historical Data
+---------------
+
+.. warning::
+
+   These are all broken due to changes in the (undocumented) Yahoo! finance API.
+
+.. autosummary::
+   :toctree: _as_gen
+   :nosignatures:
+
+   fetch_historical_yahoo
+   quotes_historical_yahoo_ochl
+   quotes_historical_yahoo_ohlc
+   parse_yahoo_historical_ochl
+   parse_yahoo_historical_ohlc
