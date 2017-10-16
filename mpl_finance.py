@@ -116,7 +116,7 @@ def parse_yahoo_historical_ochl(fh, adjusted=True, asobject=False):
 
     """
     return _parse_yahoo_historical(fh, adjusted=adjusted, asobject=asobject,
-                           ochl=True)
+                                   ochl=True)
 
 
 def parse_yahoo_historical_ohlc(fh, adjusted=True, asobject=False):
@@ -161,11 +161,11 @@ def parse_yahoo_historical_ohlc(fh, adjusted=True, asobject=False):
       very similar to the Bunch.
     """
     return _parse_yahoo_historical(fh, adjusted=adjusted, asobject=asobject,
-                           ochl=False)
+                                   ochl=False)
 
 
 def _parse_yahoo_historical(fh, adjusted=True, asobject=False,
-                           ochl=True):
+                            ochl=True):
     """Parse the historical data in file handle fh from yahoo finance.
 
 
@@ -233,7 +233,7 @@ def _parse_yahoo_historical(fh, adjusted=True, asobject=False,
         if len(vals) != 7:
             continue      # add warning?
         datestr = vals[0]
-        #dt = datetime.date(*time.strptime(datestr, datefmt)[:3])
+        # dt = datetime.date(*time.strptime(datestr, datefmt)[:3])
         # Using strptime doubles the runtime. With the present
         # format, we don't need it.
         dt = datetime.date(*[int(val) for val in datestr.split('-')])
@@ -362,7 +362,7 @@ def fetch_historical_yahoo(ticker, date1, date2, cachename=None,
 
 
 def quotes_historical_yahoo_ochl(ticker, date1, date2, asobject=False,
-                            adjusted=True, cachename=None):
+                                 adjusted=True, cachename=None):
     """ Get historical data for ticker between date1 and date2.
 
 
@@ -399,12 +399,12 @@ def quotes_historical_yahoo_ochl(ticker, date1, date2, asobject=False,
     """
 
     return _quotes_historical_yahoo(ticker, date1, date2, asobject=asobject,
-                             adjusted=adjusted, cachename=cachename,
-                             ochl=True)
+                                    adjusted=adjusted, cachename=cachename,
+                                    ochl=True)
 
 
 def quotes_historical_yahoo_ohlc(ticker, date1, date2, asobject=False,
-                            adjusted=True, cachename=None):
+                                 adjusted=True, cachename=None):
     """ Get historical data for ticker between date1 and date2.
 
 
@@ -441,13 +441,13 @@ def quotes_historical_yahoo_ohlc(ticker, date1, date2, asobject=False,
     """
 
     return _quotes_historical_yahoo(ticker, date1, date2, asobject=asobject,
-                             adjusted=adjusted, cachename=cachename,
-                             ochl=False)
+                                    adjusted=adjusted, cachename=cachename,
+                                    ochl=False)
 
 
 def _quotes_historical_yahoo(ticker, date1, date2, asobject=False,
-                            adjusted=True, cachename=None,
-                            ochl=True):
+                             adjusted=True, cachename=None,
+                             ochl=True):
     """ Get historical data for ticker between date1 and date2.
 
     See :func:`parse_yahoo_historical` for explanation of output formats
@@ -487,14 +487,14 @@ def _quotes_historical_yahoo(ticker, date1, date2, asobject=False,
     """
     # Maybe enable a warning later as part of a slow transition
     # to using None instead of False.
-    #if asobject is False:
+    # if asobject is False:
     #    warnings.warn("Recommend changing to asobject=None")
 
     fh = fetch_historical_yahoo(ticker, date1, date2, cachename)
 
     try:
         ret = _parse_yahoo_historical(fh, asobject=asobject,
-                                     adjusted=adjusted, ochl=ochl)
+                                      adjusted=adjusted, ochl=ochl)
         if len(ret) == 0:
             return None
     except IOError as exc:
@@ -505,8 +505,7 @@ def _quotes_historical_yahoo(ticker, date1, date2, asobject=False,
 
 
 def plot_day_summary_oclh(ax, quotes, ticksize=3,
-                     colorup='k', colordown='r',
-                     ):
+                          colorup='k', colordown='r'):
     """Plots day summary
 
         Represent the time, open, close, high, low as a vertical line
@@ -534,13 +533,12 @@ def plot_day_summary_oclh(ax, quotes, ticksize=3,
         list of tuples of the lines added (one tuple per quote)
     """
     return _plot_day_summary(ax, quotes, ticksize=ticksize,
-                     colorup=colorup, colordown=colordown,
-                     ochl=True)
+                             colorup=colorup, colordown=colordown,
+                             ochl=True)
 
 
 def plot_day_summary_ohlc(ax, quotes, ticksize=3,
-                     colorup='k', colordown='r',
-                      ):
+                          colorup='k', colordown='r'):
     """Plots day summary
 
         Represent the time, open, high, low, close as a vertical line
@@ -568,14 +566,13 @@ def plot_day_summary_ohlc(ax, quotes, ticksize=3,
         list of tuples of the lines added (one tuple per quote)
     """
     return _plot_day_summary(ax, quotes, ticksize=ticksize,
-                     colorup=colorup, colordown=colordown,
-                     ochl=False)
+                             colorup=colorup, colordown=colordown,
+                             ochl=False)
 
 
 def _plot_day_summary(ax, quotes, ticksize=3,
-                     colorup='k', colordown='r',
-                     ochl=True
-                     ):
+                      colorup='k', colordown='r',
+                      ochl=True):
     """Plots day summary
 
 
@@ -650,7 +647,7 @@ def _plot_day_summary(ax, quotes, ticksize=3,
 
 
 def candlestick_ochl(ax, quotes, width=0.2, colorup='k', colordown='r',
-                alpha=1.0):
+                     alpha=1.0):
 
     """
     Plot the time, open, close, high, low as a vertical line ranging
@@ -690,7 +687,7 @@ def candlestick_ochl(ax, quotes, width=0.2, colorup='k', colordown='r',
 
 
 def candlestick_ohlc(ax, quotes, width=0.2, colorup='k', colordown='r',
-                alpha=1.0):
+                     alpha=1.0):
 
     """
     Plot the time, open, high, low, close as a vertical line ranging
@@ -868,8 +865,7 @@ def _check_input(opens, closes, highs, lows, miss=-1):
 
 
 def plot_day_summary2_ochl(ax, opens, closes, highs, lows, ticksize=4,
-                          colorup='k', colordown='r',
-                          ):
+                           colorup='k', colordown='r'):
 
     """Represent the time, open, close, high, low,  as a vertical line
     ranging from low to high.  The left tick is the open and the right
@@ -901,12 +897,11 @@ def plot_day_summary2_ochl(ax, opens, closes, highs, lows, ticksize=4,
     """
 
     return plot_day_summary2_ohlc(ax, opens, highs, lows, closes, ticksize,
-                                 colorup, colordown)
+                                  colorup, colordown)
 
 
 def plot_day_summary2_ohlc(ax, opens, highs, lows, closes, ticksize=4,
-                          colorup='k', colordown='r',
-                          ):
+                           colorup='k', colordown='r'):
 
     """Represent the time, open, high, low, close as a vertical line
     ranging from low to high.  The left tick is the open and the right
@@ -1009,10 +1004,9 @@ def plot_day_summary2_ohlc(ax, opens, highs, lows, closes, ticksize=4,
     return rangeCollection, openCollection, closeCollection
 
 
-def candlestick2_ochl(ax, opens, closes, highs, lows,  width=4,
-                 colorup='k', colordown='r',
-                 alpha=0.75,
-                 ):
+def candlestick2_ochl(ax, opens, closes, highs, lows, width=4,
+                      colorup='k', colordown='r',
+                      alpha=0.75):
     """Represent the open, close as a bar line and high low range as a
     vertical line.
 
@@ -1047,14 +1041,13 @@ def candlestick2_ochl(ax, opens, closes, highs, lows,  width=4,
     """
 
     return candlestick2_ohlc(ax, opens, highs, lows, closes, width=width,
-                     colorup=colorup, colordown=colordown,
-                     alpha=alpha)
+                             colorup=colorup, colordown=colordown,
+                             alpha=alpha)
 
 
 def candlestick2_ohlc(ax, opens, highs, lows, closes, width=4,
-                 colorup='k', colordown='r',
-                 alpha=0.75,
-                 ):
+                      colorup='k', colordown='r',
+                      alpha=0.75):
     """Represent the open, close as a bar line and high low range as a
     vertical line.
 
@@ -1311,8 +1304,8 @@ def volume_overlay3(ax, quotes,
     maxy = max([volume for d, open, high, low, close, volume in quotes])
     corners = (minpy, miny), (maxx, maxy)
     ax.update_datalim(corners)
-    #print 'datalim', ax.dataLim.bounds
-    #print 'viewlim', ax.viewLim.bounds
+    # print 'datalim', ax.dataLim.bounds
+    # print 'viewlim', ax.viewLim.bounds
 
     ax.add_collection(barCollection)
     ax.autoscale_view()
