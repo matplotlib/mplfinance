@@ -1,15 +1,14 @@
-import matplotlib.pyplot as plt
-from matplotlib.dates import DateFormatter, WeekdayLocator,\
-    DayLocator, MONDAY
-from mpl_finance import candlestick_ohlc
-import matplotlib.dates as mdates
-import pandas_datareader as pdr
 import datetime
 
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import pandas as pd
+from matplotlib.dates import MONDAY, DateFormatter, DayLocator, WeekdayLocator
 
-# (Year, month, day) tuples suffice as args for quotes_historical_yahoo
-date1 = datetime.datetime(2004, 2, 1)
-date2 = datetime.datetime(2004, 4, 12)
+from mpl_finance import candlestick_ohlc
+
+date1 = "2004-2-1"
+date2 = "2004-4-12"
 
 
 mondays = WeekdayLocator(MONDAY)        # major ticks on the mondays
@@ -17,9 +16,13 @@ alldays = DayLocator()              # minor ticks on the days
 weekFormatter = DateFormatter('%b %d')  # e.g., Jan 12
 dayFormatter = DateFormatter('%d')      # e.g., 12
 
-quotes = pdr.get_data_yahoo(symbols='INTC', start=date1, end=date2,
-                            adjust_price=True)
+quotes = pd.read_csv('data/yahoofinance-INTC-19950101-20040412.csv',
+                     index_col=0,
+                     parse_dates=True,
+                     infer_datetime_format=True)
 
+# select desired range of dates
+quotes = quotes[(quotes.index >= date1) & (quotes.index <= date2)]
 
 fig, ax = plt.subplots()
 fig.subplots_adjust(bottom=0.2)

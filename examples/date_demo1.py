@@ -14,19 +14,17 @@ yahoo finance to get the data for plotting
 """
 
 import matplotlib.pyplot as plt
-import pandas_datareader as pdr
-from matplotlib.dates import YearLocator, MonthLocator, DateFormatter
-import datetime
-date1 = datetime.date(1995, 1, 1)
-date2 = datetime.date(2004, 4, 12)
+import pandas as pd
+from matplotlib.dates import DateFormatter, MonthLocator, YearLocator
 
-years = YearLocator()   # every year
+years = YearLocator()  # every year
 months = MonthLocator()  # every month
 yearsFmt = DateFormatter('%Y')
 
-quotes = pdr.get_data_yahoo(symbols='INTC', start=date1, end=date2,
-                            adjust_price=True)
-
+quotes = pd.read_csv('data/yahoofinance-INTC-19950101-20040412.csv',
+                     index_col=0,
+                     parse_dates=True,
+                     infer_datetime_format=True)
 
 dates = quotes.index
 opens = quotes['Open']
