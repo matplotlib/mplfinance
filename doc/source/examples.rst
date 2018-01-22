@@ -15,3 +15,6 @@ Examples
 
 .. plot:: ../../examples/longshort.py
    :include-source:
+
+.. plot:: ../../examples/plot_day_summary_oclh_demo.py
+   :include-source:

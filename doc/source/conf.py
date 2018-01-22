@@ -54,7 +54,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'mpl_finance'
-copyright = u'2017, Matplotlib Developers'
+copyright = u'2018, Matplotlib Developers'
 author = u'Matplotlib Developers'
 
 # The version info for the project you're documenting, acts as replacement for

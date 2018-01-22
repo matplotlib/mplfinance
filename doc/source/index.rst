@@ -6,7 +6,7 @@
 mpl_finance: financial helpers for matplotlib
 =============================================
 
-A collection of functions for collecting, analyzing and plotting financial data
+A collection of functions for analyzing and plotting financial data
 in combination with matplotlib.
 
 .. toctree::
@@ -21,7 +21,7 @@ unchanged.  Now that this code is separate from the core it can pick
 up dependencies, like :mod:`pandas` or :mod:`scipy` and expose a more
 powerful API to the user.
 
-We are looking for a finance domain-export to lead this effort!
+We are looking for a finance domain-expert to lead this effort!
 
 
 * :ref:`genindex`
