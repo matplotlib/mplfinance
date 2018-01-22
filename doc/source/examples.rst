@@ -9,3 +9,9 @@ Examples
 
 .. plot:: ../../examples/finance_demo.py
    :include-source:
+
+.. plot:: ../../examples/finance_work2.py
+   :include-source:
+
+.. plot:: ../../examples/longshort.py
+   :include-source:
