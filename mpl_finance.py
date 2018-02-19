@@ -1,514 +1,23 @@
 """
-A collection of functions for collecting, analyzing and plotting
+A collection of functions for analyzing and plotting
 financial data.   User contributions welcome!
 
 """
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import six
-from six.moves import xrange, zip
-
-import contextlib
-import os
-import warnings
-from six.moves.urllib.request import urlopen
-
-import datetime
-
 import numpy as np
-
-from matplotlib import colors as mcolors, verbose, get_cachedir
-from matplotlib.dates import date2num
-from matplotlib.cbook import iterable, mkdirs
+from matplotlib import colors as mcolors
 from matplotlib.collections import LineCollection, PolyCollection
-from matplotlib.lines import Line2D, TICKLEFT, TICKRIGHT
+from matplotlib.lines import TICKLEFT, TICKRIGHT, Line2D
 from matplotlib.patches import Rectangle
 from matplotlib.transforms import Affine2D
 
-
-if six.PY3:
-    import hashlib
-
-    def md5(x):
-        return hashlib.md5(x.encode())
-else:
-    from hashlib import md5
-
-cachedir = get_cachedir()
-# cachedir will be None if there is no writable directory.
-if cachedir is not None:
-    cachedir = os.path.join(cachedir, 'finance.cache')
-else:
-    # Should only happen in a restricted environment (such as Google App
-    # Engine). Deal with this gracefully by not caching finance data.
-    cachedir = None
-
-
-stock_dt_ohlc = np.dtype([
-    (str('date'), object),
-    (str('year'), np.int16),
-    (str('month'), np.int8),
-    (str('day'), np.int8),
-    (str('d'), np.float),     # mpl datenum
-    (str('open'), np.float),
-    (str('high'), np.float),
-    (str('low'), np.float),
-    (str('close'), np.float),
-    (str('volume'), np.float),
-    (str('aclose'), np.float)])
-
-
-stock_dt_ochl = np.dtype(
-    [(str('date'), object),
-     (str('year'), np.int16),
-     (str('month'), np.int8),
-     (str('day'), np.int8),
-     (str('d'), np.float),     # mpl datenum
-     (str('open'), np.float),
-     (str('close'), np.float),
-     (str('high'), np.float),
-     (str('low'), np.float),
-     (str('volume'), np.float),
-     (str('aclose'), np.float)])
-
-
-def parse_yahoo_historical_ochl(fh, adjusted=True, asobject=False):
-    """Parse the historical data in file handle fh from yahoo finance.
-
-    Parameters
-    ----------
-
-    adjusted : bool
-      If True (default) replace open, close, high, low prices with
-      their adjusted values. The adjustment is by a scale factor, S =
-      adjusted_close/close. Adjusted prices are actual prices
-      multiplied by S.
-
-      Volume is not adjusted as it is already backward split adjusted
-      by Yahoo. If you want to compute dollars traded, multiply volume
-      by the adjusted close, regardless of whether you choose adjusted
-      = True|False.
-
-
-    asobject : bool or None
-      If False (default for compatibility with earlier versions)
-      return a list of tuples containing
-
-        d, open, close, high, low,  volume
-
-      If None (preferred alternative to False), return
-      a 2-D ndarray corresponding to the list of tuples.
-
-      Otherwise return a numpy recarray with
-
-        date, year, month, day, d, open, close, high, low,
-        volume, adjusted_close
-
-      where d is a floating poing representation of date,
-      as returned by date2num, and date is a python standard
-      library datetime.date instance.
-
-      The name of this kwarg is a historical artifact.  Formerly,
-      True returned a cbook Bunch
-      holding 1-D ndarrays.  The behavior of a numpy recarray is
-      very similar to the Bunch.
-
-    """
-    return _parse_yahoo_historical(fh, adjusted=adjusted, asobject=asobject,
-                           ochl=True)
-
-
-def parse_yahoo_historical_ohlc(fh, adjusted=True, asobject=False):
-    """Parse the historical data in file handle fh from yahoo finance.
-
-    Parameters
-    ----------
-
-    adjusted : bool
-      If True (default) replace open, high, low, close prices with
-      their adjusted values. The adjustment is by a scale factor, S =
-      adjusted_close/close. Adjusted prices are actual prices
-      multiplied by S.
-
-      Volume is not adjusted as it is already backward split adjusted
-      by Yahoo. If you want to compute dollars traded, multiply volume
-      by the adjusted close, regardless of whether you choose adjusted
-      = True|False.
-
-
-    asobject : bool or None
-      If False (default for compatibility with earlier versions)
-      return a list of tuples containing
-
-        d, open, high, low, close, volume
-
-      If None (preferred alternative to False), return
-      a 2-D ndarray corresponding to the list of tuples.
-
-      Otherwise return a numpy recarray with
-
-        date, year, month, day, d, open, high, low,  close,
-        volume, adjusted_close
-
-      where d is a floating poing representation of date,
-      as returned by date2num, and date is a python standard
-      library datetime.date instance.
-
-      The name of this kwarg is a historical artifact.  Formerly,
-      True returned a cbook Bunch
-      holding 1-D ndarrays.  The behavior of a numpy recarray is
-      very similar to the Bunch.
-    """
-    return _parse_yahoo_historical(fh, adjusted=adjusted, asobject=asobject,
-                           ochl=False)
-
-
-def _parse_yahoo_historical(fh, adjusted=True, asobject=False,
-                           ochl=True):
-    """Parse the historical data in file handle fh from yahoo finance.
-
-
-    Parameters
-    ----------
-
-    adjusted : bool
-      If True (default) replace open, high, low, close prices with
-      their adjusted values. The adjustment is by a scale factor, S =
-      adjusted_close/close. Adjusted prices are actual prices
-      multiplied by S.
-
-      Volume is not adjusted as it is already backward split adjusted
-      by Yahoo. If you want to compute dollars traded, multiply volume
-      by the adjusted close, regardless of whether you choose adjusted
-      = True|False.
-
-
-    asobject : bool or None
-      If False (default for compatibility with earlier versions)
-      return a list of tuples containing
-
-        d, open, high, low, close, volume
-
-       or
-
-        d, open, close, high, low, volume
-
-      depending on `ochl`
-
-      If None (preferred alternative to False), return
-      a 2-D ndarray corresponding to the list of tuples.
-
-      Otherwise return a numpy recarray with
-
-        date, year, month, day, d, open, high, low, close,
-        volume, adjusted_close
-
-      where d is a floating poing representation of date,
-      as returned by date2num, and date is a python standard
-      library datetime.date instance.
-
-      The name of this kwarg is a historical artifact.  Formerly,
-      True returned a cbook Bunch
-      holding 1-D ndarrays.  The behavior of a numpy recarray is
-      very similar to the Bunch.
-
-    ochl : bool
-        Selects between ochl and ohlc ordering.
-        Defaults to True to preserve original functionality.
-
-    """
-    if ochl:
-        stock_dt = stock_dt_ochl
-    else:
-        stock_dt = stock_dt_ohlc
-
-    results = []
-
-    #    datefmt = '%Y-%m-%d'
-    fh.readline()  # discard heading
-    for line in fh:
-
-        vals = line.split(',')
-        if len(vals) != 7:
-            continue      # add warning?
-        datestr = vals[0]
-        #dt = datetime.date(*time.strptime(datestr, datefmt)[:3])
-        # Using strptime doubles the runtime. With the present
-        # format, we don't need it.
-        dt = datetime.date(*[int(val) for val in datestr.split('-')])
-        dnum = date2num(dt)
-        open, high, low, close = [float(val) for val in vals[1:5]]
-        volume = float(vals[5])
-        aclose = float(vals[6])
-        if ochl:
-            results.append((dt, dt.year, dt.month, dt.day,
-                            dnum, open, close, high, low, volume, aclose))
-
-        else:
-            results.append((dt, dt.year, dt.month, dt.day,
-                            dnum, open, high, low, close, volume, aclose))
-    results.reverse()
-    d = np.array(results, dtype=stock_dt)
-    if adjusted:
-        scale = d['aclose'] / d['close']
-        scale[np.isinf(scale)] = np.nan
-        d['open'] *= scale
-        d['high'] *= scale
-        d['low'] *= scale
-        d['close'] *= scale
-
-    if not asobject:
-        # 2-D sequence; formerly list of tuples, now ndarray
-        ret = np.zeros((len(d), 6), dtype=float)
-        ret[:, 0] = d['d']
-        if ochl:
-            ret[:, 1] = d['open']
-            ret[:, 2] = d['close']
-            ret[:, 3] = d['high']
-            ret[:, 4] = d['low']
-        else:
-            ret[:, 1] = d['open']
-            ret[:, 2] = d['high']
-            ret[:, 3] = d['low']
-            ret[:, 4] = d['close']
-        ret[:, 5] = d['volume']
-        if asobject is None:
-            return ret
-        return [tuple(row) for row in ret]
-
-    return d.view(np.recarray)  # Close enough to former Bunch return
-
-
-def fetch_historical_yahoo(ticker, date1, date2, cachename=None,
-                           dividends=False):
-    """
-    Fetch historical data for ticker between date1 and date2.  date1 and
-    date2 are date or datetime instances, or (year, month, day) sequences.
-
-    Parameters
-    ----------
-    ticker : str
-        ticker
-
-    date1 : sequence of form (year, month, day), `datetime`, or `date`
-        start date
-    date2 : sequence of form (year, month, day), `datetime`, or `date`
-        end date
-
-    cachename : str
-        cachename is the name of the local file cache.  If None, will
-        default to the md5 hash or the url (which incorporates the ticker
-        and date range)
-
-    dividends : bool
-        set dividends=True to return dividends instead of price data.  With
-        this option set, parse functions will not work
-
-    Returns
-    -------
-    file_handle : file handle
-        a file handle is returned
-
-
-    Examples
-    --------
-    >>> fh = fetch_historical_yahoo('^GSPC', (2000, 1, 1), (2001, 12, 31))
-
-    """
-
-    ticker = ticker.upper()
-
-    if iterable(date1):
-        d1 = (date1[1] - 1, date1[2], date1[0])
-    else:
-        d1 = (date1.month - 1, date1.day, date1.year)
-    if iterable(date2):
-        d2 = (date2[1] - 1, date2[2], date2[0])
-    else:
-        d2 = (date2.month - 1, date2.day, date2.year)
-
-    if dividends:
-        g = 'v'
-        verbose.report('Retrieving dividends instead of prices')
-    else:
-        g = 'd'
-
-    urlFmt = ('http://ichart.yahoo.com/table.csv?a=%d&b=%d&' +
-              'c=%d&d=%d&e=%d&f=%d&s=%s&y=0&g=%s&ignore=.csv')
-
-    url = urlFmt % (d1[0], d1[1], d1[2],
-                    d2[0], d2[1], d2[2], ticker, g)
-
-    # Cache the finance data if cachename is supplied, or there is a writable
-    # cache directory.
-    if cachename is None and cachedir is not None:
-        cachename = os.path.join(cachedir, md5(url).hexdigest())
-    if cachename is not None:
-        if os.path.exists(cachename):
-            fh = open(cachename)
-            verbose.report('Using cachefile %s for '
-                           '%s' % (cachename, ticker))
-        else:
-            mkdirs(os.path.abspath(os.path.dirname(cachename)))
-            with contextlib.closing(urlopen(url)) as urlfh:
-                with open(cachename, 'wb') as fh:
-                    fh.write(urlfh.read())
-            verbose.report('Saved %s data to cache file '
-                           '%s' % (ticker, cachename))
-            fh = open(cachename, 'r')
-
-        return fh
-    else:
-        return urlopen(url)
-
-
-def quotes_historical_yahoo_ochl(ticker, date1, date2, asobject=False,
-                            adjusted=True, cachename=None):
-    """ Get historical data for ticker between date1 and date2.
-
-
-    See :func:`parse_yahoo_historical` for explanation of output formats
-    and the *asobject* and *adjusted* kwargs.
-
-    Parameters
-    ----------
-    ticker : str
-        stock ticker
-
-    date1 : sequence of form (year, month, day), `datetime`, or `date`
-        start date
-
-    date2 : sequence of form (year, month, day), `datetime`, or `date`
-        end date
-
-    cachename : str or `None`
-        is the name of the local file cache.  If None, will
-        default to the md5 hash or the url (which incorporates the ticker
-        and date range)
-
-    Examples
-    --------
-    >>> sp = f.quotes_historical_yahoo_ochl('^GSPC', d1, d2,
-                             asobject=True, adjusted=True)
-    >>> returns = (sp.open[1:] - sp.open[:-1])/sp.open[1:]
-    >>> [n,bins,patches] = hist(returns, 100)
-    >>> mu = mean(returns)
-    >>> sigma = std(returns)
-    >>> x = normpdf(bins, mu, sigma)
-    >>> plot(bins, x, color='red', lw=2)
-
-    """
-
-    return _quotes_historical_yahoo(ticker, date1, date2, asobject=asobject,
-                             adjusted=adjusted, cachename=cachename,
-                             ochl=True)
-
-
-def quotes_historical_yahoo_ohlc(ticker, date1, date2, asobject=False,
-                            adjusted=True, cachename=None):
-    """ Get historical data for ticker between date1 and date2.
-
-
-    See :func:`parse_yahoo_historical` for explanation of output formats
-    and the *asobject* and *adjusted* kwargs.
-
-    Parameters
-    ----------
-    ticker : str
-        stock ticker
-
-    date1 : sequence of form (year, month, day), `datetime`, or `date`
-        start date
-
-    date2 : sequence of form (year, month, day), `datetime`, or `date`
-        end date
-
-    cachename : str or `None`
-        is the name of the local file cache.  If None, will
-        default to the md5 hash or the url (which incorporates the ticker
-        and date range)
-
-    Examples
-    --------
-    >>> sp = f.quotes_historical_yahoo_ohlc('^GSPC', d1, d2,
-                             asobject=True, adjusted=True)
-    >>> returns = (sp.open[1:] - sp.open[:-1])/sp.open[1:]
-    >>> [n,bins,patches] = hist(returns, 100)
-    >>> mu = mean(returns)
-    >>> sigma = std(returns)
-    >>> x = normpdf(bins, mu, sigma)
-    >>> plot(bins, x, color='red', lw=2)
-
-    """
-
-    return _quotes_historical_yahoo(ticker, date1, date2, asobject=asobject,
-                             adjusted=adjusted, cachename=cachename,
-                             ochl=False)
-
-
-def _quotes_historical_yahoo(ticker, date1, date2, asobject=False,
-                            adjusted=True, cachename=None,
-                            ochl=True):
-    """ Get historical data for ticker between date1 and date2.
-
-    See :func:`parse_yahoo_historical` for explanation of output formats
-    and the *asobject* and *adjusted* kwargs.
-
-    Parameters
-    ----------
-    ticker : str
-        stock ticker
-
-    date1 : sequence of form (year, month, day), `datetime`, or `date`
-        start date
-
-    date2 : sequence of form (year, month, day), `datetime`, or `date`
-        end date
-
-    cachename : str or `None`
-        is the name of the local file cache.  If None, will
-        default to the md5 hash or the url (which incorporates the ticker
-        and date range)
-
-    ochl: bool
-        temporary argument to select between ochl and ohlc ordering
-
-
-    Examples
-    --------
-    >>> sp = f.quotes_historical_yahoo('^GSPC', d1, d2,
-                             asobject=True, adjusted=True)
-    >>> returns = (sp.open[1:] - sp.open[:-1])/sp.open[1:]
-    >>> [n,bins,patches] = hist(returns, 100)
-    >>> mu = mean(returns)
-    >>> sigma = std(returns)
-    >>> x = normpdf(bins, mu, sigma)
-    >>> plot(bins, x, color='red', lw=2)
-
-    """
-    # Maybe enable a warning later as part of a slow transition
-    # to using None instead of False.
-    #if asobject is False:
-    #    warnings.warn("Recommend changing to asobject=None")
-
-    fh = fetch_historical_yahoo(ticker, date1, date2, cachename)
-
-    try:
-        ret = _parse_yahoo_historical(fh, asobject=asobject,
-                                     adjusted=adjusted, ochl=ochl)
-        if len(ret) == 0:
-            return None
-    except IOError as exc:
-        warnings.warn('fh failure\n%s' % (exc.strerror[1]))
-        return None
-
-    return ret
+from six.moves import xrange, zip
 
 
 def plot_day_summary_oclh(ax, quotes, ticksize=3,
-                     colorup='k', colordown='r',
-                     ):
+                          colorup='k', colordown='r'):
     """Plots day summary
 
         Represent the time, open, close, high, low as a vertical line
@@ -536,13 +45,12 @@ def plot_day_summary_oclh(ax, quotes, ticksize=3,
         list of tuples of the lines added (one tuple per quote)
     """
     return _plot_day_summary(ax, quotes, ticksize=ticksize,
-                     colorup=colorup, colordown=colordown,
-                     ochl=True)
+                             colorup=colorup, colordown=colordown,
+                             ochl=True)
 
 
 def plot_day_summary_ohlc(ax, quotes, ticksize=3,
-                     colorup='k', colordown='r',
-                      ):
+                          colorup='k', colordown='r'):
     """Plots day summary
 
         Represent the time, open, high, low, close as a vertical line
@@ -570,14 +78,13 @@ def plot_day_summary_ohlc(ax, quotes, ticksize=3,
         list of tuples of the lines added (one tuple per quote)
     """
     return _plot_day_summary(ax, quotes, ticksize=ticksize,
-                     colorup=colorup, colordown=colordown,
-                     ochl=False)
+                             colorup=colorup, colordown=colordown,
+                             ochl=False)
 
 
 def _plot_day_summary(ax, quotes, ticksize=3,
-                     colorup='k', colordown='r',
-                     ochl=True
-                     ):
+                      colorup='k', colordown='r',
+                      ochl=True):
     """Plots day summary
 
 
@@ -652,8 +159,7 @@ def _plot_day_summary(ax, quotes, ticksize=3,
 
 
 def candlestick_ochl(ax, quotes, width=0.2, colorup='k', colordown='r',
-                alpha=1.0):
-
+                     alpha=1.0):
     """
     Plot the time, open, close, high, low as a vertical line ranging
     from low to high.  Use a rectangular bar to represent the
@@ -692,8 +198,7 @@ def candlestick_ochl(ax, quotes, width=0.2, colorup='k', colordown='r',
 
 
 def candlestick_ohlc(ax, quotes, width=0.2, colorup='k', colordown='r',
-                alpha=1.0):
-
+                     alpha=1.0):
     """
     Plot the time, open, high, low, close as a vertical line ranging
     from low to high.  Use a rectangular bar to represent the
@@ -733,7 +238,6 @@ def candlestick_ohlc(ax, quotes, width=0.2, colorup='k', colordown='r',
 
 def _candlestick(ax, quotes, width=0.2, colorup='k', colordown='r',
                  alpha=1.0, ochl=True):
-
     """
     Plot the time, open, high, low, close as a vertical line ranging
     from low to high.  Use a rectangular bar to represent the
@@ -870,9 +374,7 @@ def _check_input(opens, closes, highs, lows, miss=-1):
 
 
 def plot_day_summary2_ochl(ax, opens, closes, highs, lows, ticksize=4,
-                          colorup='k', colordown='r',
-                          ):
-
+                           colorup='k', colordown='r'):
     """Represent the time, open, close, high, low,  as a vertical line
     ranging from low to high.  The left tick is the open and the right
     tick is the close.
@@ -903,13 +405,11 @@ def plot_day_summary2_ochl(ax, opens, closes, highs, lows, ticksize=4,
     """
 
     return plot_day_summary2_ohlc(ax, opens, highs, lows, closes, ticksize,
-                                 colorup, colordown)
+                                  colorup, colordown)
 
 
 def plot_day_summary2_ohlc(ax, opens, highs, lows, closes, ticksize=4,
-                          colorup='k', colordown='r',
-                          ):
-
+                           colorup='k', colordown='r'):
     """Represent the time, open, high, low, close as a vertical line
     ranging from low to high.  The left tick is the open and the right
     tick is the close.
@@ -1011,10 +511,9 @@ def plot_day_summary2_ohlc(ax, opens, highs, lows, closes, ticksize=4,
     return rangeCollection, openCollection, closeCollection
 
 
-def candlestick2_ochl(ax, opens, closes, highs, lows,  width=4,
-                 colorup='k', colordown='r',
-                 alpha=0.75,
-                 ):
+def candlestick2_ochl(ax, opens, closes, highs, lows, width=4,
+                      colorup='k', colordown='r',
+                      alpha=0.75):
     """Represent the open, close as a bar line and high low range as a
     vertical line.
 
@@ -1049,14 +548,13 @@ def candlestick2_ochl(ax, opens, closes, highs, lows,  width=4,
     """
 
     return candlestick2_ohlc(ax, opens, highs, lows, closes, width=width,
-                     colorup=colorup, colordown=colordown,
-                     alpha=alpha)
+                             colorup=colorup, colordown=colordown,
+                             alpha=alpha)
 
 
 def candlestick2_ohlc(ax, opens, highs, lows, closes, width=4,
-                 colorup='k', colordown='r',
-                 alpha=0.75,
-                 ):
+                      colorup='k', colordown='r',
+                      alpha=0.75):
     """Represent the open, close as a bar line and high low range as a
     vertical line.
 
@@ -1313,8 +811,8 @@ def volume_overlay3(ax, quotes,
     maxy = max([volume for d, open, high, low, close, volume in quotes])
     corners = (minpy, miny), (maxx, maxy)
     ax.update_datalim(corners)
-    #print 'datalim', ax.dataLim.bounds
-    #print 'viewlim', ax.viewLim.bounds
+    # print 'datalim', ax.dataLim.bounds
+    # print 'viewlim', ax.viewLim.bounds
 
     ax.add_collection(barCollection)
     ax.autoscale_view()

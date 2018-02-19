@@ -5,4 +5,3 @@ mpl_finance
    :maxdepth: 4
 
    mpl_finance
-   setup

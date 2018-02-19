@@ -14,22 +14,20 @@ yahoo finance to get the data for plotting
 """
 
 import matplotlib.pyplot as plt
-from mpl_finance import quotes_historical_yahoo_ochl
-from matplotlib.dates import YearLocator, MonthLocator, DateFormatter
-import datetime
-date1 = datetime.date(1995, 1, 1)
-date2 = datetime.date(2004, 4, 12)
+import pandas as pd
+from matplotlib.dates import DateFormatter, MonthLocator, YearLocator
 
-years = YearLocator()   # every year
+years = YearLocator()  # every year
 months = MonthLocator()  # every month
 yearsFmt = DateFormatter('%Y')
 
-quotes = quotes_historical_yahoo_ochl('INTC', date1, date2)
-if len(quotes) == 0:
-    raise SystemExit
+quotes = pd.read_csv('data/yahoofinance-INTC-19950101-20040412.csv',
+                     index_col=0,
+                     parse_dates=True,
+                     infer_datetime_format=True)
 
-dates = [q[0] for q in quotes]
-opens = [q[1] for q in quotes]
+dates = quotes.index
+opens = quotes['Open']
 
 fig, ax = plt.subplots()
 ax.plot_date(dates, opens, '-')
@@ -44,6 +42,8 @@ ax.autoscale_view()
 # format the coords message box
 def price(x):
     return '$%1.2f' % x
+
+
 ax.fmt_xdata = DateFormatter('%Y-%m-%d')
 ax.fmt_ydata = price
 ax.grid(True)

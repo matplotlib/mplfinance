@@ -1,1 +1,8 @@
-build
+doc/build
+doc/examples
+_as_gen
+__pycache__
+*.pyc
+*.egg-info
+.tox/
+.cache/
