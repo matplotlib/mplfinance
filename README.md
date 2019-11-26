@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/matplotlib/mpl_finance.svg?branch=master)](https://travis-ci.org/matplotlib/mpl_finance)
+[![Build Status](https://travis-ci.org/matplotlib/mpl-finance.svg?branch=master)](https://travis-ci.org/matplotlib/mpl-finance)
 
 This module consists of code extracted from the deprecated matplotlib.finance
 module along with a few examples of usage.
