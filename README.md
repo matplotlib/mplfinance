@@ -1,5 +1,7 @@
 [![Build Status](https://travis-ci.org/matplotlib/mpl-finance.svg?branch=master)](https://travis-ci.org/matplotlib/mpl-finance)
 
+# mplfinance (to replace mpl-finance sometime in 2020).
+
 ## Introduction
 My name is Daniel Goldfarb.  Last month (November 2019) I became the maintainer of `matplotlib/mpl-finance`.  This module consists of code extracted from the deprecated `matplotlib.finance` module along with a few examples of usage.  The code has been mostly un-maintained for the past three years.
 
