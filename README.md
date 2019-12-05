@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/matplotlib/mpl-finance.svg?branch=master)](https://travis-ci.org/matplotlib/mpl-finance)
+[![Build Status](https://travis-ci.org/matplotlib/mplfinance.svg?branch=master)](https://travis-ci.org/matplotlib/mplfinance)
 
 # mplfinance (to replace mpl-finance sometime in 2020).
 
