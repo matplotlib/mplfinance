@@ -3,9 +3,11 @@ import datetime
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pandas as pd
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
 from matplotlib.dates import MONDAY, DateFormatter, DayLocator, WeekdayLocator
 
-from mpl_finance import candlestick_ohlc
+from mplfinance.original_flavor import candlestick_ohlc
 
 date1 = "2004-2-1"
 date2 = "2004-4-12"
