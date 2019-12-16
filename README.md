@@ -16,18 +16,9 @@ It is my intention to archive `matplotlib/mpl-finance` soon to be replaced wth `
 
 At present (Dec 2019) this repository, `matplotlib/mplfinance`, contains an initial pre-beta, pre-release version of the new API (see below) for people to play with and provide feedback or pull requests for enhancements.
 
-## The old API
-My own take on the old `mpl-finance` API is that the methods were too low-level, and too cumbersome to use.  This current package contains a new API that automatically does the extra matplotlib work that the caller previously had to do "manually, on their own" with the old API.  
-
-For the time being, users can access the old API by changing their import statments<br>**from:**
-
-    from mpl_finance import candlestick_ohlc
-    
-**to:**
-
-    from mplfinance.original_flavor import candlestick_ohlc
-
 ## The new API
+
+My own take on the old `mpl-finance` API is that the methods were too low-level, and too cumbersome to use.  This current package contains a new API that automatically does the extra matplotlib work that the caller previously had to do "manually, on their own" with the old API.  
 
 The new API is not yet in pypi, however it can be installed as follows:
 
@@ -43,4 +34,17 @@ The most common usage is to then call `mpf.plot(data)` where `data` is a `Pandas
 
 For further details on how to call the new API, see the jupyter notebook in the examples folder:
 
+https://github.com/DanielGoldfarb/mplfinance/blob/master/examples/mplfinance_plot.ipynb
+
 I am very interested to hear from you how you are using mpl-finance, and what you think of the new API.  I will be honored if you will share your code with me, so I can see specifically *how you are calling the existing mpl-finance APIs, and what additional matplotlib stuff you are doing around them.*  I am particularly interested to hear about what you found frustrating or challenging in using mpl-finance, plus any suggestions you have for improvement.  You can reach me at dgoldfarb.github@gmail.com
+
+
+## The old API
+
+With this new `matplotlib/mplfinance` package installed, in addition to the new API, users can access the old API by changing their import statments<br>**from:**
+
+    from mpl_finance import candlestick_ohlc
+    
+**to:**
+
+    from mplfinance.original_flavor import candlestick_ohlc
