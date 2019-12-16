@@ -1,6 +1,7 @@
 import matplotlib.dates  as mdates
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy  as np
 
 plt.style.use('seaborn-darkgrid')
 import matplotlib as mpl
@@ -82,7 +83,7 @@ def _valid_kwargs_table():
         'volume'      : { 'Default'     : False,
  
                           'Implemented' : False,
-                          'Validator'   : lambda value: value in [True,False] },
+                          'Validator'   : lambda value: isinstance(value,bool) },
  
         'mav'         : { 'Default'     : None,
  
@@ -92,7 +93,7 @@ def _valid_kwargs_table():
         'study'       : { 'Default'     : None,
  
                           'Implemented' : False,
-                          'Validator'   : (lambda value: isinstance(value,dict)) }, #{'studyname': {study parms}} example: {'TE':{'mav':20,'upper':2,'lower':2}}
+                          'Validator'   : lambda value: isinstance(value,dict) }, #{'studyname': {study parms}} example: {'TE':{'mav':20,'upper':2,'lower':2}}
  
         'upcolor'     : { 'Default'     : None, # use 'style' for default, instead.
  
@@ -104,15 +105,20 @@ def _valid_kwargs_table():
                           'Implemented' : False,
                           'Validator'   : lambda value: isinstance(value,str) },
  
-        'upborder'    : { 'Default'     : None, # use 'style' for default, instead.
+        'border'      : { 'Default'     : None, # use 'style' for default, instead.
  
                           'Implemented' : False,
                           'Validator'   : lambda value: isinstance(value,str) },
  
-        'downborder'  : { 'Default'     : None, # use 'style' for default, instead.
+        'no_xgaps'      : { 'Default'     : None,  # None means follow default logic below:
+                                                 # True for intraday data spanning 2 or more days, else False
+                          'Implemented' : True,
+                          'Validator'   : lambda value: isinstance(value,bool) },
  
-                          'Implemented' : False,
-                          'Validator'   : lambda value: isinstance(value,str) }
+        'autofmt_xdate':{ 'Default'     : False,
+ 
+                          'Implemented' : True,
+                          'Validator'   : lambda value: isinstance(value,bool) }
     }
     # Check that we didn't make a typo in any of the things above
     #  that should otherwise be the same for all kwags:
@@ -157,6 +163,28 @@ def _process_kwargs( kwargs ):
 
     return config
 
+from matplotlib.ticker import Formatter
+class NoGapsDateTimeFormatter(Formatter):
+    def __init__(self, dates, fmt='%b %d, %H:%M'):
+        self.dates = dates
+        self.len   = len(dates)
+        self.fmt   = fmt
+
+    def __call__(self, x, pos=0):
+        #import pdb; pdb.set_trace()
+        'Return label for time x at position pos'
+        # not sure what 'pos' is for: see
+        # https://matplotlib.org/gallery/ticks_and_spines/date_index_formatter.html
+        ix = int(np.round(x))
+         
+        if ix >= self.len or ix < 0:
+            date = None
+            dateformat = ''
+        else:
+            date = self.dates[ix]
+            dateformat = mdates.num2date(date).strftime(self.fmt)
+        #print('x=',x,'pos=',pos,'dates[',ix,']=',date,'dateformat=',dateformat)
+        return dateformat
 
 def plot( data, **kwargs ):
 
@@ -169,37 +197,70 @@ def plot( data, **kwargs ):
     
     fig, ax = plt.subplots()
     fig.set_size_inches((10,8))
-    fig.autofmt_xdate()
-    
+
     avg_days_between_points = (dates[-1] - dates[0]) / float(len(dates))
 
-    if avg_days_between_points < 0.3:
-        if (dates[-1] - dates[0]) > 1.3:    
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %d, %H:%M'))
-        else:
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+    #print('avg_days_between_points=',avg_days_between_points)
+    #print('(dates[-1] - dates[0])=',(dates[-1] - dates[0]))
+    #print('float(len(dates))=',float(len(dates)))
+
+    # 'no_xgaps' default logic: True for intraday data spanning 2 or more days, else False
+    # 'no_xgaps' kwarg overrides default logic.
+    no_xgaps = False
+
+    # avgerage of 3 or more data points per day we will call intraday data:
+    if avg_days_between_points < 0.33:  # intraday
+        if mdates.num2date(dates[-1]).date() != mdates.num2date(dates[0]).date():
+            # intraday data for more than one day:
+            fmtstring = '%b %d, %H:%M'
+            no_xgaps = True
+        else:  # intraday data for a single day
+            fmtstring = '%H:%M'
+    else:  # 'daily' data (or could be weekly, etc.)
+        fmtstring = '%b %d'
+
+    if config['no_xgaps'] != None:  # override whatever was determined above.
+        no_xgaps = config['no_xgaps']
+
+    if no_xgaps:
+        formatter = NoGapsDateTimeFormatter(dates, fmtstring)
+        xdates = np.arange(len(dates))
     else:
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %d'))
-    ax.xaxis_date()
+        formatter = mdates.DateFormatter(fmtstring)
+        xdates = dates
+    
+    ax.xaxis.set_major_formatter(formatter)
+    plt.xticks(rotation=45)
 
     ptype = config['type']
     if _debug_trace(): 
         print('ptype=',ptype)
-    if ptype == 'candlestick':
-        collections = _construct_candlestick_collections(dates, opens, highs, lows, closes )
-    elif ptype == 'ohlc':
-        collections = _construct_ohlc_collections(dates, opens, highs, lows, closes )
 
-    avg_dist_between_points = (dates[-1] - dates[0]) / float(len(dates))
-    minx = dates[0]  - avg_dist_between_points
-    maxx = dates[-1] + avg_dist_between_points
+    if ptype == 'candlestick':
+        collections = _construct_candlestick_collections(xdates, opens, highs, lows, closes )
+    elif ptype == 'ohlc':
+        collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes )
+
+    avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
+    minx = xdates[0]  - avg_dist_between_points
+    maxx = xdates[-1] + avg_dist_between_points
     miny = min([low for low in lows if low != -1])
     maxy = max([high for high in highs if high != -1])
     corners = (minx, miny), (maxx, maxy)
     ax.update_datalim(corners)
-    ax.autoscale_view()
 
-    # add these last (I don't know why, but this comment was in the "original_flavor" code).
+    # TODO: ================================================================
+    # TODO:  Investigate:
+    # TODO:  ===========
+    # TODO:  It appears to me that there may be some or significant overlap
+    # TODO:  between what the following functions actually do:
+    # TODO:  At the very least, all three of them appear to communicate 
+    # TODO:  to matplotlib that the xaxis should be treated as dates:
+    # TODO:   ->  'ax.autoscale_view()'
+    # TODO:   ->  'ax.xaxis_dates()'
+    # TODO:   ->  'plt.autofmt_xdates()'
+    # TODO: ================================================================
+    
     for collection in collections:
         ax.add_collection(collection)
 
@@ -213,9 +274,17 @@ def plot( data, **kwargs ):
         mavcolors=['turquoise','gold','magenta']
         jj = 0
         for mav in mavgs:
-            mavprices = (pd.Series(closes).rolling(mav).mean()).values            
-            ax.plot(dates, mavprices, color=mavcolors[jj])
+            ## mavprices = (pd.Series(closes).rolling(mav).mean()).values            
+            mavprices = data['Close'].rolling(mav).mean().values            
+            ax.plot(xdates, mavprices, color=mavcolors[jj])
             jj+=1
+
+    #ax.xaxis_date()
+    if config['autofmt_xdate']:
+        print('CALLING fig.autofmt_xdate()')
+        fig.autofmt_xdate()
+
+    ax.autoscale_view()
 
     plt.show()
 

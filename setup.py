@@ -2,7 +2,7 @@ from setuptools import setup
 from setuptools import find_packages
 
 setup(name='mplfinance',
-      version='0.10.0',
+      version='0.20.0',
       author='MPL Developers',
       author_email='matplotlib-users@python.org',
       py_modules=['mplfinance'],
