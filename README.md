@@ -34,7 +34,7 @@ The most common usage is to then call `mpf.plot(data)` where `data` is a `Pandas
 
 For further details on how to call the new API, see the jupyter notebook in the examples folder:
 
-https://github.com/DanielGoldfarb/mplfinance/blob/master/examples/mplfinance_plot.ipynb
+https://github.com/matplotlib/mplfinance/blob/master/examples/mplfinance_plot.ipynb
 
 I am very interested to hear from you how you are using mpl-finance, and what you think of the new API.  I will be honored if you will share your code with me, so I can see specifically *how you are calling the existing mpl-finance APIs, and what additional matplotlib stuff you are doing around them.*  I am particularly interested to hear about what you found frustrating or challenging in using mpl-finance, plus any suggestions you have for improvement.  You can reach me at dgoldfarb.github@gmail.com
 
