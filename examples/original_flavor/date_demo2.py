@@ -6,6 +6,8 @@ controlling major and minor ticks
 
 import matplotlib.pyplot as plt
 import pandas as pd
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
 from matplotlib.dates import (MONDAY, DateFormatter, MonthLocator,
                               WeekdayLocator)
 

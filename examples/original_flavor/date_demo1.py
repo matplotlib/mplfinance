@@ -15,6 +15,8 @@ yahoo finance to get the data for plotting
 
 import matplotlib.pyplot as plt
 import pandas as pd
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
 from matplotlib.dates import DateFormatter, MonthLocator, YearLocator
 
 years = YearLocator()  # every year

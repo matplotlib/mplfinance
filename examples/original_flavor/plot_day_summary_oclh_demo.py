@@ -3,10 +3,12 @@ Show how to use plot_day_summary_oclh function
 """
 import matplotlib.pyplot as plt
 import pandas as pd
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
 from matplotlib.dates import (MONDAY, DateFormatter, MonthLocator,
                               WeekdayLocator, date2num)
 
-from mpl_finance import plot_day_summary_oclh
+from mplfinance.original_flavor import plot_day_summary_oclh
 
 date1 = "2003-11-1"
 date2 = "2003-12-1"

@@ -7,6 +7,8 @@ import matplotlib.mlab as mlab
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
 
 from six.moves import urllib
 

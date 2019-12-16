@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import numpy as np
 import pandas as pd
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
 
 ticker = 'SPY'
 r = pd.read_csv('data/yahoofinance-SPY-20080101-20180101.csv',
