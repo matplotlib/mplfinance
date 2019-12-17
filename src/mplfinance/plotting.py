@@ -14,6 +14,7 @@ register_matplotlib_converters()
 
 from mplfinance._utils import _construct_ohlc_collections
 from mplfinance._utils import _construct_candlestick_collections
+from mplfinance._utils import IntegerIndexDateTimeFormatter
 
 def _debug_trace():
     return False
@@ -43,13 +44,17 @@ def _check_and_prepare_data(data):
     if not isinstance(data.index,pd.core.indexes.datetimes.DatetimeIndex):
         raise TypeError('Expect data.index as DatetimeIndex')
 
-    dates  = mdates.date2num(data.index.to_pydatetime())
-    opens  = data['Open'].values
-    highs  = data['High'].values
-    lows   = data['Low'].values
-    closes = data['Close'].values
+    dates   = mdates.date2num(data.index.to_pydatetime())
+    opens   = data['Open'].values
+    highs   = data['High'].values
+    lows    = data['Low'].values
+    closes  = data['Close'].values
+    if 'Volume' in data.columns:
+        volumes = data['Volume'].values
+    else:
+        volumes = None
 
-    return dates, opens, highs, lows, closes, None
+    return dates, opens, highs, lows, closes, volumes
 
 def _valid_kwargs_table():
 
@@ -73,7 +78,7 @@ def _valid_kwargs_table():
         'type'        : { 'Default'     : 'ohlc',
  
                           'Implemented' : True,
-                          'Validator'   : lambda value: value in ['candlestick','ohlc','bar','line'] },
+                          'Validator'   : lambda value: value in ['candle','candlestick','ohlc','bars','ohlc_bars','line'] },
  
         'style'       : { 'Default'     : 'classic',
  
@@ -82,7 +87,7 @@ def _valid_kwargs_table():
  
         'volume'      : { 'Default'     : False,
  
-                          'Implemented' : False,
+                          'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,bool) },
  
         'mav'         : { 'Default'     : None,
@@ -95,12 +100,12 @@ def _valid_kwargs_table():
                           'Implemented' : False,
                           'Validator'   : lambda value: isinstance(value,dict) }, #{'studyname': {study parms}} example: {'TE':{'mav':20,'upper':2,'lower':2}}
  
-        'upcolor'     : { 'Default'     : None, # use 'style' for default, instead.
+        'colorup'     : { 'Default'     : None, # use 'style' for default, instead.
  
                           'Implemented' : False,
                           'Validator'   : lambda value: isinstance(value,str) },
  
-        'downcolor'   : { 'Default'     : None, # use 'style' for default, instead.
+        'colordown'   : { 'Default'     : None, # use 'style' for default, instead.
  
                           'Implemented' : False,
                           'Validator'   : lambda value: isinstance(value,str) },
@@ -163,30 +168,15 @@ def _process_kwargs( kwargs ):
 
     return config
 
-from matplotlib.ticker import Formatter
-class NoGapsDateTimeFormatter(Formatter):
-    def __init__(self, dates, fmt='%b %d, %H:%M'):
-        self.dates = dates
-        self.len   = len(dates)
-        self.fmt   = fmt
-
-    def __call__(self, x, pos=0):
-        #import pdb; pdb.set_trace()
-        'Return label for time x at position pos'
-        # not sure what 'pos' is for: see
-        # https://matplotlib.org/gallery/ticks_and_spines/date_index_formatter.html
-        ix = int(np.round(x))
-         
-        if ix >= self.len or ix < 0:
-            date = None
-            dateformat = ''
-        else:
-            date = self.dates[ix]
-            dateformat = mdates.num2date(date).strftime(self.fmt)
-        #print('x=',x,'pos=',pos,'dates[',ix,']=',date,'dateformat=',dateformat)
-        return dateformat
-
 def plot( data, **kwargs ):
+    """
+    Given open,high,low,close,volume data for a financial instrument (such as a stock, index,
+    currency, future, option, etc.) plot the data.
+    Available plots include ohlc bars, candlestick, and line plots.
+    Also provide visually analysis in the form of common technical studies, such as:
+    moving averages, macd, trading envelope, etc. 
+    Also provide ability to plot trading signals, and/or user-defined studies.
+    """
 
     config = _process_kwargs(kwargs)
     
@@ -194,52 +184,84 @@ def plot( data, **kwargs ):
         print('config=',config)
 
     dates,opens,highs,lows,closes,volumes = _check_and_prepare_data(data)
+
     
-    fig, ax = plt.subplots()
-    fig.set_size_inches((10,8))
+    fig = plt.figure()
+    fig.set_size_inches((11,8))
+
+    #  fig.add_axes( [left, bottom, width, height] )
+    if config['volume']:
+        if volumes is None:
+            raise ValueError('Request for volume, but NO volume data.')
+        ax1 = fig.add_axes( [0.05, 0.25, 0.9, 0.7] )
+        ax2 = fig.add_axes( [0.05, 0.05, 0.9, 0.2], sharex=ax1 )
+    else:
+        ax1 = fig.add_axes( [0.05, 0.05, 0.9, 0.9] )
+        ax2 = None
 
     avg_days_between_points = (dates[-1] - dates[0]) / float(len(dates))
 
-    #print('avg_days_between_points=',avg_days_between_points)
-    #print('(dates[-1] - dates[0])=',(dates[-1] - dates[0]))
-    #print('float(len(dates))=',float(len(dates)))
 
-    # 'no_xgaps' default logic: True for intraday data spanning 2 or more days, else False
-    # 'no_xgaps' kwarg overrides default logic.
+    # Default logic for 'no_xgaps':  True for intraday data spanning 2 or more days, else False
+    # Caller provided 'no_xgaps' kwarg OVERRIDES default logic.
+
     no_xgaps = False
 
     # avgerage of 3 or more data points per day we will call intraday data:
     if avg_days_between_points < 0.33:  # intraday
         if mdates.num2date(dates[-1]).date() != mdates.num2date(dates[0]).date():
             # intraday data for more than one day:
-            fmtstring = '%b %d, %H:%M'
             no_xgaps = True
+            fmtstring = '%b %d, %H:%M'
         else:  # intraday data for a single day
             fmtstring = '%H:%M'
     else:  # 'daily' data (or could be weekly, etc.)
-        fmtstring = '%b %d'
+        if mdates.num2date(dates[-1]).date().year != mdates.num2date(dates[0]).date().year:
+           fmtstring = '%Y %b %d'
+        else:
+           fmtstring = '%b %d'
 
-    if config['no_xgaps'] != None:  # override whatever was determined above.
+    if config['no_xgaps'] is not None:  # override whatever was determined above.
         no_xgaps = config['no_xgaps']
 
     if no_xgaps:
-        formatter = NoGapsDateTimeFormatter(dates, fmtstring)
+        formatter = IntegerIndexDateTimeFormatter(dates, fmtstring)
         xdates = np.arange(len(dates))
     else:
         formatter = mdates.DateFormatter(fmtstring)
         xdates = dates
     
-    ax.xaxis.set_major_formatter(formatter)
+    ax1.xaxis.set_major_formatter(formatter)
     plt.xticks(rotation=45)
 
     ptype = config['type']
     if _debug_trace(): 
         print('ptype=',ptype)
 
-    if ptype == 'candlestick':
+    if ptype == 'candle' or ptype == 'candlestick':
         collections = _construct_candlestick_collections(xdates, opens, highs, lows, closes )
-    elif ptype == 'ohlc':
+    elif ptype == 'ohlc' or ptype == 'bars' or ptype == 'ohlc_bars':
         collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes )
+    elif ptype == 'line':
+        raise ValueError('"line" plot type not yet supported.')
+    else:
+        raise ValueError('Unrecognized plot type = "'+ptype+'"')
+
+    for collection in collections:
+        ax1.add_collection(collection)
+
+    mavgs = config['mav']
+    if mavgs is not None:
+        if isinstance(mavgs,int):
+            mavgs = mavgs,      # convert to tuple 
+        if len(mavgs) > 3:
+            mavgs = mavgs[0:3]  # take at most 3
+        mavcolors=['turquoise','gold','magenta']
+        jj = 0
+        for mav in mavgs:
+            mavprices = data['Close'].rolling(mav).mean().values            
+            ax1.plot(xdates, mavprices, color=mavcolors[jj])
+            jj+=1
 
     avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
     minx = xdates[0]  - avg_dist_between_points
@@ -247,7 +269,19 @@ def plot( data, **kwargs ):
     miny = min([low for low in lows if low != -1])
     maxy = max([high for high in highs if high != -1])
     corners = (minx, miny), (maxx, maxy)
-    ax.update_datalim(corners)
+    ax1.update_datalim(corners)
+
+    if config['volume']:
+        ax2.bar(xdates,volumes,width=0.7)
+        miny = 0.3 * min(volumes)
+        maxy = 1.1 * max(volumes)
+        ax2.set_ylim( miny, maxy )
+        ax2.yaxis.set_label_position('right')
+        ax2.yaxis.tick_right()
+        ax2.xaxis.set_major_formatter(formatter)
+        #ax2.autoscale_view()  # is this really necessary?
+        ax1.spines['bottom'].set_linewidth(0.25)
+        ax2.spines['top'   ].set_linewidth(0.25)
 
     # TODO: ================================================================
     # TODO:  Investigate:
@@ -261,41 +295,23 @@ def plot( data, **kwargs ):
     # TODO:   ->  'plt.autofmt_xdates()'
     # TODO: ================================================================
     
-    for collection in collections:
-        ax.add_collection(collection)
 
-    mavgs = config['mav']
-    if mavgs != None:
-        if isinstance(mavgs,int):
-            mavgs = mavgs,      # convert to tuple 
-        if len(mavgs) > 3:
-            mavgs = mavgs[0:3]  # take at most 3
+    #if config['autofmt_xdate']:
+        #print('CALLING fig.autofmt_xdate()')
+        #fig.autofmt_xdate()
 
-        mavcolors=['turquoise','gold','magenta']
-        jj = 0
-        for mav in mavgs:
-            ## mavprices = (pd.Series(closes).rolling(mav).mean()).values            
-            mavprices = data['Close'].rolling(mav).mean().values            
-            ax.plot(xdates, mavprices, color=mavcolors[jj])
-            jj+=1
+    ax1.autoscale_view()  # Is this really necessary??
 
-    #ax.xaxis_date()
-    if config['autofmt_xdate']:
-        print('CALLING fig.autofmt_xdate()')
-        fig.autofmt_xdate()
+    #  really use rcParams: call plt.rc('axes', grid=True)
+    #  plt.rc('grid', color='0.75', linestyle='-', linewidth=0.5)
+    ax1.set_ylabel('Price',size='x-large',weight='bold')
 
-    ax.autoscale_view()
+    if config['volume']:
+        ax2.figure.canvas.draw()  # This is needed to calculate offset
+        offset = ax2.yaxis.get_major_formatter().get_offset()
+        ax2.yaxis.offsetText.set_visible(False)
+        vol_label = 'Volume x '+str(offset)
+        ax2.set_ylabel(vol_label,size='x-large',weight='bold')
 
     plt.show()
 
-import datetime
-def roundTime(dt=None, roundTo=60):
-   """Round a datetime object to any time lapse in seconds
-   dt : datetime.datetime object, default now.
-   roundTo : Closest number of seconds to round to, default 1 minute.
-   Author: Thierry Husson 2012 - Use it as you want but don't blame me.
-   """
-   if dt == None : dt = datetime.datetime.now()
-   seconds = (dt.replace(tzinfo=None) - dt.min).seconds
-   rounding = (seconds+roundTo/2) // roundTo * roundTo
-   return dt + datetime.timedelta(0,rounding-seconds,-dt.microsecond)
