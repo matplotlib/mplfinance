@@ -78,7 +78,7 @@ def _valid_kwargs_table():
         'type'        : { 'Default'     : 'ohlc',
  
                           'Implemented' : True,
-                          'Validator'   : lambda value: value in ['candle','candlestick','ohlc','bars','ohlc_bars','line'] },
+                          'Validator'   : lambda value: value in ['candle','candlestick','ohlc','bars','ohlc bars','line'] },
  
         'style'       : { 'Default'     : 'classic',
  
@@ -238,17 +238,19 @@ def plot( data, **kwargs ):
     if _debug_trace(): 
         print('ptype=',ptype)
 
+    collections = None
     if ptype == 'candle' or ptype == 'candlestick':
         collections = _construct_candlestick_collections(xdates, opens, highs, lows, closes )
     elif ptype == 'ohlc' or ptype == 'bars' or ptype == 'ohlc_bars':
         collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes )
     elif ptype == 'line':
-        raise ValueError('"line" plot type not yet supported.')
+        ax1.plot(xdates, closes, color='k')
     else:
         raise ValueError('Unrecognized plot type = "'+ptype+'"')
 
-    for collection in collections:
-        ax1.add_collection(collection)
+    if collections is not None:
+        for collection in collections:
+            ax1.add_collection(collection)
 
     mavgs = config['mav']
     if mavgs is not None:
@@ -256,7 +258,7 @@ def plot( data, **kwargs ):
             mavgs = mavgs,      # convert to tuple 
         if len(mavgs) > 3:
             mavgs = mavgs[0:3]  # take at most 3
-        mavcolors=['turquoise','gold','magenta']
+        mavcolors=['turquoise','magenta','gold']
         jj = 0
         for mav in mavgs:
             mavprices = data['Close'].rolling(mav).mean().values            
