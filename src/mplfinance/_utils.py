@@ -5,6 +5,9 @@ A collection of utilities for analyzing and plotting financial data.
 #from __future__ import (absolute_import, division, print_function, unicode_literals)
 
 import numpy as np
+import matplotlib.dates as mdates
+import datetime
+
 from matplotlib import colors as mcolors
 from matplotlib.collections import LineCollection, PolyCollection
 from matplotlib.lines import TICKLEFT, TICKRIGHT, Line2D
@@ -68,6 +71,17 @@ def _check_input(opens, closes, highs, lows, miss=-1):
                " length. NOTE: this code assumes if any value open, high,"
                " low, close is missing (*-1*) they all must be missing.")
         raise ValueError(msg)
+
+def roundTime(dt=None, roundTo=60):
+   """Round a datetime object to any time lapse in seconds
+   dt : datetime.datetime object, default now.
+   roundTo : Closest number of seconds to round to, default 1 minute.
+   Author: Thierry Husson 2012 - Use it as you want but don't blame me.
+   """
+   if dt is None : dt = datetime.datetime.now()
+   seconds = (dt.replace(tzinfo=None) - dt.min).seconds
+   rounding = (seconds+roundTo/2) // roundTo * roundTo
+   return dt + datetime.timedelta(0,rounding-seconds,-dt.microsecond)
 
 def _construct_ohlc_collections(dates, opens, highs, lows, closes, colorup='k', colordown='k'):
     """Represent the time, open, high, low, close as a vertical line
@@ -243,19 +257,41 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes,
                                    linewidths=lw
                                    )
 
-    #    minx = dates[0]  - avg_dist_between_points
-    #    maxx = dates[-1] + avg_dist_between_points
-    #    miny = min([low for low in lows if low != -1])
-    #    maxy = max([high for high in highs if high != -1])
-    #
-    #    corners = (minx, miny), (maxx, maxy)
-    #    #print('corners=',corners)
-    #    ax.update_datalim(corners)
-    #    ax.autoscale_view()
-    #
-    #    # add these last
-    #    ax.add_collection(rangeCollection)
-    #    ax.add_collection(barCollection)
-
     return rangeCollection, barCollection
+
+from matplotlib.ticker import Formatter
+class IntegerIndexDateTimeFormatter(Formatter):
+    """
+    Formatter for axis that is indexed by integer, where the integers
+    represent the index location of the datetime object that should be
+    formatted at that lcoation.  This formatter is used typically when
+    plotting datetime on an axis but the user does NOT want to see gaps
+    where days (or times) are missing.  To use: plot the data against
+    a range of integers equal in length to the array of datetimes that
+    you would otherwise plot on that axis.  Construct this formatter
+    by providing the arrange of datetimes (as matplotlib floats). When
+    the formatter receives an integer in the range, it will look up the
+    datetime and format it.  
+
+    """
+    def __init__(self, dates, fmt='%b %d, %H:%M'):
+        self.dates = dates
+        self.len   = len(dates)
+        self.fmt   = fmt
+
+    def __call__(self, x, pos=0):
+        #import pdb; pdb.set_trace()
+        'Return label for time x at position pos'
+        # not sure what 'pos' is for: see
+        # https://matplotlib.org/gallery/ticks_and_spines/date_index_formatter.html
+        ix = int(np.round(x))
+         
+        if ix >= self.len or ix < 0:
+            date = None
+            dateformat = ''
+        else:
+            date = self.dates[ix]
+            dateformat = mdates.num2date(date).strftime(self.fmt)
+        #print('x=',x,'pos=',pos,'dates[',ix,']=',date,'dateformat=',dateformat)
+        return dateformat
 
