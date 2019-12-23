@@ -9,6 +9,22 @@
 ---
 
 
+## Installation
+### &nbsp;&nbsp;&nbsp;`pip install mplfinance`
+   - mplfinance requires [matplotlib](https://pypi.org/project/matplotlib/) and [pandas](https://pypi.org/project/pandas/)
+
+
+## Quick Start Usage
+Start with a Pandas DataFrame containing OHLC data.  For example,
+
+
+---
+
+---
+
+---
+
+# HISTORY
 ## Introduction
 My name is Daniel Goldfarb.  Last month (November 2019) I became the maintainer of `matplotlib/mpl-finance`.  That module is being deprecated in favor of the current `matplotlib/mplfinance`.  The old `mpl-finance` consisted of code extracted from the deprecated `matplotlib.finance` module along with a few examples of usage.  It has been mostly un-maintained for the past three years.  
 
