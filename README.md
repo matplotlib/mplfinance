@@ -4,10 +4,8 @@
 (to replace mpl-finance sometime in 2020).
 
 ---
-# The `mplfinance` package provides utilities for the visualization, and visual analysis, of financial data
 
----
-
+## The `mplfinance` package provides utilities for the visualization, and visual analysis, of financial data
 
 ## Installation
 ### &nbsp;&nbsp;&nbsp;`pip install mplfinance`
