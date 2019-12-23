@@ -1,18 +1,30 @@
 from setuptools import setup
 from setuptools import find_packages
 
+pkg_location = 'src'
+
+import sys
+sys.path.insert(0,pkg_location)
+# for safety, make sure this: is the only import after changing sys.path
+from mplfinance import __version__
+
+with open('README.md') as f:
+    long_description = f.read()
+
 setup(name='mplfinance',
-      version='0.11.0',
+      version=__version__,
       author='MPL Developers',
       author_email='matplotlib-users@python.org',
       py_modules=['mplfinance'],
-      description='Finance plots using matplotlib',
+      description='Utilities for the visualization, and visual analysis, of financial data',
+      long_description=long_description,
+      long_description_content_type='text/markdown; charset=UTF-8',
       url='http://github.com/matplotlib/mplfinance',
       platforms='Cross platform (Linux, Mac OSX, Windows)',
-      install_requires=['matplotlib'],
-      license="BSD",
-      package_dir={'': 'src'},
-      packages=find_packages(where='src'),
+      install_requires=['matplotlib','pandas'],
+      license="BSD-style",
+      package_dir={'': pkg_location},
+      packages=find_packages(where=pkg_location),
       classifiers=['Development Status :: 3 - Alpha',
                    'Programming Language :: Python :: 3',
                    'Programming Language :: Python :: 3.6',
