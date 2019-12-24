@@ -1,18 +1,17 @@
 [![Build Status](https://travis-ci.org/matplotlib/mplfinance.svg?branch=master)](https://travis-ci.org/matplotlib/mplfinance)
 
 # mplfinance
-(to replace mpl-finance sometime in 2020).
+## matplotlib utilities for the visualization, and visual analysis, of financial data
 
 ---
 
-## The `mplfinance` package provides utilities for the visualization, and visual analysis, of financial data
-
-## Installation
-### &nbsp;&nbsp;&nbsp;`pip install mplfinance`
+# Installation
+## &nbsp;&nbsp;&nbsp;`pip install mplfinance`
    - mplfinance requires [matplotlib](https://pypi.org/project/matplotlib/) and [pandas](https://pypi.org/project/pandas/)
 
+---
 
-## Usage
+# Usage
 Start with a Pandas DataFrame containing OHLC data.  For example,
 
 ```python
@@ -121,17 +120,24 @@ daily.tail(3)
   </tbody>
 </table>
 
+<br>
+
 ---
-After importing mplfinance, plotting open,high,low,close data is as simple as calling `mpf.plot()` on the dataframe
+
+<br>
+
+After importing mplfinance, plotting OHLC data is as simple as calling `mpf.plot()` on the dataframe
 
 ```python
 import mplfinance as mpf
 mpf.plot(daily)
 ```
 
-![png](https://raw.githubusercontent.com/DanielGoldfarb/mplfinance/master/readme_files/readme_4_0.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_4_0.png)
 
 ---
+<br>
+
 The default plot type, as you can see above, is `'ohlc'`.  Other plot types can be specified with the keyword argument `type`, for example, `type='candle'` or `type='line'`
 
 
@@ -139,18 +145,20 @@ The default plot type, as you can see above, is `'ohlc'`.  Other plot types can 
 mpf.plot(daily,type='candle')
 ```
 
-![png](readme_files/readme_6_0.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_6_0.png)
 
 
 ```python
 mpf.plot(daily,type='line')
 ```
 
-![png](readme_files/readme_7_0.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_7_0.png)
 
 ---
+<br>
+
 We can also plot moving averages with the `mav` keyword
-- use an scaler for a single moving average 
+- use a scaler for a single moving average 
 - use a tuple or list of integers for multiple moving averages
 
 
@@ -158,14 +166,14 @@ We can also plot moving averages with the `mav` keyword
 mpf.plot(daily,type='ohlc',mav=4)
 ```
 
-![png](readme_files/readme_9_0.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_9_0.png)
 
 
 ```python
 mpf.plot(daily,type='candle',mav=(3,6,9))
 ```
 
-![png](readme_files/readme_10_0.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_10_0.png)
 
 ---
 We can also display `Volume`
@@ -176,7 +184,7 @@ mpf.plot(daily,type='candle',mav=(3,6,9),volume=True)
 ```
 
 
-![png](readme_files/readme_12_0.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_12_0.png)
 
 Notice, in the above chart, there are gaps along the x-coordinate corresponding to days on which there was no trading.  
 - Many people like to see these gaps so that they can tell, with a quick glance, where the weekends and holidays fall.  
@@ -189,7 +197,7 @@ mpf.plot(daily,type='candle',mav=(3,6,9),volume=True,no_xgaps=True)
 ```
 
 
-![png](readme_files/readme_14_0.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_14_0.png)
 
 
 ---
@@ -302,7 +310,7 @@ iday = intraday.loc['2019-11-06 15:00':'2019-11-06 16:00',:]
 mpf.plot(iday,type='candle',mav=(7,12))
 ```
 
-![png](readme_files/readme_18_0.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_18_0.png)
 
 
   The "time-interpretation" of the `mav` integers depends on the frequency of the data, because the mav integers are number of data points used in the Moving Average.  Notice above that for intraday data the x-axis automatically displays TIME *instead of* date.  Below we see that if the intraday data spans two (or more) trading days then two things happen:
@@ -316,7 +324,7 @@ mpf.plot(iday,type='candle')
 ```
 
 
-![png](readme_files/readme_20_0.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_20_0.png)
 
 
 ---
@@ -328,7 +336,7 @@ mpf.plot(iday,type='candle',no_xgaps=False)
 ```
 
 
-![png](readme_files/readme_22_0.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_22_0.png)
 
 
 ---
@@ -340,7 +348,7 @@ mpf.plot(intraday,type='ohlc',no_xgaps=False)  # 4 day of intraday with no_xgaps
 ```
 
 
-![png](readme_files/readme_24_0.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_24_0.png)
 
 
 ---
@@ -352,7 +360,7 @@ mpf.plot(intraday,type='line')  # intraday spanning more than one day defaults t
 ```
 
 
-![png](readme_files/readme_26_0.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_26_0.png)
 
 
 ---
@@ -478,7 +486,7 @@ df.tail(3)
 mpf.plot(df[700:850],type='bars',volume=True,no_xgaps=True,mav=(20,40))
 ```
 
-![png](readme_files/readme_29_0.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_29_0.png)
 
 
 For more examples of using mplfinance, please see the jupyter notebooks in the `examples` directory.
