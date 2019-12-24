@@ -4,10 +4,14 @@ import pandas as pd
 import numpy  as np
 
 plt.style.use('seaborn-darkgrid')
-import matplotlib as mpl
-mpl.rcParams['axes.edgecolor'] = 'black'
-mpl.rcParams['axes.linewidth'] = 1.5
-mpl.rcParams['lines.linewidth'] = 2.0
+#import matplotlib as mpl
+plt.rcParams['axes.edgecolor'  ] = 'black'
+plt.rcParams['axes.linewidth'  ] =  1.5
+plt.rcParams['axes.labelsize'  ] =  'large'
+plt.rcParams['lines.linewidth' ] =  2.0
+plt.rcParams['font.weight'     ] = 'medium'
+plt.rcParams['font.size'       ] =  12.0
+plt.rcParams['axes.labelweight'] = 'medium'
 
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
@@ -120,6 +124,11 @@ def _valid_kwargs_table():
                           'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,bool) },
  
+        'figscale'      : { 'Default'   : 0.75, # scale base figure size (11" x 8.5") up or down.
+                                          
+                          'Implemented' : True,
+                          'Validator'   : lambda value: isinstance(value,float) },
+ 
         'autofmt_xdate':{ 'Default'     : False,
  
                           'Implemented' : True,
@@ -185,11 +194,14 @@ def plot( data, **kwargs ):
 
     dates,opens,highs,lows,closes,volumes = _check_and_prepare_data(data)
 
+    base      = [11.0, 8.5]
+    figscale  = config['figscale']
+    fsize     = [d*figscale for d in base]
     
     fig = plt.figure()
-    fig.set_size_inches((11,8))
+    fig.set_size_inches(fsize)
 
-    #  fig.add_axes( [left, bottom, width, height] )
+    #  fig.add_axes( [left, bottom, width, height] ) ... numbers are fraction of fig
     if config['volume']:
         if volumes is None:
             raise ValueError('Request for volume, but NO volume data.')
@@ -281,9 +293,9 @@ def plot( data, **kwargs ):
         ax2.yaxis.set_label_position('right')
         ax2.yaxis.tick_right()
         ax2.xaxis.set_major_formatter(formatter)
-        #ax2.autoscale_view()  # is this really necessary?
         ax1.spines['bottom'].set_linewidth(0.25)
         ax2.spines['top'   ].set_linewidth(0.25)
+        plt.setp(ax1.get_xticklabels(), visible=False)
 
     # TODO: ================================================================
     # TODO:  Investigate:
@@ -306,14 +318,14 @@ def plot( data, **kwargs ):
 
     #  really use rcParams: call plt.rc('axes', grid=True)
     #  plt.rc('grid', color='0.75', linestyle='-', linewidth=0.5)
-    ax1.set_ylabel('Price',size='x-large',weight='bold')
+    ax1.set_ylabel('Price',size='x-large',weight='semibold')
 
     if config['volume']:
         ax2.figure.canvas.draw()  # This is needed to calculate offset
         offset = ax2.yaxis.get_major_formatter().get_offset()
         ax2.yaxis.offsetText.set_visible(False)
         vol_label = 'Volume x '+str(offset)
-        ax2.set_ylabel(vol_label,size='x-large',weight='bold')
+        ax2.set_ylabel(vol_label,size='x-large',weight='semibold')
 
     plt.show()
 
