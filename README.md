@@ -1,18 +1,17 @@
 [![Build Status](https://travis-ci.org/matplotlib/mplfinance.svg?branch=master)](https://travis-ci.org/matplotlib/mplfinance)
 
 # mplfinance
-(to replace mpl-finance sometime in 2020).
+## matplotlib utilities for the visualization, and visual analysis, of financial data
 
 ---
 
-## The `mplfinance` package provides utilities for the visualization, and visual analysis, of financial data
-
-## Installation
-### &nbsp;&nbsp;&nbsp;`pip install mplfinance`
+# Installation
+## &nbsp;&nbsp;&nbsp;`pip install mplfinance`
    - mplfinance requires [matplotlib](https://pypi.org/project/matplotlib/) and [pandas](https://pypi.org/project/pandas/)
 
+---
 
-## Usage
+# Usage
 Start with a Pandas DataFrame containing OHLC data.  For example,
 
 ```python
@@ -121,8 +120,13 @@ daily.tail(3)
   </tbody>
 </table>
 
+<br>
+
 ---
-After importing mplfinance, plotting open,high,low,close data is as simple as calling `mpf.plot()` on the dataframe
+
+<br>
+
+After importing mplfinance, plotting OHLC data is as simple as calling `mpf.plot()` on the dataframe
 
 ```python
 import mplfinance as mpf
@@ -132,6 +136,8 @@ mpf.plot(daily)
 ![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_4_0.png)
 
 ---
+<br>
+
 The default plot type, as you can see above, is `'ohlc'`.  Other plot types can be specified with the keyword argument `type`, for example, `type='candle'` or `type='line'`
 
 
@@ -149,8 +155,10 @@ mpf.plot(daily,type='line')
 ![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_7_0.png)
 
 ---
+<br>
+
 We can also plot moving averages with the `mav` keyword
-- use an scaler for a single moving average 
+- use a scaler for a single moving average 
 - use a tuple or list of integers for multiple moving averages
 
 
