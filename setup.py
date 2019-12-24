@@ -2,25 +2,21 @@ from setuptools import setup
 from setuptools import find_packages
 
 pkg_location = 'src'
+pkg_name     = 'mplfinance'
 
-import sys
-# Never sys.path.insert(0, ). Rather sys.path.insert(1, ) because
-# third-party code may rely on sys.path documentation conformance:
-#    As initialized upon program startup, the first item of this list, path[0], is
-#    the directory containing the script that was used to invoke the Python interpreter.
-###sys.path.insert(1,pkg_location)
-# for safety, make sure this: is the only import after changing sys.path
-###from mplfinance import __version__
-__version__='0.11.0a0' # test hard-coded so avoid sys.path.insert (maybe that's breaking travis checks).
+vfile = './'+pkg_location+'/'+pkg_name+'/_version.py'
+vers = {}
+with open(vfile) as f:
+   exec(f.read(), {}, vers)
 
 with open('README.md') as f:
     long_description = f.read()
 
-setup(name='mplfinance',
-      version=__version__,
+setup(name=pkg_name,
+      version=vers['__version__'],
       author='MPL Developers',
       author_email='matplotlib-users@python.org',
-      py_modules=['mplfinance'],
+      py_modules=[pkg_name],
       description='Utilities for the visualization, and visual analysis, of financial data',
       long_description=long_description,
       long_description_content_type='text/markdown; charset=UTF-8',
