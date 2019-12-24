@@ -4,7 +4,11 @@ from setuptools import find_packages
 pkg_location = 'src'
 
 import sys
-sys.path.insert(0,pkg_location)
+# Never sys.path.insert(0, ). Rather sys.path.insert(1, ) because
+# third-party code may rely on sys.path documentation conformance:
+#    As initialized upon program startup, the first item of this list, path[0], is
+#    the directory containing the script that was used to invoke the Python interpreter.
+sys.path.insert(1,pkg_location)
 # for safety, make sure this: is the only import after changing sys.path
 from mplfinance import __version__
 
