@@ -124,7 +124,7 @@ def _valid_kwargs_table():
                           'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,bool) },
  
-        'figscale'      : { 'Default'   : 0.8, # scale base figure size (11" x 8.5") up or down.
+        'figscale'      : { 'Default'   : 0.75, # scale base figure size (11" x 8.5") up or down.
                                           
                           'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,float) },
