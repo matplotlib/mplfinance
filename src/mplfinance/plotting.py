@@ -127,7 +127,7 @@ def _valid_kwargs_table():
         'figscale'      : { 'Default'   : 0.75, # scale base figure size (11" x 8.5") up or down.
                                           
                           'Implemented' : True,
-                          'Validator'   : lambda value: isinstance(value,float) },
+                          'Validator'   : lambda value: isinstance(value,float) or isinstance(value,int) },
  
         'autofmt_xdate':{ 'Default'     : False,
  
@@ -170,7 +170,9 @@ def _process_kwargs( kwargs ):
        else:
            value = kwargs[key]
            if not vkwargs[key]['Validator'](value):
-               raise ValueError('kwarg "'+key+'" with invalid value: "'+str(value)+'"')
+               import inspect
+               v = inspect.getsource(vkwargs[key]['Validator']).strip()
+               raise ValueError('kwarg "'+key+'" with invalid value: "'+str(value)+'"\n    '+v)
        # if we are here, then kwarg is valid as far as we can tell;
        #  replace the appropriate value in config:
        config[key] = value
