@@ -328,7 +328,7 @@ mpf.plot(iday,type='candle')
 
 
 ---
-In the plot below, we see **what would happend if ` no_xgaps ` did NOT** default to `True` for intraday data involving two or more days.
+In the plot below, we see **what would happen if ` no_xgaps ` did NOT** default to `True` for intraday data involving two or more days.
 
 
 ```python
@@ -553,6 +553,6 @@ With this new ` mplfinance ` package installed, in addition to the new API, user
 where `<method>` indicates the method you want to import, for example:
 
 ```python
-    from mplfinance.original_flavor import candlestick_ohlc\
+    from mplfinance.original_flavor import candlestick_ohlc
 ```
 
