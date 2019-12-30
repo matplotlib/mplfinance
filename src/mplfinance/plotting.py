@@ -127,7 +127,7 @@ def _valid_kwargs_table():
         'figscale'      : { 'Default'   : 0.75, # scale base figure size (11" x 8.5") up or down.
                                           
                           'Implemented' : True,
-                          'Validator'   : lambda value: isinstance(value,float) },
+                          'Validator'   : lambda value: isinstance(value,float) or isinstance(value,int) },
  
         'autofmt_xdate':{ 'Default'     : False,
  
@@ -170,7 +170,9 @@ def _process_kwargs( kwargs ):
        else:
            value = kwargs[key]
            if not vkwargs[key]['Validator'](value):
-               raise ValueError('kwarg "'+key+'" with invalid value: "'+str(value)+'"')
+               import inspect
+               v = inspect.getsource(vkwargs[key]['Validator']).strip()
+               raise ValueError('kwarg "'+key+'" with invalid value: "'+str(value)+'"\n    '+v)
        # if we are here, then kwarg is valid as far as we can tell;
        #  replace the appropriate value in config:
        config[key] = value
@@ -205,14 +207,13 @@ def plot( data, **kwargs ):
     if config['volume']:
         if volumes is None:
             raise ValueError('Request for volume, but NO volume data.')
-        ax1 = fig.add_axes( [0.05, 0.25, 0.9, 0.7] )
-        ax2 = fig.add_axes( [0.05, 0.05, 0.9, 0.2], sharex=ax1 )
+        ax1 = fig.add_axes( [0.15, 0.38, 0.70, 0.50] )
+        ax2 = fig.add_axes( [0.15, 0.18, 0.70, 0.20], sharex=ax1 )
     else:
-        ax1 = fig.add_axes( [0.05, 0.05, 0.9, 0.9] )
+        ax1 = fig.add_axes( [0.15, 0.18, 0.70, 0.70] )
         ax2 = None
 
     avg_days_between_points = (dates[-1] - dates[0]) / float(len(dates))
-
 
     # Default logic for 'no_xgaps':  True for intraday data spanning 2 or more days, else False
     # Caller provided 'no_xgaps' kwarg OVERRIDES default logic.
