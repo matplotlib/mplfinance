@@ -158,7 +158,7 @@ mpf.plot(daily,type='line')
 <br>
 
 We can also plot moving averages with the `mav` keyword
-- use a scaler for a single moving average 
+- use a scalar for a single moving average 
 - use a tuple or list of integers for multiple moving averages
 
 
