@@ -14,7 +14,7 @@
 # Contents
 
   - **[Basic Usage](#usage)**
-  - **[Adding Custom Data to Ohlcv Plots](https://github.com/DanielGoldfarb/mplfinance/blob/master/examples/addplot.ipynb)**
+  - **[Adding Custom Data to Ohlcv Plots](https://github.com/matplotlib/mplfinance/blob/master/examples/addplot.ipynb)**
   - Customizing the Appearance of Plots (presently in development)
   - Technical Studies (presently in development)
   - **[Latest Release Info](#release)**
