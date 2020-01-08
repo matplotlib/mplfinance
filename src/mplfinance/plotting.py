@@ -20,64 +20,27 @@ from mplfinance._utils import _construct_ohlc_collections
 from mplfinance._utils import _construct_candlestick_collections
 from mplfinance._utils import IntegerIndexDateTimeFormatter
 
-def _debug_trace():
-    return False
+from mplfinance._arg_validators import _check_and_prepare_data
+from mplfinance._arg_validators import _mav_validator
 
-def _check_and_prepare_data(data):
-    '''
-    Check and Prepare the data input:
-    For now, data must be a Pandas DataFrame with a DatetimeIndex
-    and columns named 'Open', 'High', 'Low', 'Close', and optionally 'Volume'
-
-    Later we will accept all of the following data formats:
-      1. Pandas DataFrame with DatetimeIndex (as described above)
-      2. Pandas Series with DatetimeIndex:
-             Values are close prices, and Series generates a line plot
-      3. Tuple of Lists, or List of Lists:
-             The inner Lists are each columns, in the order: DateTime, Open, High, Low, Close, Volume
-      4. Tuple of Tuples or List of Tuples:
-             The inner tuples are each row, containing values in the order: DateTime, Open, High, Low, Close, Volume
-
-    Return a Tuple of Lists: datetimes, opens, highs, lows, closes, volumes
-    '''
-
-
-    if not isinstance(data, pd.core.frame.DataFrame):
-        raise TypeError('Expect data as DataFrame')
-
-    if not isinstance(data.index,pd.core.indexes.datetimes.DatetimeIndex):
-        raise TypeError('Expect data.index as DatetimeIndex')
-
-    dates   = mdates.date2num(data.index.to_pydatetime())
-    opens   = data['Open'].values
-    highs   = data['High'].values
-    lows    = data['Low'].values
-    closes  = data['Close'].values
-    if 'Volume' in data.columns:
-        volumes = data['Volume'].values
-    else:
-        volumes = None
-
-    return dates, opens, highs, lows, closes, volumes
+def _list_of_dict(x):
+    return isinstance(x,list) and all([isinstance(item,dict) for item in x])
 
 def _valid_kwargs_table():
-
-    def _mav_validator(mav_value):
-        # value for mav (moving average) keyword may be:
-        # scalar int greater than 1, or tuple of ints, or list of ints (greater than 1).
-        # tuple or list limited to length of 3 moving averages (to keep the plot clean).
-        if isinstance(mav_value,int) and mav_value > 1:
-            return True
-        elif not isinstance(mav_value,tuple) and not isinstance(mav_value,list):
-            return False
-
-        if not len(mav_value) < 4:
-            return False
-        for num in mav_value:
-            if not isinstance(num,int) and num > 1:
-                return False
-        return True
-
+    '''
+    Construct and return the "valid kwargs table" for the mplfinance.plot() function.
+    A valid kwargs table is a `dict` of `dict`s.  The keys of the outer dict are the
+    valid key-words for the function.  The value for each key is a dict containing
+    3 specific keys: "Default", "Implemented", and "Validator" with the following values:
+        "Default"      - The default value for the kwarg if none is specified.
+        "Implemented"  - Boolean, has this kwarg been implemented or not.  
+                         NOTE: A non-implemented kwarg will still be present in the
+                         configuration dict, along with the kwarg's default value.
+        "Validator"    - A function that takes the caller specified value for the kwarg,
+                         and validates that it is the correct type, and (for kwargs with 
+                         a limited set of allowed values) may also validate that the
+                         kwarg value is one of the allowed values.
+    '''
     vkwargs = {
         'type'        : { 'Default'     : 'ohlc',
  
@@ -119,22 +82,23 @@ def _valid_kwargs_table():
                           'Implemented' : False,
                           'Validator'   : lambda value: isinstance(value,str) },
  
-        'no_xgaps'      : { 'Default'     : None,  # None means follow default logic below:
+        'no_xgaps'    : { 'Default'     : None,  # None means follow default logic below:
                                                  # True for intraday data spanning 2 or more days, else False
                           'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,bool) },
  
-        'figscale'      : { 'Default'   : 0.75, # scale base figure size (11" x 8.5") up or down.
+        'figscale'    : { 'Default'     : 0.75, # scale base figure size (11" x 8.5") up or down.
                                           
                           'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,float) or isinstance(value,int) },
  
-        'autofmt_xdate':{ 'Default'     : False,
- 
+        'addplot'     : { 'Default'     : None, 
+                                          
                           'Implemented' : True,
-                          'Validator'   : lambda value: isinstance(value,bool) }
+                          'Validator'   : lambda value: isinstance(value,dict) or (isinstance(value,list) and all([isinstance(d,dict) for d in value])) },
+ 
     }
-    # Check that we didn't make a typo in any of the things above
+    # Check that we didn't make a typo in any of the things above:
     #  that should otherwise be the same for all kwags:
     for key, value in vkwargs.items():
         if len(value) != 3:
@@ -151,10 +115,14 @@ def _valid_kwargs_table():
     return vkwargs
    
 
-def _process_kwargs( kwargs ):
-
-    vkwargs = _valid_kwargs_table()
-
+def _process_kwargs(kwargs, vkwargs):
+    '''
+    Given a "valid kwargs table" and some kwargs, verify that each key-word
+    is valid per the kwargs table, and that the value of the kwarg is the
+    correct type.  Fill a configuration dictionary with the default value
+    for each kwarg, and then substitute in any values that were provided 
+    as kwargs and return the configuration dictionary.
+    '''
     # initialize configuration from valid_kwargs_table:
     config = {}
     for key, value in vkwargs.items():
@@ -169,12 +137,20 @@ def _process_kwargs( kwargs ):
            raise NotImplementedError('kwarg "'+key+'" is NOT YET implemented.') 
        else:
            value = kwargs[key]
-           if not vkwargs[key]['Validator'](value):
+           try:
+               valid = vkwargs[key]['Validator'](value)
+           except Exception as ex:
+               raise ValueError('kwarg "'+key+'" with invalid value: "'+str(value)+'"') from ex
+           if not valid:
                import inspect
                v = inspect.getsource(vkwargs[key]['Validator']).strip()
                raise ValueError('kwarg "'+key+'" with invalid value: "'+str(value)+'"\n    '+v)
-       # if we are here, then kwarg is valid as far as we can tell;
-       #  replace the appropriate value in config:
+
+       # ---------------------------------------------------------------
+       #  At this point in the loop, if we have not raised an exception,
+       #      then kwarg is valid as far as we can tell, therefore, 
+       #      go ahead and replace the appropriate value in config:
+
        config[key] = value
 
     return config
@@ -186,16 +162,13 @@ def plot( data, **kwargs ):
     Available plots include ohlc bars, candlestick, and line plots.
     Also provide visually analysis in the form of common technical studies, such as:
     moving averages, macd, trading envelope, etc. 
-    Also provide ability to plot trading signals, and/or user-defined studies.
+    Also provide ability to plot trading signals, and/or addtional user-defined data.
     """
-
-    config = _process_kwargs(kwargs)
-    
-    if _debug_trace():
-        print('config=',config)
 
     dates,opens,highs,lows,closes,volumes = _check_and_prepare_data(data)
 
+    config = _process_kwargs(kwargs, _valid_kwargs_table())
+    
     base      = [11.0, 8.5]
     figscale  = config['figscale']
     fsize     = [d*figscale for d in base]
@@ -203,9 +176,24 @@ def plot( data, **kwargs ):
     fig = plt.figure()
     fig.set_size_inches(fsize)
 
+    # check if we need a lower panel for an additional plot.
+    #     if volume=True we will share the lower panel.
+
+    need_lower_panel = False
+    addplot = config['addplot']
+    if addplot is not None:
+        if isinstance(addplot,dict):
+            addplot = [addplot,]   # make list of dict to be consistent
+        elif not _list_of_dict(addplot):
+            raise TypeError('addplot must be `dict`, or `list of dict`, NOT '+str(type(addplot)))
+        for apdict in addplot:
+            if apdict['panel'] == 'lower':
+                need_lower_panel = True
+                break
+
     #  fig.add_axes( [left, bottom, width, height] ) ... numbers are fraction of fig
-    if config['volume']:
-        if volumes is None:
+    if need_lower_panel or config['volume']:
+        if config['volume'] and volumes is None:
             raise ValueError('Request for volume, but NO volume data.')
         ax1 = fig.add_axes( [0.15, 0.38, 0.70, 0.50] )
         ax2 = fig.add_axes( [0.15, 0.18, 0.70, 0.20], sharex=ax1 )
@@ -230,7 +218,7 @@ def plot( data, **kwargs ):
             fmtstring = '%H:%M'
     else:  # 'daily' data (or could be weekly, etc.)
         if mdates.num2date(dates[-1]).date().year != mdates.num2date(dates[0]).date().year:
-           fmtstring = '%Y %b %d'
+           fmtstring = '%Y-%b-%d'
         else:
            fmtstring = '%b %d'
 
@@ -248,8 +236,6 @@ def plot( data, **kwargs ):
     plt.xticks(rotation=45)
 
     ptype = config['type']
-    if _debug_trace(): 
-        print('ptype=',ptype)
 
     collections = None
     if ptype == 'candle' or ptype == 'candlestick':
@@ -286,14 +272,54 @@ def plot( data, **kwargs ):
     corners = (minx, miny), (maxx, maxy)
     ax1.update_datalim(corners)
 
+    addplot = config['addplot']
+    if addplot is not None:
+        if isinstance(addplot,dict):
+            addplot = [addplot,]   # make list of dict to be consistent
+
+        elif not _list_of_dict(addplot):
+            raise TypeError('addplot must be `dict`, or `list of dict`, NOT '+str(type(addplot)))
+
+        for apdict in addplot:
+            apdata = apdict['data']
+            if isinstance(apdata,list) and not isinstance(apdata[0],(float,int)):
+                raise TypeError('apdata is list but NOT of float or int')
+            if isinstance(apdata,pd.DataFrame): 
+                havedf = True
+            else:
+                havedf = False      # must be a single series or array
+                apdata = [apdata,]  # make it iterable
+
+            if apdict['panel'] == 'lower':
+                ax = ax2
+                if config['volume']:
+                    ax = ax2.twinx()
+            else:
+                ax = ax1
+
+            for column in apdata:
+                if havedf:
+                    ydata = apdata.loc[:,column]
+                else:
+                    ydata = column
+                if apdict['scatter']:
+                    size = apdict['markersize']
+                    mark = apdict['marker']
+                    ax.scatter(xdates, ydata, s=size, marker=mark)
+                else:
+                    ax.plot(xdates, ydata)
+
+
     if config['volume']:
         ax2.bar(xdates,volumes,width=0.7)
         miny = 0.3 * min(volumes)
         maxy = 1.1 * max(volumes)
         ax2.set_ylim( miny, maxy )
-        ax2.yaxis.set_label_position('right')
-        ax2.yaxis.tick_right()
+        #ax2.yaxis.set_label_position('right')
+        #ax2.yaxis.tick_right()
         ax2.xaxis.set_major_formatter(formatter)
+     
+    if need_lower_panel or config['volume']:
         ax1.spines['bottom'].set_linewidth(0.25)
         ax2.spines['top'   ].set_linewidth(0.25)
         plt.setp(ax1.get_xticklabels(), visible=False)
@@ -303,11 +329,12 @@ def plot( data, **kwargs ):
     # TODO:  ===========
     # TODO:  It appears to me that there may be some or significant overlap
     # TODO:  between what the following functions actually do:
-    # TODO:  At the very least, all three of them appear to communicate 
+    # TODO:  At the very least, all four of them appear to communicate 
     # TODO:  to matplotlib that the xaxis should be treated as dates:
     # TODO:   ->  'ax.autoscale_view()'
     # TODO:   ->  'ax.xaxis_dates()'
     # TODO:   ->  'plt.autofmt_xdates()'
+    # TODO:   ->  'fig.autofmt_xdate()'
     # TODO: ================================================================
     
 
@@ -330,3 +357,66 @@ def plot( data, **kwargs ):
 
     plt.show()
 
+def _valid_addplot_kwargs_table():
+
+    valid_markers = ['.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', '8',
+                     's', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd', '|', '_', 'P',
+                     'X', 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 'None', None, ' ', '']
+
+    vkwargs = {
+        'scatter'     : { 'Default'     : False,
+
+                          'Implemented' : True,
+                          'Validator'   : lambda value: isinstance(value,bool) },
+
+        'panel'       : { 'Default'     : 'main',
+    
+                          'Implemented' : True,
+                          'Validator'   : lambda value: value in ['main','lower'] },
+
+        'marker'      : { 'Default'     : 'o',
+    
+                          'Implemented' : True,
+                          'Validator'   : lambda value: value in valid_markers },
+
+        'markersize'  : { 'Default'     : 18,
+    
+                          'Implemented' : True,
+                          'Validator'   : lambda value: isinstance(value,(int,float)) },
+
+        'secondary_y' : { 'Default' : None,
+
+                          'Implemented' : False,
+                          'Validator'   : lambda value: value in [] },
+    }
+
+    # Check that we didn't make a typo in any of the things above
+    #  that should otherwise be the same for all kwags:
+    for key, value in vkwargs.items():
+        if len(value) != 3:
+            raise ValueError('Items != 3 in valid kwarg table, for kwarg "'+key+'"')
+        if 'Default' not in value:
+            raise ValueError('Missing "Default" value for kwarg "'+key+'"')
+        if 'Implemented' not in value:
+            raise ValueError('Missing "Implemented" flag for kwarg "'+key+'"')
+        if 'Validator' not in value:
+            raise ValueError('Missing "Validator" function for kwarg "'+key+'"')
+        if value['Implemented'] not in [True,False]:
+            raise ValueError('"Implemented" flag NOT True or False for kwarg "'+key+'"')
+
+    return vkwargs
+
+
+def make_addplot(data, **kwargs):
+    '''
+    Take data (pd.Series, pd.DataFrame, np.ndarray of floats, list of floats), and
+    kwargs (see valid_addplot_kwargs_table) and construct a correctly structured dict
+    to be passed into plot() using kwarg `addplot`.  
+    NOTE WELL: len(data) here must match the len(data) passed into plot()
+    '''
+    if not isinstance(data, (pd.Series, pd.DataFrame, np.ndarray, list)):
+        raise TypeError('Wrong type for data, in make_addplot()')
+
+    config = _process_kwargs(kwargs, _valid_addplot_kwargs_table())
+
+    return dict( data=data, **config)
