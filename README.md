@@ -13,13 +13,39 @@
 
 # Contents
 
-  - **[Basic Usage](#usage)**
+  - **[The New API](https://github.com/matplotlib/mplfinance#newapi)**
+  - **[Basic Usage](https://github.com/matplotlib/mplfinance#usage)**
   - **[Adding Custom Data to Ohlcv Plots](https://github.com/matplotlib/mplfinance/blob/master/examples/addplot.ipynb)**
   - Customizing the Appearance of Plots (presently in development)
   - Technical Studies (presently in development)
-  - **[Latest Release Info](#release)**
-  - **[Some Background History About This Package](#history)**
-  - **[Old API Availability](#oldapi)**
+  - **[Latest Release Info](https://github.com/matplotlib/mplfinance#release)**
+  - **[Some Background History About This Package](https://github.com/matplotlib/mplfinance#history)**
+  - **[Old API Availability](https://github.com/matplotlib/mplfinance#oldapi)**
+
+---
+## <a name="newapi"></a>The New API
+
+This repository, `matplotlib/mplfinance`, contains a new **matplotlib finance** API that makes it easier to create financial plots.  It interfaces nicely with **Pandas** DataFrames.  
+
+*More importantly, **the new API automatically does the extra matplotlib work that the user previously had to do "manually" with the old API.***   (The old API is still available within this package; see below).
+
+The conventional way to import the new API is as follows:
+
+```python
+    import mplfinance as mpf
+```
+    
+The most common usage is then to call 
+
+```python
+    mpf.plot(data)
+```
+
+where `data` is a `Pandas DataFrame` object containing Open, High, Low and Close data, with a Pandas `DatetimeIndex`.
+
+Details on how to call the new API can be found below under **[Basic Usage](https://github.com/matplotlib/mplfinance#usage)**, as well as in the jupyter notebooks in the **[examples](https://github.com/matplotlib/mplfinance/blob/master/examples/)** folder.
+
+I am very interested to hear from you regarding what you think of the new `mplfinance`, plus any suggestions you may have for improvement.  You can reach me at dgoldfarb.github@gmail.com
 
 ---
 
@@ -504,22 +530,13 @@ mpf.plot(df[700:850],type='bars',volume=True,no_xgaps=True,mav=(20,40))
 For more examples of using mplfinance, please see the jupyter notebooks in the `examples` directory.
 
 ---
-
-##  COMING SOON:
-
-- customize appearance of plot (colors, date format, etc)
-- show trading signals on plot
-- technical studies, such as:
-  - Trading Envelope, Bollinger Bands
-  - MACD
-- save plot to file
  
 # <a name="release"></a>Release Notes
 
 | Version  |  Description   | Release Date |
 |----------|--------------|----------------|
 | 0.12.x   | Ability plot arbitrary user data (in addition to basic OHLCV data).<br> - both line and scatter plots available.<br> - optionally plot on either the "main" or "lower" (aka "volume") axis. | 2020-01-09 |
-| 0.11.x   | Basic Plotting from Pandas DataFrame of OHLC bars and candlesticks.<br> - optional display of volume<br> - optional display of (up to 3 different) moving averages.<br> - old API still available by importing from "mplfinance/original_flavor" | 2019-13-20  |
+| 0.11.x   | Basic Plotting from Pandas DataFrame of OHLC bars and candlesticks.<br> - optional display of volume<br> - optional display of (up to 3 different) moving averages.<br> - old API still available by importing from "mplfinance/original_flavor" | 2019-12-20  |
 | 0.10.x   | Old mpl-finance API set up as its own package<br> (i.e. removed from the matplotlib package). | 2016-09-08   |
 
 ---
@@ -528,28 +545,6 @@ For more examples of using mplfinance, please see the jupyter notebooks in the `
 My name is Daniel Goldfarb.  In November 2019, I became the maintainer of `matplotlib/mpl-finance`.  That module is being deprecated in favor of the current `matplotlib/mplfinance`.  The old `mpl-finance` consisted of code extracted from the deprecated `matplotlib.finance` module along with a few examples of usage.  It has been mostly un-maintained for the past three years.  
 
 It is my intention to archive the `matplotlib/mpl-finance` repository soon, and direct everyone to `matplotlib/mplfinance`.  The main reason for the rename is to avoid confusion with the hyphen and the underscore: As it was, `mpl-finance` was *installed with the hyphen, but imported with an underscore `mpl_finance`.*  Going forward it will be a simple matter of both installing and importing `mplfinance`.
-
-## The new API
-
-At present (Dec 2019) this repository, `matplotlib/mplfinance`, contains an initial 'alpha', version of the new API for people to play with and provide feedback or pull requests for enhancements.
-
-My own take on the old `mpl-finance` API is that the methods were too low-level, and too cumbersome to use.  The new API in this current package automatically does the extra matplotlib work that the caller previously had to do "manually, on their own" with the old API.
-
-The conventional way to import the new API is as follows:
-
-```python
-    import mplfinance as mpf
-```
-    
-The most common usage is to then call `mpf.plot(data)` where `data` is a `Pandas DataFrame` object containing Open, High, Low and Close data, with a Pandas `DatetimeIndex`.
-
----
-### For details on how to call the new API, see the jupyter notebook(s) in the examples folder:
-
-### https://github.com/matplotlib/mplfinance/blob/master/examples/mplfinance_plot.ipynb
-
----
-I am very interested to hear from you regarding how you were using the old `mpl-finance` (if you were), what you think of the new `mplfinance`, plus any suggestions you may have for improvement.  You can reach me at dgoldfarb.github@gmail.com
 
 ---
 ### <a name="oldapi"></a>old API availability
@@ -572,4 +567,3 @@ where `<method>` indicates the method you want to import, for example:
 ```python
     from mplfinance.original_flavor import candlestick_ohlc
 ```
-
