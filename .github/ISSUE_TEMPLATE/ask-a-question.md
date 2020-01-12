@@ -2,7 +2,7 @@
 name: Ask a Question
 about: Question about usage, project priorities, or anything else related to mplfinance.
 title: ''
-labels: ''
+labels: 'question'
 assignees: ''
 
 ---
