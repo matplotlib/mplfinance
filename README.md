@@ -45,7 +45,7 @@ where `data` is a `Pandas DataFrame` object containing Open, High, Low and Close
 
 Details on how to call the new API can be found below under **[Basic Usage](https://github.com/matplotlib/mplfinance#usage)**, as well as in the jupyter notebooks in the **[examples](https://github.com/matplotlib/mplfinance/blob/master/examples/)** folder.
 
-I am very interested to hear from you regarding what you think of the new `mplfinance`, plus any suggestions you may have for improvement.  You can reach me at dgoldfarb.github@gmail.com  Or, if you prefer, provide feedback or a ask question on our [issues page.](https://github.com/matplotlib/mplfinance/issues/new/choose)
+I am very interested to hear from you regarding what you think of the new `mplfinance`, plus any suggestions you may have for improvement.  You can reach me at **dgoldfarb.github@gmail.com**  or, if you prefer, provide feedback or a ask question on our **[issues page.](https://github.com/matplotlib/mplfinance/issues/new/choose)**
 
 ---
 
