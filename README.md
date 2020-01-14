@@ -536,7 +536,8 @@ For more examples of using mplfinance, please see the jupyter notebooks in the `
 
 | Version  |  Description   | Release Date |
 |----------|--------------|----------------|
-| 0.12.x   | Ability to plot arbitrary user data (in addition to basic OHLCV data).<br> - both line and scatter plots available.<br> - optionally plot on either the "main" or "lower" (aka "volume") axis. | 2020-01-09 |
+| 0.12.0a2   | Ability to save plot to a file (pdf, svg, png, jpg, ...) | 2020-01-14 |
+| 0.12.0a1   | Ability to plot arbitrary user data (in addition to basic OHLCV data).<br> - both line and scatter plots available.<br> - optionally plot on either the "main" or "lower" (aka "volume") axis. | 2020-01-09 |
 | 0.11.x   | Basic Plotting from Pandas DataFrame of OHLC bars and candlesticks.<br> - optional display of volume<br> - optional display of (up to 3 different) moving averages.<br> - old API still available by importing from "mplfinance/original_flavor" | 2019-12-20  |
 | 0.10.x   | Old mpl-finance API set up as its own package<br> (i.e. removed from the matplotlib package). | 2016-09-08   |
 
