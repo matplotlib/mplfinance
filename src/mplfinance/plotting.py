@@ -97,6 +97,11 @@ def _valid_kwargs_table():
                           'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,dict) or (isinstance(value,list) and all([isinstance(d,dict) for d in value])) },
  
+        'savefig'     : { 'Default'     : None, 
+                                          
+                          'Implemented' : True,
+                          'Validator'   : lambda value: isinstance(value,dict) or isinstance(value,str) },
+ 
     }
     # Check that we didn't make a typo in any of the things above:
     #  that should otherwise be the same for all kwags:
@@ -355,7 +360,14 @@ def plot( data, **kwargs ):
         vol_label = 'Volume x '+str(offset)
         ax2.set_ylabel(vol_label,size='x-large',weight='semibold')
 
-    plt.show()
+    if config['savefig'] is not None:
+        save = config['savefig']
+        if isinstance(save,dict):
+            plt.savefig(**save)
+        else:
+            plt.savefig(save)
+    else:
+        plt.show()
 
 def _valid_addplot_kwargs_table():
 

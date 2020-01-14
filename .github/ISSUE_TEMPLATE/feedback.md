@@ -1,8 +1,8 @@
 ---
 name: Feedback
 about: What do you think of mplfinance?  Pros? Cons?  Thoughts?
-title: ''
-labels: ''
+title: 'Comment:'
+labels: 'feedback'
 assignees: ''
 
 ---
