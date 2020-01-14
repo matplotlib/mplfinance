@@ -16,6 +16,7 @@
   - **[The New API](https://github.com/matplotlib/mplfinance#newapi)**
   - **[Basic Usage](https://github.com/matplotlib/mplfinance#usage)**
   - **[Adding Custom Data to Ohlcv Plots](https://github.com/matplotlib/mplfinance/blob/master/examples/addplot.ipynb)**
+  - **[Saving the Plot to a File](https://github.com/matplotlib/mplfinance/blob/master/examples/savefig.ipynb)**
   - Customizing the Appearance of Plots (presently in development)
   - Technical Studies (presently in development)
   - **[Latest Release Info](https://github.com/matplotlib/mplfinance#release)**
@@ -535,7 +536,7 @@ For more examples of using mplfinance, please see the jupyter notebooks in the `
 
 | Version  |  Description   | Release Date |
 |----------|--------------|----------------|
-| 0.12.x   | Ability plot arbitrary user data (in addition to basic OHLCV data).<br> - both line and scatter plots available.<br> - optionally plot on either the "main" or "lower" (aka "volume") axis. | 2020-01-09 |
+| 0.12.x   | Ability to plot arbitrary user data (in addition to basic OHLCV data).<br> - both line and scatter plots available.<br> - optionally plot on either the "main" or "lower" (aka "volume") axis. | 2020-01-09 |
 | 0.11.x   | Basic Plotting from Pandas DataFrame of OHLC bars and candlesticks.<br> - optional display of volume<br> - optional display of (up to 3 different) moving averages.<br> - old API still available by importing from "mplfinance/original_flavor" | 2019-12-20  |
 | 0.10.x   | Old mpl-finance API set up as its own package<br> (i.e. removed from the matplotlib package). | 2016-09-08   |
 
@@ -567,3 +568,5 @@ where `<method>` indicates the method you want to import, for example:
 ```python
     from mplfinance.original_flavor import candlestick_ohlc
 ```
+---
+
