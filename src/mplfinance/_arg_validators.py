@@ -42,14 +42,14 @@ def _mav_validator(mav_value):
     ''' 
     Value for mav (moving average) keyword may be:
     scalar int greater than 1, or tuple of ints, or list of ints (greater than 1).
-    tuple or list limited to length of 3 moving averages (to keep the plot clean).
+    tuple or list limited to length of 7 moving averages (to keep the plot clean).
     '''
     if isinstance(mav_value,int) and mav_value > 1:
         return True
     elif not isinstance(mav_value,tuple) and not isinstance(mav_value,list):
         return False
 
-    if not len(mav_value) < 4:
+    if not len(mav_value) < 8:
         return False
     for num in mav_value:
         if not isinstance(num,int) and num > 1:
