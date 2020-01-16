@@ -260,14 +260,11 @@ def plot( data, **kwargs ):
     if mavgs is not None:
         if isinstance(mavgs,int):
             mavgs = mavgs,      # convert to tuple 
-        if len(mavgs) > 3:
-            mavgs = mavgs[0:3]  # take at most 3
-        mavcolors=['turquoise','magenta','gold']
-        jj = 0
+        if len(mavgs) > 7:
+            mavgs = mavgs[0:7]  # take at most 7
         for mav in mavgs:
-            mavprices = data['Close'].rolling(mav).mean().values            
-            ax1.plot(xdates, mavprices, color=mavcolors[jj])
-            jj+=1
+            mavprices = data['Close'].rolling(mav).mean().values 
+            ax1.plot(xdates, mavprices)
 
     avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
     minx = xdates[0]  - avg_dist_between_points
