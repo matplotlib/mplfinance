@@ -3,16 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy  as np
 
-plt.style.use('seaborn-darkgrid')
-#import matplotlib as mpl
-plt.rcParams['axes.edgecolor'  ] = 'black'
-plt.rcParams['axes.linewidth'  ] =  1.5
-plt.rcParams['axes.labelsize'  ] =  'large'
-plt.rcParams['lines.linewidth' ] =  2.0
-plt.rcParams['font.weight'     ] = 'medium'
-plt.rcParams['font.size'       ] =  12.0
-plt.rcParams['axes.labelweight'] = 'medium'
-
+from itertools import cycle
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
 
@@ -20,8 +11,21 @@ from mplfinance._utils import _construct_ohlc_collections
 from mplfinance._utils import _construct_candlestick_collections
 from mplfinance._utils import IntegerIndexDateTimeFormatter
 
+from mplfinance import _styles
+
 from mplfinance._arg_validators import _check_and_prepare_data
 from mplfinance._arg_validators import _mav_validator
+
+def with_rc_context(func):
+    '''
+    This decoractor creates an rcParams context around a function, so that any changes
+    the function makes to rcParams will be reversed when the decorated function returns
+    (therefore those changes have no effect outside of the decorated function).
+    '''
+    def decorator(*args, **kwargs):
+        with plt.rc_context():
+            func(*args, **kwargs)
+    return decorator
 
 def _list_of_dict(x):
     return isinstance(x,list) and all([isinstance(item,dict) for item in x])
@@ -49,8 +53,9 @@ def _valid_kwargs_table():
  
         'style'       : { 'Default'     : 'classic',
  
-                          'Implemented' : False,
-                          'Validator'   : lambda value: value in ['classic','dark','checkers','chanuka','xmas','pastel'] },
+                          'Implemented' : True,
+                          'Validator'   : lambda value: (value in ['classic','dark','checkers','chanuka','xmas','pastel']) or
+                                                         isinstance(value,dict) },
  
         'volume'      : { 'Default'     : False,
  
@@ -67,27 +72,17 @@ def _valid_kwargs_table():
                           'Implemented' : False,
                           'Validator'   : lambda value: isinstance(value,dict) }, #{'studyname': {study parms}} example: {'TE':{'mav':20,'upper':2,'lower':2}}
  
-        'colorup'     : { 'Default'     : None, # use 'style' for default, instead.
+        'marketcolors': { 'Default'     : None, # use 'style' for default, instead.
  
-                          'Implemented' : False,
-                          'Validator'   : lambda value: isinstance(value,str) },
- 
-        'colordown'   : { 'Default'     : None, # use 'style' for default, instead.
- 
-                          'Implemented' : False,
-                          'Validator'   : lambda value: isinstance(value,str) },
- 
-        'border'      : { 'Default'     : None, # use 'style' for default, instead.
- 
-                          'Implemented' : False,
-                          'Validator'   : lambda value: isinstance(value,str) },
+                          'Implemented' : True,
+                          'Validator'   : lambda value: isinstance(value,dict) },
  
         'no_xgaps'    : { 'Default'     : None,  # None means follow default logic below:
                                                  # True for intraday data spanning 2 or more days, else False
                           'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,bool) },
  
-        'figscale'    : { 'Default'     : 0.75, # scale base figure size (11" x 8.5") up or down.
+        'figscale'    : { 'Default'     : 0.90, # scale base figure size (11" x 8.5") up or down.
                                           
                           'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,float) or isinstance(value,int) },
@@ -160,6 +155,7 @@ def _process_kwargs(kwargs, vkwargs):
 
     return config
 
+@with_rc_context
 def plot( data, **kwargs ):
     """
     Given open,high,low,close,volume data for a financial instrument (such as a stock, index,
@@ -173,6 +169,15 @@ def plot( data, **kwargs ):
     dates,opens,highs,lows,closes,volumes = _check_and_prepare_data(data)
 
     config = _process_kwargs(kwargs, _valid_kwargs_table())
+
+    style = config['style']
+    if isinstance(style,str):
+        print('plot() about to GET style="'+style+'"')
+        style = _styles._get_mpfstyle(style)
+
+    if isinstance(style,dict):
+        print('plot() about to apply style=',style)
+        _styles._apply_mpfstyle(style)
     
     base      = [11.0, 8.5]
     figscale  = config['figscale']
@@ -244,7 +249,8 @@ def plot( data, **kwargs ):
 
     collections = None
     if ptype == 'candle' or ptype == 'candlestick':
-        collections = _construct_candlestick_collections(xdates, opens, highs, lows, closes )
+        collections = _construct_candlestick_collections(xdates, opens, highs, lows, closes,
+                                                         marketcolors=style['marketcolors'] )
     elif ptype == 'ohlc' or ptype == 'bars' or ptype == 'ohlc_bars':
         collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes )
     elif ptype == 'line':
@@ -262,9 +268,18 @@ def plot( data, **kwargs ):
             mavgs = mavgs,      # convert to tuple 
         if len(mavgs) > 7:
             mavgs = mavgs[0:7]  # take at most 7
+     
+        if style['mavcolors'] is not None:
+            mavc = cycle(style['mavcolors'])
+        else:
+            mavc = None
+            
         for mav in mavgs:
             mavprices = data['Close'].rolling(mav).mean().values 
-            ax1.plot(xdates, mavprices)
+            if mavc:
+                ax1.plot(xdates, mavprices, color=next(mavc))
+            else:
+                ax1.plot(xdates, mavprices)
 
     avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
     minx = xdates[0]  - avg_dist_between_points
@@ -311,9 +326,8 @@ def plot( data, **kwargs ):
                 else:
                     ax.plot(xdates, ydata)
 
-
     if config['volume']:
-        ax2.bar(xdates,volumes,width=0.7)
+        ax2.bar(xdates,volumes,width=0.7,color=style['marketcolors']['volume'])
         miny = 0.3 * min(volumes)
         maxy = 1.1 * max(volumes)
         ax2.set_ylim( miny, maxy )
@@ -365,6 +379,8 @@ def plot( data, **kwargs ):
             plt.savefig(save)
     else:
         plt.show()
+    #print('.plot() about to return')
+
 
 def _valid_addplot_kwargs_table():
 
