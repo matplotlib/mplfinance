@@ -12,6 +12,7 @@ from matplotlib.collections import LineCollection, PolyCollection
 
 from six.moves import zip
 
+from mplfinance._styles import _get_mpfstyle
 
 def _check_input(opens, closes, highs, lows, miss=-1):
     """Checks that *opens*, *highs*, *lows* and *closes* have the same length.
@@ -80,7 +81,17 @@ def roundTime(dt=None, roundTo=60):
    rounding = (seconds+roundTo/2) // roundTo * roundTo
    return dt + datetime.timedelta(0,rounding-seconds,-dt.microsecond)
 
-from mplfinance._styles import _get_mpfstyle
+def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False):
+    if upcolor == downcolor:
+        return upcolor
+    cmap = {True : upcolor, False : downcolor}
+    if not use_prev_close:
+        return [ cmap[opn < cls] for opn,cls in zip(opens,closes) ]
+    else:
+        first = cmap[opens[0] < closes[0]] 
+        _list = [ cmap[pre < cls] for cls,pre in zip(closes[1:], closes) ]
+        return [first] + _list
+
 def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=None):
     """Represent the time, open, high, low, close as a vertical line
     ranging from low to high.  The left tick is the open and the right
@@ -110,9 +121,8 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=
     _check_input(opens, highs, lows, closes)
 
     if marketcolors is None:
-        #mktcolors = _market_color_defaults('ohlc')
         mktcolors = _get_mpfstyle('classic')['marketcolors']['ohlc']
-        print('mktcolors=',mktcolors)
+        print('default mktcolors=',mktcolors)
     else:
         mktcolors = marketcolors['ohlc']
 
@@ -196,9 +206,8 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
     _check_input(opens, highs, lows, closes)
 
     if marketcolors is None:
-        mktcolors = _market_color_defaults('candle')
-    else:
-        mktcolors = marketcolors['candle']
+        marketcolors = _get_mpfstyle('classic')['marketcolors']
+        print('default market colors:',marketcolors)
 
     avg_dist_between_points = (dates[-1] - dates[0]) / float(len(dates))
 
@@ -221,17 +230,19 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
                       
     rangeSegments = rangeSegLow + rangeSegHigh
 
-    alpha     = mktcolors['alpha']
-    colorup   = mcolors.to_rgba(mktcolors['up'], alpha)
-    colordown = mcolors.to_rgba(mktcolors['down'], alpha)
-    #colorup   = mcolors.to_rgba(colorup, 1.0)
-    #colordown = mcolors.to_rgba(colordown, alpha)
-    colord = {True: colorup, False: colordown}
-    colors = [colord[open < close]
-              for open, close in zip(opens, closes)
-              if open != -1 and close != -1]
-    edgecolor = mcolors.to_rgba(mktcolors['edge'], 1.0)
-    wickcolor = mcolors.to_rgba(mktcolors['wick'], 1.0)
+    alpha  = marketcolors['alpha']
+
+    uc     = mcolors.to_rgba(marketcolors['candle'][ 'up' ], alpha)
+    dc     = mcolors.to_rgba(marketcolors['candle']['down'], alpha)
+    colors = _updown_colors(uc, dc, opens, closes)
+
+    uc     = mcolors.to_rgba(marketcolors['edge'][ 'up' ], 1.0)
+    dc     = mcolors.to_rgba(marketcolors['edge']['down'], 1.0)
+    edgecolor = _updown_colors(uc, dc, opens, closes)
+    
+    uc     = mcolors.to_rgba(marketcolors['wick'][ 'up' ], 1.0)
+    dc     = mcolors.to_rgba(marketcolors['wick']['down'], 1.0)
+    wickcolor = _updown_colors(uc, dc, opens, closes)
 
     useAA = 0,    # use tuple here
     lw    = 0.5,  # use tuple here

@@ -15,9 +15,9 @@
 
   - **[The New API](https://github.com/matplotlib/mplfinance#newapi)**
   - **[Basic Usage](https://github.com/matplotlib/mplfinance#usage)**
-  - **[Adding Custom Data to Ohlcv Plots](https://github.com/matplotlib/mplfinance/blob/master/examples/addplot.ipynb)**
+  - **[Adding Your Own Studies Data to Plots](https://github.com/matplotlib/mplfinance/blob/master/examples/addplot.ipynb)**
   - **[Saving the Plot to a File](https://github.com/matplotlib/mplfinance/blob/master/examples/savefig.ipynb)**
-  - Customizing the Appearance of Plots (presently in development)
+  - **[Customizing the Appearance of Plots](https://github.com/danielgoldfarb/mplfinance/blob/master/examples/customization_and_styles.ipynb)**
   - Technical Studies (presently in development)
   - **[Latest Release Info](https://github.com/matplotlib/mplfinance#release)**
   - **[Some Background History About This Package](https://github.com/matplotlib/mplfinance#history)**
@@ -528,7 +528,7 @@ mpf.plot(df[700:850],type='bars',volume=True,no_xgaps=True,mav=(20,40))
 ![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_29_0.png)
 
 
-For more examples of using mplfinance, please see the jupyter notebooks in the `examples` directory.
+For more examples of using mplfinance, please see the jupyter notebooks in the **[`examples`](https://github.com/matplotlib/mplfinance/blob/master/examples/)** directory.
 
 ---
  
