@@ -15,7 +15,7 @@
 
   - **[The New API](https://github.com/matplotlib/mplfinance#newapi)**
   - **[Basic Usage](https://github.com/matplotlib/mplfinance#usage)**
-  - **[Adding Your Own Studies Data to Plots](https://github.com/matplotlib/mplfinance/blob/master/examples/addplot.ipynb)**
+  - **[Adding Your Own Studies to Plots](https://github.com/matplotlib/mplfinance/blob/master/examples/addplot.ipynb)**
   - **[Saving the Plot to a File](https://github.com/matplotlib/mplfinance/blob/master/examples/savefig.ipynb)**
   - **[Customizing the Appearance of Plots](https://github.com/danielgoldfarb/mplfinance/blob/master/examples/customization_and_styles.ipynb)**
   - Technical Studies (presently in development)

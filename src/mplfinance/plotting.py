@@ -1,5 +1,6 @@
 import matplotlib.dates  as mdates
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 import pandas as pd
 import numpy  as np
 
@@ -361,11 +362,14 @@ def plot( data, **kwargs ):
                 else:
                     ydata = column
                 if apdict['scatter']:
-                    size = apdict['markersize']
-                    mark = apdict['marker']
+                    size  = apdict['markersize']
+                    mark  = apdict['marker']
+                    color = apdict['color']
                     ax.scatter(xdates, ydata, s=size, marker=mark)
                 else:
-                    ax.plot(xdates, ydata)
+                    ls    = apdict['linestyle']
+                    color = apdict['color']
+                    ax.plot(xdates, ydata, linestyle=ls, color=color)
 
     # put the twinx() on the "other" side:
     if style['y_on_right']:
@@ -451,31 +455,37 @@ def _valid_addplot_kwargs_table():
                      's', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd', '|', '_', 'P',
                      'X', 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 'None', None, ' ', '']
 
+
+    valid_linestyles = ['-','solid','--','dashed','-.','dashdot','.','dotted',None,' ','']
+
     vkwargs = {
         'scatter'     : { 'Default'     : False,
-
                           'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,bool) },
 
         'panel'       : { 'Default'     : 'main',
-    
                           'Implemented' : True,
                           'Validator'   : lambda value: value in ['main','lower'] },
 
         'marker'      : { 'Default'     : 'o',
-    
                           'Implemented' : True,
                           'Validator'   : lambda value: value in valid_markers },
 
         'markersize'  : { 'Default'     : 18,
-    
                           'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,(int,float)) },
 
-        'secondary_y' : { 'Default' : None,
+        'color'       : { 'Default'     : None,
+                          'Implemented' : True,
+                          'Validator'   : lambda value: mcolors.is_color_like(value) },
 
-                          'Implemented' : False,
-                          'Validator'   : lambda value: value in [] },
+        'linestyle'   : { 'Default'     : None,
+                          'Implemented' : True,
+                          'Validator'   : lambda value: value in valid_linestyles },
+
+        'secondary_y' : { 'Default'     : 'auto',
+                          'Implemented' : True,
+                          'Validator'   : lambda value: isinstance(value,bool) or value == 'auto' }
     }
 
     # Check that we didn't make a typo in any of the things above
