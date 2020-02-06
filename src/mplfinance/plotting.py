@@ -322,7 +322,8 @@ def plot( data, **kwargs ):
         vcolors = _updown_colors(vup, vdown, opens, closes, use_prev_close=style['marketcolors']['vcdopcod'])
         #-- print('len(vcolors),len(opens),len(closes)=',len(vcolors),len(opens),len(closes))
         #-- print('vcolors=',vcolors)
-        ax2.bar(xdates,volumes,width=0.6,color=vcolors)
+        width = 0.5*avg_dist_between_points
+        ax2.bar(xdates,volumes,width=width,color=vcolors)
         miny = 0.3 * min(volumes)
         maxy = 1.1 * max(volumes)
         ax2.set_ylim( miny, maxy )
@@ -427,10 +428,14 @@ def plot( data, **kwargs ):
         ax2.figure.canvas.draw()  # This is needed to calculate offset
         offset = ax2.yaxis.get_major_formatter().get_offset()
         ax2.yaxis.offsetText.set_visible(False)
+        if len(offset) > 0:
+            offset = (' x '+offset)
         if config['ylabel_lower'] is None:
-            vol_label = 'Volume x '+str(offset)
+            vol_label = 'Volume'+offset
         else:
-            vol_label = config['ylabel_lower'] + '\nx '+str(offset)
+            if len(offset) > 0:
+                offset = '\n'+offset
+            vol_label = config['ylabel_lower'] + offset
         ax2.set_ylabel(vol_label)
 
     if config['title'] is not None:
