@@ -15,7 +15,7 @@ mpf.plot(daily,mav=7,block=False)
 mpf.plot(daily,volume=True,block=False)
 
 df = pd.read_csv('../data/yahoofinance-SPY-20080101-20180101.csv',index_col=0,parse_dates=True)
-#mpf.plot(df[700:850],type='bars',no_xgaps=True,mav=(20,40),figscale=0.7)
 mpf.plot(df[700:850],type='bars',volume=True,mav=(20,40),figscale=0.7,block=False)
 
-mpf.plot(df[700:850],type='candle',volume=True,mav=(20,40),figscale=0.7,style='schwab')
+mpf.plot(df[700:850],type='bars',no_xgaps=True,mav=(20,40),figscale=0.7,block=False)
+mpf.plot(df[700:850],type='candle',volume=True,mav=(20,40),figscale=0.7,style='charles')

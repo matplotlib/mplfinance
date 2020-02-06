@@ -3,10 +3,12 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import pandas as pd
 import numpy  as np
+import copy
+import warnings
 
 from itertools import cycle
-from pandas.plotting import register_matplotlib_converters
-register_matplotlib_converters()
+#from pandas.plotting import register_matplotlib_converters
+#register_matplotlib_converters()
 
 from mplfinance._utils import _construct_ohlc_collections
 from mplfinance._utils import _construct_candlestick_collections
@@ -19,7 +21,6 @@ from mplfinance._arg_validators import _check_and_prepare_data
 from mplfinance._arg_validators import _mav_validator
 from mplfinance._arg_validators import _process_kwargs
 
-import copy
 
 def with_rc_context(func):
     '''
@@ -36,8 +37,12 @@ def _list_of_dict(x):
     return isinstance(x,list) and all([isinstance(item,dict) for item in x])
 
 def _warn_no_xgaps_deprecated(value):
-    raise DeprecationWarning('\n`no_xgaps` is deprecated:'+
-                             '\nplease use `show_nontrading` instead.')
+    warnings.warn('\n `no_xgaps` is deprecated:'+
+                  '\n     Default value is now `no_xgaps=True`'+
+                  '\n     However, to set `no_xgaps=False` and silence this warning,'+
+                  '\n     use instead: `show_nontrading=True`.',
+                  category=DeprecationWarning)
+    return isinstance(value,bool)
 
 
 def _valid_kwargs_table():
