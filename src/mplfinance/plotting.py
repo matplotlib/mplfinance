@@ -388,13 +388,13 @@ def plot( data, **kwargs ):
                             secondary_y = True
                     elif ymlo < omrange['main']['lo'] or ymhi > omrange['main']['hi']:
                         secondary_y = True
-                    if secondary_y:
-                        print('auto says USE secondary_y')
-                    else:
-                        print('auto says do NOT use secondary_y')
+                    #   if secondary_y:
+                    #       print('auto says USE secondary_y')
+                    #   else:
+                    #       print('auto says do NOT use secondary_y')
                 else:
                     secondary_y = apdict['secondary_y']
-                    print("apdict['secondary_y'] says secondary_y is",secondary_y)
+                    #   print("apdict['secondary_y'] says secondary_y is",secondary_y)
 
                 if apdict['panel'] == 'lower':
                     ax = ax4 if secondary_y else ax2
