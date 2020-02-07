@@ -420,6 +420,8 @@ def plot( data, **kwargs ):
     if style['y_on_right']:
         ax1.yaxis.set_label_position('right')
         ax1.yaxis.tick_right()
+        ax3.yaxis.set_label_position('left')
+        ax3.yaxis.tick_left()
         if ax2 and ax4:
             ax2.yaxis.set_label_position('right')
             ax2.yaxis.tick_right()
@@ -429,6 +431,8 @@ def plot( data, **kwargs ):
     else:
         ax1.yaxis.set_label_position('left')
         ax1.yaxis.tick_left()
+        ax3.yaxis.set_label_position('right')
+        ax3.yaxis.tick_right()
         if ax2 and ax4:
             ax2.yaxis.set_label_position('left')
             ax2.yaxis.tick_left()
