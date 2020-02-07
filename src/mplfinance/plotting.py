@@ -4,6 +4,7 @@ import matplotlib.colors as mcolors
 import pandas as pd
 import numpy  as np
 import copy
+import math
 import warnings
 
 from itertools import cycle
@@ -217,8 +218,13 @@ def plot( data, **kwargs ):
     if config['volume'] and volumes is None:
         raise ValueError('Request for volume, but NO volume data.')
 
-    # check if we need a lower panel for an additional plot.
-    #     if volume=True we will share the lower panel.
+    # -------------------------------------------------------------
+    # For now (06-Feb-2020) to keep the code somewhat simpler for
+    # implementing `secondary_y` we are going to ALWAYS create
+    # secondary (twinx) axes, whether we need them or not, and 
+    # then they will be available to use later when we are plotting:
+    # -------------------------------------------------------------
+
     need_lower_panel = False
     addplot = config['addplot']
     if addplot is not None:
@@ -236,15 +242,14 @@ def plot( data, **kwargs ):
         ax1 = fig.add_axes( [0.15, 0.38, 0.70, 0.50] )
         ax2 = fig.add_axes( [0.15, 0.18, 0.70, 0.20], sharex=ax1 )
         ax2.set_axisbelow(True) # so grid does not show through volume bars.
-        if need_lower_panel and config['volume']:
-            ax3 = ax2.twinx()
-            ax3.grid(False)
-        else:
-            ax3 = ax2
+        ax4 = ax2.twinx()
+        ax4.grid(False)
     else:
         ax1 = fig.add_axes( [0.15, 0.18, 0.70, 0.70] )
         ax2 = None
-        ax3 = None
+        ax4 = None
+    ax3 = ax1.twinx()
+    ax3.grid(False)
 
     avg_days_between_points = (dates[-1] - dates[0]) / float(len(dates))
 
@@ -329,24 +334,29 @@ def plot( data, **kwargs ):
         ax2.set_ylim( miny, maxy )
         ax2.xaxis.set_major_formatter(formatter)
     
+    used_ax3 = False
+    used_ax4 = False
     addplot = config['addplot']
     if addplot is not None:
+        # Calculate the Order of Magnitude Range
+        # If addplot['secondary_y'] == 'auto', then: If the addplot['data']
+        # is out of the Order of Magnitude Range, then use secondary_y.
+        # Calculate omrange for Main panel, and for Lower (volume) panel:
+        lo = math.log(math.fabs(min(lows )),10) - 0.5
+        hi = math.log(math.fabs(max(highs)),10) + 0.5
+        omrange = {'main' :{'lo':lo,'hi':hi},
+                   'lower':None             }
+        if config['volume']:
+            lo = math.log(math.fabs(min(volumes)),10) - 0.5
+            hi = math.log(math.fabs(max(volumes)),10) + 0.5
+            omrange.update(lower={'lo':lo,'hi':hi})
+
         if isinstance(addplot,dict):
             addplot = [addplot,]   # make list of dict to be consistent
 
         elif not _list_of_dict(addplot):
             raise TypeError('addplot must be `dict`, or `list of dict`, NOT '+str(type(addplot)))
 
-        # This may create issues for some plots, but to keep things simple, at least for now,
-        # we allow only 3 axes: 1 for the main panel, and two for the lower panel (one for
-        # volume, the other for any and all addplots on the lower panel).
-        # 
-        # I was playing around with logarithms to determine the order of magniture of the 
-        # addplots (see `addplot_range_testing.ipynb` in examples/scratch_pad/). If necessary,
-        # we can parcel out the additional plots to appropriate axes (depending on magnitude),
-        # but I am still inclined (for maintainability) to limit to two (or at most three) axes
-        # per panel.  Anything more, user can call mpf.axplot() and build their own figure.
-        
         for apdict in addplot:
             apdata = apdict['data']
             if isinstance(apdata,list) and not isinstance(apdata[0],(float,int)):
@@ -357,21 +367,50 @@ def plot( data, **kwargs ):
                 havedf = False      # must be a single series or array
                 apdata = [apdata,]  # make it iterable
 
-            if apdict['panel'] == 'lower':
-                ax = ax3
-            else:
-                ax = ax1
-
             for column in apdata:
                 if havedf:
                     ydata = apdata.loc[:,column]
                 else:
                     ydata = column
+                yd = [y for y in ydata if not math.isnan(y)]
+                ymhi = math.log(math.fabs(max(yd)),10)
+                ymlo = math.log(math.fabs(min(yd)),10)
+                secondary_y = False
+                if apdict['secondary_y'] == 'auto':
+                    if apdict['panel'] == 'lower':
+                        # If omrange['lower'] is not yet set by volume,
+                        # then set it here as this is the first ydata
+                        # to be plotted on the lower panel, so consider
+                        # it to be the 'primary' lower panel axis.
+                        if omrange['lower'] is None:
+                            omrange.update(lower={'lo':ymlo,'hi':ymhi})
+                        elif ymlo < omrange['lower']['lo'] or ymhi > omrange['lower']['hi']:
+                            secondary_y = True
+                    elif ymlo < omrange['main']['lo'] or ymhi > omrange['main']['hi']:
+                        secondary_y = True
+                    if secondary_y:
+                        print('auto says USE secondary_y')
+                    else:
+                        print('auto says do NOT use secondary_y')
+                else:
+                    secondary_y = apdict['secondary_y']
+                    print("apdict['secondary_y'] says secondary_y is",secondary_y)
+
+                if apdict['panel'] == 'lower':
+                    ax = ax4 if secondary_y else ax2
+                else:
+                    ax = ax3 if secondary_y else ax1
+
+                if ax == ax3:
+                    used_ax3 = True
+                if ax == ax4:
+                    used_ax4 = True
+
                 if apdict['scatter']:
                     size  = apdict['markersize']
                     mark  = apdict['marker']
                     color = apdict['color']
-                    ax.scatter(xdates, ydata, s=size, marker=mark)
+                    ax.scatter(xdates, ydata, s=size, marker=mark, color=color)
                 else:
                     ls    = apdict['linestyle']
                     color = apdict['color']
@@ -381,21 +420,21 @@ def plot( data, **kwargs ):
     if style['y_on_right']:
         ax1.yaxis.set_label_position('right')
         ax1.yaxis.tick_right()
-        if ax2 and ax3:
+        if ax2 and ax4:
             ax2.yaxis.set_label_position('right')
             ax2.yaxis.tick_right()
-            if ax3 != ax2:
-                 ax3.yaxis.set_label_position('left')
-                 ax3.yaxis.tick_left()
+            if ax4 != ax2:
+                 ax4.yaxis.set_label_position('left')
+                 ax4.yaxis.tick_left()
     else:
         ax1.yaxis.set_label_position('left')
         ax1.yaxis.tick_left()
-        if ax2 and ax3:
+        if ax2 and ax4:
             ax2.yaxis.set_label_position('left')
             ax2.yaxis.tick_left()
-            if ax3 != ax2:
-                ax3.yaxis.set_label_position('right')
-                ax3.yaxis.tick_right()
+            if ax4 != ax2:
+                ax4.yaxis.set_label_position('right')
+                ax4.yaxis.tick_right()
 
     if need_lower_panel or config['volume']:
         ax1.spines['bottom'].set_linewidth(0.25)
@@ -440,6 +479,12 @@ def plot( data, **kwargs ):
 
     if config['title'] is not None:
         fig.suptitle(config['title'],size='x-large',weight='semibold')
+
+    if not used_ax3 and ax3 is not None:
+        ax3.get_yaxis().set_visible(False)
+
+    if not used_ax4 and ax4 is not None:
+        ax4.get_yaxis().set_visible(False)
 
     if config['savefig'] is not None:
         save = config['savefig']
