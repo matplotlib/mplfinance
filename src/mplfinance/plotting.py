@@ -241,11 +241,14 @@ def plot( data, **kwargs ):
     if need_lower_panel or config['volume']:
         ax1 = fig.add_axes( [0.15, 0.38, 0.70, 0.50] )
         ax2 = fig.add_axes( [0.15, 0.18, 0.70, 0.20], sharex=ax1 )
+        plt.xticks(rotation=45) # must do this after creation of axis, and
+                                # after `sharex`, but must be BEFORE any 'twinx()'
         ax2.set_axisbelow(True) # so grid does not show through volume bars.
         ax4 = ax2.twinx()
         ax4.grid(False)
     else:
         ax1 = fig.add_axes( [0.15, 0.18, 0.70, 0.70] )
+        plt.xticks(rotation=45) # must do this after creation of axis, but before any 'twinx()'
         ax2 = None
         ax4 = None
     ax3 = ax1.twinx()
@@ -274,7 +277,6 @@ def plot( data, **kwargs ):
         xdates = np.arange(len(dates))
     
     ax1.xaxis.set_major_formatter(formatter)
-    plt.xticks(rotation=45)
 
     ptype = config['type']
 
