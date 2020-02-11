@@ -9,6 +9,7 @@ from mplfinance._styledata import mike
 from mplfinance._styledata import charles
 from mplfinance._styledata import blueskies
 from mplfinance._styledata import starsandstripes
+from mplfinance._styledata import sas
 from mplfinance._styledata import brasil
 from mplfinance._styledata import yahoo
 from mplfinance._styledata import checkers

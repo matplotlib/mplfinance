@@ -6,7 +6,7 @@
 ---
 
 # Installation
-## &nbsp;&nbsp;&nbsp;`pip install mplfinance`
+## &nbsp;&nbsp;&nbsp;`pip install --upgrade mplfinance`
    - mplfinance requires [matplotlib](https://pypi.org/project/matplotlib/) and [pandas](https://pypi.org/project/pandas/)
 
 ---
@@ -15,9 +15,9 @@
 
   - **[The New API](https://github.com/matplotlib/mplfinance#newapi)**
   - **[Basic Usage](https://github.com/matplotlib/mplfinance#usage)**
-  - **[Adding Your Own Studies to Plots](https://github.com/matplotlib/mplfinance/blob/master/examples/addplot.ipynb)**
+  - **[Adding Your Own Technical Studies to Plots](https://github.com/matplotlib/mplfinance/blob/master/examples/addplot.ipynb)**
   - **[Saving the Plot to a File](https://github.com/matplotlib/mplfinance/blob/master/examples/savefig.ipynb)**
-  - **[Customizing the Appearance of Plots](https://github.com/danielgoldfarb/mplfinance/blob/master/examples/customization_and_styles.ipynb)**
+  - **[Customizing the Appearance of Plots](https://github.com/matplotlib/mplfinance/blob/master/examples/customization_and_styles.ipynb)**
   - Technical Studies (presently in development)
   - **[Latest Release Info](https://github.com/matplotlib/mplfinance#release)**
   - **[Some Background History About This Package](https://github.com/matplotlib/mplfinance#history)**
