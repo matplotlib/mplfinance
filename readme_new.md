@@ -35,8 +35,8 @@ The conventional way to import the new API is as follows:
 ```python
     import mplfinance as mpf
 ```
-    
-The most common usage is then to call 
+
+The most common usage is then to call
 
 ```python
     mpf.plot(data)
@@ -53,6 +53,7 @@ I am very interested to hear from you regarding what you think of the new `mplfi
 # <a name="usage"></a>Basic Usage
 Start with a Pandas DataFrame containing OHLC data.  For example,
 
+
 ```python
 import pandas as pd
 daily = pd.read_csv('examples/data/SP500_NOV2019_Hist.csv',index_col=0,parse_dates=True)
@@ -61,7 +62,16 @@ daily.shape
 daily.head(3)
 daily.tail(3)
 ```
+
+
+
+
     (20, 5)
+
+
+
+
+
 
 <table border="1" class="dataframe">
   <thead>
@@ -84,7 +94,7 @@ daily.tail(3)
   </thead>
   <tbody>
     <tr>
-      <th>2019-11-01</th>
+      <td>2019-11-01</td>
       <td>3050.72</td>
       <td>3066.95</td>
       <td>3050.72</td>
@@ -92,7 +102,7 @@ daily.tail(3)
       <td>510301237</td>
     </tr>
     <tr>
-      <th>2019-11-04</th>
+      <td>2019-11-04</td>
       <td>3078.96</td>
       <td>3085.20</td>
       <td>3074.87</td>
@@ -100,7 +110,7 @@ daily.tail(3)
       <td>524848878</td>
     </tr>
     <tr>
-      <th>2019-11-05</th>
+      <td>2019-11-05</td>
       <td>3080.80</td>
       <td>3083.95</td>
       <td>3072.15</td>
@@ -110,7 +120,9 @@ daily.tail(3)
   </tbody>
 </table>
 
-...
+
+
+
 
 <table border="1" class="dataframe">
   <thead>
@@ -133,7 +145,7 @@ daily.tail(3)
   </thead>
   <tbody>
     <tr>
-      <th>2019-11-26</th>
+      <td>2019-11-26</td>
       <td>3134.85</td>
       <td>3142.69</td>
       <td>3131.00</td>
@@ -141,7 +153,7 @@ daily.tail(3)
       <td>986041660</td>
     </tr>
     <tr>
-      <th>2019-11-27</th>
+      <td>2019-11-27</td>
       <td>3145.49</td>
       <td>3154.26</td>
       <td>3143.41</td>
@@ -149,7 +161,7 @@ daily.tail(3)
       <td>421853938</td>
     </tr>
     <tr>
-      <th>2019-11-29</th>
+      <td>2019-11-29</td>
       <td>3147.18</td>
       <td>3150.30</td>
       <td>3139.34</td>
@@ -159,20 +171,21 @@ daily.tail(3)
   </tbody>
 </table>
 
-<br>
 
 ---
-
 <br>
 
 After importing mplfinance, plotting OHLC data is as simple as calling `mpf.plot()` on the dataframe
+
 
 ```python
 import mplfinance as mpf
 mpf.plot(daily)
 ```
 
-![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_4_0.png)
+
+![png](readme_new_files/readme_new_4_0.png)
+
 
 ---
 <br>
@@ -184,14 +197,18 @@ The default plot type, as you can see above, is `'ohlc'`.  Other plot types can 
 mpf.plot(daily,type='candle')
 ```
 
-![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_6_0.png)
+
+![png](readme_new_files/readme_new_6_0.png)
+
 
 
 ```python
 mpf.plot(daily,type='line')
 ```
 
-![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_7_0.png)
+
+![png](readme_new_files/readme_new_7_0.png)
+
 
 ---
 <br>
@@ -205,14 +222,18 @@ We can also plot moving averages with the `mav` keyword
 mpf.plot(daily,type='ohlc',mav=4)
 ```
 
-![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_9_0.png)
+
+![png](readme_new_files/readme_new_9_0.png)
+
 
 
 ```python
 mpf.plot(daily,type='candle',mav=(3,6,9))
 ```
 
-![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_10_0.png)
+
+![png](readme_new_files/readme_new_10_0.png)
+
 
 ---
 We can also display `Volume`
@@ -223,20 +244,23 @@ mpf.plot(daily,type='candle',mav=(3,6,9),volume=True)
 ```
 
 
-![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_12_0.png)
+![png](readme_new_files/readme_new_12_0.png)
 
-Notice, in the above chart, there are gaps along the x-coordinate corresponding to days on which there was no trading.  
-- Many people like to see these gaps so that they can tell, with a quick glance, where the weekends and holidays fall.  
-- For example, in the above chart you can see a gap at Thursday, November 28th for the U.S. Thanksgiving holiday.
-- Gaps along the x-axis can be eliminated with the `no_xgaps` keyword
+
+Notice, in the above chart, there are no gaps along the x-coordinate corresponding to days on which there was no trading.  Non-trading days are simply not shown, since there are no prices for those days.
+
+- However, many people like to see these gaps so that they can tell, with a quick glance, where the weekends and holidays fall.  
+
+- Non-trading days can be displayed with the `show_nontrading` keyword.
+- For example, in the chart below, you can easily see weekends, as well as a gap at Thursday, November 28th for the U.S. Thanksgiving holiday.
 
 
 ```python
-mpf.plot(daily,type='candle',mav=(3,6,9),volume=True,no_xgaps=True)
+mpf.plot(daily,type='candle',mav=(3,6,9),volume=True,show_nontrading=True)
 ```
 
 
-![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_14_0.png)
+![png](readme_new_files/readme_new_14_0.png)
 
 
 ---
@@ -253,7 +277,15 @@ intraday.head(3)
 intraday.tail(3)
 ```
 
+
+
+
     (1563, 4)
+
+
+
+
+
 
 <table border="1" class="dataframe">
   <thead>
@@ -274,21 +306,21 @@ intraday.tail(3)
   </thead>
   <tbody>
     <tr>
-      <th>2019-11-05 09:30:00</th>
+      <td>2019-11-05 09:30:00</td>
       <td>3080.80</td>
       <td>3080.49</td>
       <td>3081.47</td>
       <td>3080.30</td>
     </tr>
     <tr>
-      <th>2019-11-05 09:31:00</th>
+      <td>2019-11-05 09:31:00</td>
       <td>3080.33</td>
       <td>3079.36</td>
       <td>3080.33</td>
       <td>3079.15</td>
     </tr>
     <tr>
-      <th>2019-11-05 09:32:00</th>
+      <td>2019-11-05 09:32:00</td>
       <td>3079.43</td>
       <td>3079.68</td>
       <td>3080.46</td>
@@ -297,7 +329,8 @@ intraday.tail(3)
   </tbody>
 </table>
 
-...
+
+
 
 <table border="1" class="dataframe">
   <thead>
@@ -318,21 +351,21 @@ intraday.tail(3)
   </thead>
   <tbody>
     <tr>
-      <th>2019-11-08 15:57:00</th>
+      <td>2019-11-08 15:57:00</td>
       <td>3090.73</td>
       <td>3090.70</td>
       <td>3091.02</td>
       <td>3090.52</td>
     </tr>
     <tr>
-      <th>2019-11-08 15:58:00</th>
+      <td>2019-11-08 15:58:00</td>
       <td>3090.73</td>
       <td>3091.04</td>
       <td>3091.13</td>
       <td>3090.58</td>
     </tr>
     <tr>
-      <th>2019-11-08 15:59:00</th>
+      <td>2019-11-08 15:59:00</td>
       <td>3091.16</td>
       <td>3092.91</td>
       <td>3092.91</td>
@@ -340,6 +373,9 @@ intraday.tail(3)
     </tr>
   </tbody>
 </table>
+
+
+
 
 The above dataframe contains Open,High,Low,Close data at 1 minute intervervals for the S&P 500 stock index for November 5, 6, 7 and 8, 2019.  Let's look at the last hour of trading on November 6th, with a 7 minute and 12 minute moving average.
 
@@ -349,12 +385,11 @@ iday = intraday.loc['2019-11-06 15:00':'2019-11-06 16:00',:]
 mpf.plot(iday,type='candle',mav=(7,12))
 ```
 
-![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_18_0.png)
+
+![png](readme_new_files/readme_new_18_0.png)
 
 
-  The "time-interpretation" of the `mav` integers depends on the frequency of the data, because the mav integers are number of data points used in the Moving Average.  Notice above that for intraday data the x-axis automatically displays TIME *instead of* date.  Below we see that if the intraday data spans two (or more) trading days then two things happen:
-- The x-axis displays *BOTH* TIME and DATE
-- `no-xgaps` defaults to `True` FOR INTRADAY DATA INVOLVING TWO OR MORE TRADING DAYS
+  The "time-interpretation" of the `mav` integers depends on the frequency of the data, because the mav integers are number of data points used in the Moving Average.  Notice above that for intraday data the x-axis automatically displays TIME *instead of* date.  Below we see that if the intraday data spans two (or more) trading days the x-axis displays *BOTH* TIME and DATE
 
 
 ```python
@@ -363,43 +398,43 @@ mpf.plot(iday,type='candle')
 ```
 
 
-![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_20_0.png)
+![png](readme_new_files/readme_new_20_0.png)
 
 
 ---
-In the plot below, we see **what would happen if ` no_xgaps ` did NOT** default to `True` for intraday data involving two or more days.
+In the plot below, we see what an intraday plot looks like when we **display non-trading time periods with `show_nontrading=True` for intraday data involving two or more days.**
 
 
 ```python
-mpf.plot(iday,type='candle',no_xgaps=False)
+mpf.plot(iday,type='candle',show_nontrading=True)
 ```
 
 
-![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_22_0.png)
+![png](readme_new_files/readme_new_22_0.png)
 
 
 ---
-Below: 4 days of intraday data with `no_xgaps=False`
+Below: 4 days of intraday data with `show_nontrading=True`
 
 
 ```python
-mpf.plot(intraday,type='ohlc',no_xgaps=False)  # 4 day of intraday with no_xgaps=False
+mpf.plot(intraday,type='ohlc',show_nontrading=True)  # 4 day of intraday with show_nontrading=True
 ```
 
 
-![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_24_0.png)
+![png](readme_new_files/readme_new_24_0.png)
 
 
 ---
-Below: 4 days of intraday data with `no_xgaps` defaulted to `True` for intraday data spanning more than one day.
+Below: the same 4 days of intraday data with `show_nontrading` defaulted to `False`.
 
 
 ```python
-mpf.plot(intraday,type='line')  # intraday spanning more than one day defaults to no_xgaps=True
+mpf.plot(intraday,type='line') 
 ```
 
 
-![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_26_0.png)
+![png](readme_new_files/readme_new_26_0.png)
 
 
 ---
@@ -413,7 +448,15 @@ df.head(3)
 df.tail(3)
 ```
 
+
+
+
     (2519, 6)
+
+
+
+
+
 
 <table border="1" class="dataframe">
   <thead>
@@ -438,7 +481,7 @@ df.tail(3)
   </thead>
   <tbody>
     <tr>
-      <th>2007-12-31</th>
+      <td>2007-12-31</td>
       <td>147.100006</td>
       <td>147.610001</td>
       <td>146.059998</td>
@@ -447,7 +490,7 @@ df.tail(3)
       <td>108126800</td>
     </tr>
     <tr>
-      <th>2008-01-02</th>
+      <td>2008-01-02</td>
       <td>146.529999</td>
       <td>146.990005</td>
       <td>143.880005</td>
@@ -456,7 +499,7 @@ df.tail(3)
       <td>204935600</td>
     </tr>
     <tr>
-      <th>2008-01-03</th>
+      <td>2008-01-03</td>
       <td>144.910004</td>
       <td>145.490005</td>
       <td>144.070007</td>
@@ -467,7 +510,8 @@ df.tail(3)
   </tbody>
 </table>
 
-...
+
+
 
 <table border="1" class="dataframe">
   <thead>
@@ -492,7 +536,7 @@ df.tail(3)
   </thead>
   <tbody>
     <tr>
-      <th>2017-12-27</th>
+      <td>2017-12-27</td>
       <td>267.380005</td>
       <td>267.730011</td>
       <td>267.010010</td>
@@ -501,7 +545,7 @@ df.tail(3)
       <td>57751000</td>
     </tr>
     <tr>
-      <th>2017-12-28</th>
+      <td>2017-12-28</td>
       <td>267.890015</td>
       <td>267.920013</td>
       <td>267.450012</td>
@@ -510,7 +554,7 @@ df.tail(3)
       <td>45116100</td>
     </tr>
     <tr>
-      <th>2017-12-29</th>
+      <td>2017-12-29</td>
       <td>268.529999</td>
       <td>268.549988</td>
       <td>266.640015</td>
@@ -521,11 +565,14 @@ df.tail(3)
   </tbody>
 </table>
 
+
+
 ```python
-mpf.plot(df[700:850],type='bars',volume=True,no_xgaps=True,mav=(20,40))
+mpf.plot(df[700:850],type='bars',volume=True,mav=(20,40))
 ```
 
-![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_29_0.png)
+
+![png](readme_new_files/readme_new_29_0.png)
 
 
 For more examples of using mplfinance, please see the jupyter notebooks in the **[`examples`](https://github.com/matplotlib/mplfinance/blob/master/examples/)** directory.
@@ -535,7 +582,7 @@ For more examples of using mplfinance, please see the jupyter notebooks in the *
 # <a name="release"></a>Release Notes
 
 | Version  |  Description   | Release Date |
-|----------|--------------|----------------|
+|:---------|:-------------|:---------------|
 | 0.12.3a0   | - kwarg `block=False` for non-blocking call to `mpf.plot()`<br> - customize aspect ratio, title, y-labels<br> - customize colors and other `style` aspects of plot<br> - `no_xgaps` now default to True: use `show_nontrading=True` to set no_xgaps to false<br> - secondary y-axis available to `make_addplot()`<br> - bug fix for volume widths | 2020-02-11 |
 | 0.12.0a3   | Increase mav limit from 3 to 7 different mavs  | 2020-01-16 |
 | 0.12.0a2   | Ability to save plot to a file (pdf, svg, png, jpg, ...) | 2020-01-14 |
@@ -566,10 +613,13 @@ With this new ` mplfinance ` package installed, in addition to the new API, user
     from mplfinance.original_flavor import <method>
 ```
 
+
 where `<method>` indicates the method you want to import, for example:
+
+
 
 ```python
     from mplfinance.original_flavor import candlestick_ohlc
 ```
----
 
+---
