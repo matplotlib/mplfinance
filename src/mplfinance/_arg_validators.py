@@ -60,16 +60,12 @@ def _validate_vkwargs_dict(vkwargs):
     # Check that we didn't make a typo in any of the things
     # that should be the same for all vkwargs dict items:
     for key, value in vkwargs.items():
-        if len(value) != 3:
-            raise ValueError('Items != 3 in valid kwarg table, for kwarg "'+key+'"')
+        if len(value) != 2:
+            raise ValueError('Items != 2 in valid kwarg table, for kwarg "'+key+'"')
         if 'Default' not in value:
             raise ValueError('Missing "Default" value for kwarg "'+key+'"')
-        if 'Implemented' not in value:
-            raise ValueError('Missing "Implemented" flag for kwarg "'+key+'"')
         if 'Validator' not in value:
             raise ValueError('Missing "Validator" function for kwarg "'+key+'"')
-        if value['Implemented'] not in [True,False]:
-            raise ValueError('"Implemented" flag NOT True or False for kwarg "'+key+'"')
 
 def _process_kwargs(kwargs, vkwargs):
     '''
@@ -80,7 +76,7 @@ def _process_kwargs(kwargs, vkwargs):
     as kwargs and return the configuration dictionary.
     '''
     # initialize configuration from valid_kwargs_table:
-    config = {}
+    config  = {}
     for key, value in vkwargs.items():
         config[key] = value['Default']
 
@@ -89,18 +85,16 @@ def _process_kwargs(kwargs, vkwargs):
     for key in kwargs.keys():
        if key not in vkwargs:
            raise KeyError('Unrecognized kwarg="'+str(key)+'"')
-       elif not vkwargs[key]['Implemented']:
-           raise NotImplementedError('kwarg "'+key+'" is NOT YET implemented.') 
        else:
            value = kwargs[key]
            try:
                valid = vkwargs[key]['Validator'](value)
            except Exception as ex:
-               raise ValueError('kwarg "'+key+'" with invalid value: "'+str(value)+'"') from ex
+               raise ValueError('kwarg "'+key+'" validator raised exception to value: "'+str(value)+'"') from ex
            if not valid:
                import inspect
                v = inspect.getsource(vkwargs[key]['Validator']).strip()
-               raise ValueError('kwarg "'+key+'" with invalid value: "'+str(value)+'"\n    '+v)
+               raise ValueError('kwarg "'+key+'" validator returned False for value: "'+str(value)+'"\n    '+v)
 
        # ---------------------------------------------------------------
        #  At this point in the loop, if we have not raised an exception,

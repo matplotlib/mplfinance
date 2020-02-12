@@ -18,9 +18,8 @@ from mplfinance._utils import IntegerIndexDateTimeFormatter
 
 from mplfinance import _styles
 
-from mplfinance._arg_validators import _check_and_prepare_data
-from mplfinance._arg_validators import _mav_validator
-from mplfinance._arg_validators import _process_kwargs
+from mplfinance._arg_validators import _check_and_prepare_data, _mav_validator
+from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 
 
 def with_rc_context(func):
@@ -46,124 +45,77 @@ def _warn_no_xgaps_deprecated(value):
     return isinstance(value,bool)
 
 
-def _valid_kwargs_table():
+def _valid_plot_kwargs():
     '''
     Construct and return the "valid kwargs table" for the mplfinance.plot() function.
     A valid kwargs table is a `dict` of `dict`s.  The keys of the outer dict are the
     valid key-words for the function.  The value for each key is a dict containing
-    3 specific keys: "Default", "Implemented", and "Validator" with the following values:
+    2 specific keys: "Default", and "Validator" with the following values:
         "Default"      - The default value for the kwarg if none is specified.
-        "Implemented"  - Boolean, has this kwarg been implemented or not.  
-                         NOTE: A non-implemented kwarg will still be present in the
-                         configuration dict, along with the kwarg's default value.
         "Validator"    - A function that takes the caller specified value for the kwarg,
                          and validates that it is the correct type, and (for kwargs with 
                          a limited set of allowed values) may also validate that the
                          kwarg value is one of the allowed values.
     '''
+
     vkwargs = {
         'type'        : { 'Default'     : 'ohlc',
- 
-                          'Implemented' : True,
                           'Validator'   : lambda value: value in ['candle','candlestick','ohlc','bars','ohlc bars','line'] },
  
         'style'       : { 'Default'     : 'default',
- 
-                          'Implemented' : True,
                           'Validator'   : lambda value: value in _styles.available_styles() or isinstance(value,dict) },
  
         'volume'      : { 'Default'     : False,
- 
-                          'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,bool) },
  
         'mav'         : { 'Default'     : None,
- 
-                          'Implemented' : True,
                           'Validator'   : _mav_validator },
  
         'study'       : { 'Default'     : None,
- 
-                          'Implemented' : False,
                           'Validator'   : lambda value: isinstance(value,dict) }, #{'studyname': {study parms}} example: {'TE':{'mav':20,'upper':2,'lower':2}}
  
         'marketcolors': { 'Default'     : None, # use 'style' for default, instead.
- 
-                          'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,dict) },
  
         'no_xgaps'    : { 'Default'     : True,  # None means follow default logic below:
-                                                 # True for intraday data spanning 2 or more days, else False
-                          'Implemented' : True,
                           'Validator'   : lambda value: _warn_no_xgaps_deprecated(value) },
  
-        'show_nontrading': { 'Default'  : False,  # None means follow default logic below:
-                                                 # True for intraday data spanning 2 or more days, else False
-                          'Implemented' : True,
+        'show_nontrading': { 'Default'  : False, 
                           'Validator'   : lambda value: isinstance(value,bool) },
  
         'figscale'    : { 'Default'     : 1.0, # scale base figure size up or down.
-                                          
-                          'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,float) or isinstance(value,int) },
  
-        'figratio'   : { 'Default'      : (8.00,5.75), # aspect ratio; will equal fig size when figscale=1.0
-                                          
-                          'Implemented' : True,
+        'figratio'    : { 'Default'     : (8.00,5.75), # aspect ratio; will equal fig size when figscale=1.0
                           'Validator'   : lambda value: isinstance(value,(tuple,list))
                                                         and len(value) == 2
                                                         and isinstance(value[0],(float,int))
                                                         and isinstance(value[1],(float,int)) },
  
-        'title'      : {  'Default'     : None, # Plot Title
-                                          
-                          'Implemented' : True,
+        'title'       : { 'Default'     : None, # Plot Title
                           'Validator'   : lambda value: isinstance(value,str) },
  
-        'ylabel'     : {  'Default'     : 'Price', # y-axis label
-                                          
-                          'Implemented' : True,
+        'ylabel'      : { 'Default'     : 'Price', # y-axis label
                           'Validator'   : lambda value: isinstance(value,str) },
  
-        'ylabel_lower': {  'Default'    : None, # y-axis label default logic below
-                                          
-                          'Implemented' : True,
+        'ylabel_lower': { 'Default'     : None, # y-axis label default logic below
                           'Validator'   : lambda value: isinstance(value,str) },
  
-        'xlabel'     : {  'Default'     : None,  # x-axis label, default is None because obvious it's time or date
-                                          
-                          'Implemented' : False, # x-axis label, NOT implemented because obvious it's time or date (will see if users ask for it).
-                          'Validator'   : lambda value: isinstance(value,str) },
+       #'xlabel'      : { 'Default'     : None,  # x-axis label, default is None because obvious it's time or date
+       #                  'Validator'   : lambda value: isinstance(value,str) },
  
         'addplot'     : { 'Default'     : None, 
-                                          
-                          'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,dict) or (isinstance(value,list) and all([isinstance(d,dict) for d in value])) },
  
         'savefig'     : { 'Default'     : None, 
-                                          
-                          'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,dict) or isinstance(value,str) },
  
         'block'       : { 'Default'     : True, 
-                                          
-                          'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,bool) },
  
     }
-    # Check that we didn't make a typo in any of the things above:
-    #  that should otherwise be the same for all kwags:
-    for key, value in vkwargs.items():
-        if len(value) != 3:
-            raise ValueError('Items != 3 in valid kwarg table, for kwarg "'+key+'"')
-        if 'Default' not in value:
-            raise ValueError('Missing "Default" value for kwarg "'+key+'"')
-        if 'Implemented' not in value:
-            raise ValueError('Missing "Implemented" flag for kwarg "'+key+'"')
-        if 'Validator' not in value:
-            raise ValueError('Missing "Validator" function for kwarg "'+key+'"')
-        if value['Implemented'] not in [True,False]:
-            raise ValueError('"Implemented" flag NOT True or False for kwarg "'+key+'"')
+
+    _validate_vkwargs_dict(vkwargs)
 
     return vkwargs
    
@@ -195,7 +147,7 @@ def plot( data, **kwargs ):
 
     dates,opens,highs,lows,closes,volumes = _check_and_prepare_data(data)
 
-    config = _process_kwargs(kwargs, _valid_kwargs_table())
+    config = _process_kwargs(kwargs, _valid_plot_kwargs())
 
     style = config['style']
     if isinstance(style,str):
@@ -510,7 +462,7 @@ def plot( data, **kwargs ):
     
 
 
-def _valid_addplot_kwargs_table():
+def _valid_addplot_kwargs():
 
     valid_markers = ['.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', '8',
                      's', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd', '|', '_', 'P',
@@ -519,49 +471,31 @@ def _valid_addplot_kwargs_table():
 
     valid_linestyles = ['-','solid','--','dashed','-.','dashdot','.','dotted',None,' ','']
 
+
     vkwargs = {
         'scatter'     : { 'Default'     : False,
-                          'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,bool) },
 
         'panel'       : { 'Default'     : 'main',
-                          'Implemented' : True,
                           'Validator'   : lambda value: value in ['main','lower'] },
 
         'marker'      : { 'Default'     : 'o',
-                          'Implemented' : True,
                           'Validator'   : lambda value: value in valid_markers },
 
         'markersize'  : { 'Default'     : 18,
-                          'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,(int,float)) },
 
         'color'       : { 'Default'     : None,
-                          'Implemented' : True,
                           'Validator'   : lambda value: mcolors.is_color_like(value) },
 
         'linestyle'   : { 'Default'     : None,
-                          'Implemented' : True,
                           'Validator'   : lambda value: value in valid_linestyles },
 
         'secondary_y' : { 'Default'     : 'auto',
-                          'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,bool) or value == 'auto' }
     }
 
-    # Check that we didn't make a typo in any of the things above
-    #  that should otherwise be the same for all kwags:
-    for key, value in vkwargs.items():
-        if len(value) != 3:
-            raise ValueError('Items != 3 in valid kwarg table, for kwarg "'+key+'"')
-        if 'Default' not in value:
-            raise ValueError('Missing "Default" value for kwarg "'+key+'"')
-        if 'Implemented' not in value:
-            raise ValueError('Missing "Implemented" flag for kwarg "'+key+'"')
-        if 'Validator' not in value:
-            raise ValueError('Missing "Validator" function for kwarg "'+key+'"')
-        if value['Implemented'] not in [True,False]:
-            raise ValueError('"Implemented" flag NOT True or False for kwarg "'+key+'"')
+    _validate_vkwargs_dict(vkwargs)
 
     return vkwargs
 
@@ -576,6 +510,6 @@ def make_addplot(data, **kwargs):
     if not isinstance(data, (pd.Series, pd.DataFrame, np.ndarray, list)):
         raise TypeError('Wrong type for data, in make_addplot()')
 
-    config = _process_kwargs(kwargs, _valid_addplot_kwargs_table())
+    config = _process_kwargs(kwargs, _valid_addplot_kwargs())
 
     return dict( data=data, **config)
