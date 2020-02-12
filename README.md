@@ -174,7 +174,7 @@ mpf.plot(daily)
 ```
 
 
-![png](https://raw.githubusercontent.com/DanielGoldfarb/mplfinance/master/readme_files/readme_4_1.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_4_1.png)
 
 
 ---
@@ -188,7 +188,7 @@ mpf.plot(daily,type='candle')
 ```
 
 
-![png](https://raw.githubusercontent.com/DanielGoldfarb/mplfinance/master/readme_files/readme_6_1.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_6_1.png)
 
 
 
@@ -197,7 +197,7 @@ mpf.plot(daily,type='line')
 ```
 
 
-![png](https://raw.githubusercontent.com/DanielGoldfarb/mplfinance/master/readme_files/readme_7_1.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_7_1.png)
 
 
 ---
@@ -213,7 +213,7 @@ mpf.plot(daily,type='ohlc',mav=4)
 ```
 
 
-![png](https://raw.githubusercontent.com/DanielGoldfarb/mplfinance/master/readme_files/readme_9_1.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_9_1.png)
 
 
 
@@ -222,7 +222,7 @@ mpf.plot(daily,type='candle',mav=(3,6,9))
 ```
 
 
-![png](https://raw.githubusercontent.com/DanielGoldfarb/mplfinance/master/readme_files/readme_10_1.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_10_1.png)
 
 
 ---
@@ -234,7 +234,7 @@ mpf.plot(daily,type='candle',mav=(3,6,9),volume=True)
 ```
 
 
-![png](https://raw.githubusercontent.com/DanielGoldfarb/mplfinance/master/readme_files/readme_12_1.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_12_1.png)
 
 
 Notice, in the above chart, there are no gaps along the x-coordinate, even though there are days on which there was no trading.  ***Non-trading days are simply not shown*** (since there are no prices for those days).
@@ -250,7 +250,7 @@ mpf.plot(daily,type='candle',mav=(3,6,9),volume=True,show_nontrading=True)
 ```
 
 
-![png](https://raw.githubusercontent.com/DanielGoldfarb/mplfinance/master/readme_files/readme_14_1.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_14_1.png)
 
 
 ---
@@ -367,7 +367,7 @@ mpf.plot(iday,type='candle',mav=(7,12))
 ```
 
 
-![png](https://raw.githubusercontent.com/DanielGoldfarb/mplfinance/master/readme_files/readme_18_1.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_18_1.png)
 
 
   The "time-interpretation" of the `mav` integers depends on the frequency of the data, because the mav integers are the *number of data points* used in the Moving Average (not the number of days or minutes, etc).  Notice above that for intraday data the x-axis automatically displays TIME *instead of* date.  Below we see that if the intraday data spans into two (or more) trading days the x-axis automatically displays *BOTH* TIME and DATE
@@ -379,7 +379,7 @@ mpf.plot(iday,type='candle')
 ```
 
 
-![png](https://raw.githubusercontent.com/DanielGoldfarb/mplfinance/master/readme_files/readme_20_1.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_20_1.png)
 
 
 ---
@@ -391,7 +391,7 @@ mpf.plot(iday,type='candle',show_nontrading=True)
 ```
 
 
-![png](https://raw.githubusercontent.com/DanielGoldfarb/mplfinance/master/readme_files/readme_22_1.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_22_1.png)
 
 
 ---
@@ -403,7 +403,7 @@ mpf.plot(intraday,type='ohlc',show_nontrading=True)
 ```
 
 
-![png](https://raw.githubusercontent.com/DanielGoldfarb/mplfinance/master/readme_files/readme_24_1.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_24_1.png)
 
 
 ---
@@ -415,7 +415,7 @@ mpf.plot(intraday,type='line')
 ```
 
 
-![png](https://raw.githubusercontent.com/DanielGoldfarb/mplfinance/master/readme_files/readme_26_1.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_26_1.png)
 
 
 ---
