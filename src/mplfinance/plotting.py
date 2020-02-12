@@ -1,30 +1,50 @@
 import matplotlib.dates  as mdates
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 import pandas as pd
 import numpy  as np
+import copy
+import math
+import warnings
 
-plt.style.use('seaborn-darkgrid')
-#import matplotlib as mpl
-plt.rcParams['axes.edgecolor'  ] = 'black'
-plt.rcParams['axes.linewidth'  ] =  1.5
-plt.rcParams['axes.labelsize'  ] =  'large'
-plt.rcParams['lines.linewidth' ] =  2.0
-plt.rcParams['font.weight'     ] = 'medium'
-plt.rcParams['font.size'       ] =  12.0
-plt.rcParams['axes.labelweight'] = 'medium'
-
-from pandas.plotting import register_matplotlib_converters
-register_matplotlib_converters()
+from itertools import cycle
+#from pandas.plotting import register_matplotlib_converters
+#register_matplotlib_converters()
 
 from mplfinance._utils import _construct_ohlc_collections
 from mplfinance._utils import _construct_candlestick_collections
+from mplfinance._utils import _updown_colors
 from mplfinance._utils import IntegerIndexDateTimeFormatter
+
+from mplfinance import _styles
 
 from mplfinance._arg_validators import _check_and_prepare_data
 from mplfinance._arg_validators import _mav_validator
+from mplfinance._arg_validators import _process_kwargs
+
+
+def with_rc_context(func):
+    '''
+    This decoractor creates an rcParams context around a function, so that any changes
+    the function makes to rcParams will be reversed when the decorated function returns
+    (therefore those changes have no effect outside of the decorated function).
+    '''
+    def decorator(*args, **kwargs):
+        with plt.rc_context():
+            return func(*args, **kwargs)
+    return decorator
 
 def _list_of_dict(x):
     return isinstance(x,list) and all([isinstance(item,dict) for item in x])
+
+def _warn_no_xgaps_deprecated(value):
+    warnings.warn('\n `no_xgaps` is deprecated:'+
+                  '\n     Default value is now `no_xgaps=True`'+
+                  '\n     However, to set `no_xgaps=False` and silence this warning,'+
+                  '\n     use instead: `show_nontrading=True`.',
+                  category=DeprecationWarning)
+    return isinstance(value,bool)
+
 
 def _valid_kwargs_table():
     '''
@@ -47,10 +67,10 @@ def _valid_kwargs_table():
                           'Implemented' : True,
                           'Validator'   : lambda value: value in ['candle','candlestick','ohlc','bars','ohlc bars','line'] },
  
-        'style'       : { 'Default'     : 'classic',
+        'style'       : { 'Default'     : 'default',
  
-                          'Implemented' : False,
-                          'Validator'   : lambda value: value in ['classic','dark','checkers','chanuka','xmas','pastel'] },
+                          'Implemented' : True,
+                          'Validator'   : lambda value: value in _styles.available_styles() or isinstance(value,dict) },
  
         'volume'      : { 'Default'     : False,
  
@@ -67,30 +87,53 @@ def _valid_kwargs_table():
                           'Implemented' : False,
                           'Validator'   : lambda value: isinstance(value,dict) }, #{'studyname': {study parms}} example: {'TE':{'mav':20,'upper':2,'lower':2}}
  
-        'colorup'     : { 'Default'     : None, # use 'style' for default, instead.
+        'marketcolors': { 'Default'     : None, # use 'style' for default, instead.
  
-                          'Implemented' : False,
-                          'Validator'   : lambda value: isinstance(value,str) },
+                          'Implemented' : True,
+                          'Validator'   : lambda value: isinstance(value,dict) },
  
-        'colordown'   : { 'Default'     : None, # use 'style' for default, instead.
+        'no_xgaps'    : { 'Default'     : True,  # None means follow default logic below:
+                                                 # True for intraday data spanning 2 or more days, else False
+                          'Implemented' : True,
+                          'Validator'   : lambda value: _warn_no_xgaps_deprecated(value) },
  
-                          'Implemented' : False,
-                          'Validator'   : lambda value: isinstance(value,str) },
- 
-        'border'      : { 'Default'     : None, # use 'style' for default, instead.
- 
-                          'Implemented' : False,
-                          'Validator'   : lambda value: isinstance(value,str) },
- 
-        'no_xgaps'    : { 'Default'     : None,  # None means follow default logic below:
+        'show_nontrading': { 'Default'  : False,  # None means follow default logic below:
                                                  # True for intraday data spanning 2 or more days, else False
                           'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,bool) },
  
-        'figscale'    : { 'Default'     : 0.75, # scale base figure size (11" x 8.5") up or down.
+        'figscale'    : { 'Default'     : 1.0, # scale base figure size up or down.
                                           
                           'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,float) or isinstance(value,int) },
+ 
+        'figratio'   : { 'Default'      : (8.00,5.75), # aspect ratio; will equal fig size when figscale=1.0
+                                          
+                          'Implemented' : True,
+                          'Validator'   : lambda value: isinstance(value,(tuple,list))
+                                                        and len(value) == 2
+                                                        and isinstance(value[0],(float,int))
+                                                        and isinstance(value[1],(float,int)) },
+ 
+        'title'      : {  'Default'     : None, # Plot Title
+                                          
+                          'Implemented' : True,
+                          'Validator'   : lambda value: isinstance(value,str) },
+ 
+        'ylabel'     : {  'Default'     : 'Price', # y-axis label
+                                          
+                          'Implemented' : True,
+                          'Validator'   : lambda value: isinstance(value,str) },
+ 
+        'ylabel_lower': {  'Default'    : None, # y-axis label default logic below
+                                          
+                          'Implemented' : True,
+                          'Validator'   : lambda value: isinstance(value,str) },
+ 
+        'xlabel'     : {  'Default'     : None,  # x-axis label, default is None because obvious it's time or date
+                                          
+                          'Implemented' : False, # x-axis label, NOT implemented because obvious it's time or date (will see if users ask for it).
+                          'Validator'   : lambda value: isinstance(value,str) },
  
         'addplot'     : { 'Default'     : None, 
                                           
@@ -101,6 +144,11 @@ def _valid_kwargs_table():
                                           
                           'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,dict) or isinstance(value,str) },
+ 
+        'block'       : { 'Default'     : True, 
+                                          
+                          'Implemented' : True,
+                          'Validator'   : lambda value: isinstance(value,bool) },
  
     }
     # Check that we didn't make a typo in any of the things above:
@@ -120,46 +168,21 @@ def _valid_kwargs_table():
     return vkwargs
    
 
-def _process_kwargs(kwargs, vkwargs):
-    '''
-    Given a "valid kwargs table" and some kwargs, verify that each key-word
-    is valid per the kwargs table, and that the value of the kwarg is the
-    correct type.  Fill a configuration dictionary with the default value
-    for each kwarg, and then substitute in any values that were provided 
-    as kwargs and return the configuration dictionary.
-    '''
-    # initialize configuration from valid_kwargs_table:
-    config = {}
-    for key, value in vkwargs.items():
-        config[key] = value['Default']
+def rcParams_to_df(rcp,name=None):
+    keys = []
+    vals = []
+    for item in rcp:
+        keys.append(item)
+        vals.append(rcp[item])
+    df = pd.DataFrame(vals,index=pd.Index(keys,name='rcParams Key'))
+    if name is not None:
+        df.columns = [name]
+    else:
+        df.columns = ['Value']
+    return df
 
-    # now validate kwargs, and for any valid kwargs
-    #  replace the appropriate value in config:
-    for key in kwargs.keys():
-       if key not in vkwargs:
-           raise KeyError('Unrecognized kwarg="'+str(key)+'"')
-       elif not vkwargs[key]['Implemented']:
-           raise NotImplementedError('kwarg "'+key+'" is NOT YET implemented.') 
-       else:
-           value = kwargs[key]
-           try:
-               valid = vkwargs[key]['Validator'](value)
-           except Exception as ex:
-               raise ValueError('kwarg "'+key+'" with invalid value: "'+str(value)+'"') from ex
-           if not valid:
-               import inspect
-               v = inspect.getsource(vkwargs[key]['Validator']).strip()
-               raise ValueError('kwarg "'+key+'" with invalid value: "'+str(value)+'"\n    '+v)
 
-       # ---------------------------------------------------------------
-       #  At this point in the loop, if we have not raised an exception,
-       #      then kwarg is valid as far as we can tell, therefore, 
-       #      go ahead and replace the appropriate value in config:
-
-       config[key] = value
-
-    return config
-
+@with_rc_context
 def plot( data, **kwargs ):
     """
     Given open,high,low,close,volume data for a financial instrument (such as a stock, index,
@@ -173,16 +196,34 @@ def plot( data, **kwargs ):
     dates,opens,highs,lows,closes,volumes = _check_and_prepare_data(data)
 
     config = _process_kwargs(kwargs, _valid_kwargs_table())
+
+    style = config['style']
+    if isinstance(style,str):
+        style = _styles._get_mpfstyle(style)
+
+    if isinstance(style,dict):
+        _styles._apply_mpfstyle(style)
     
-    base      = [11.0, 8.5]
+    w,h = config['figratio']
+    r = float(w)/float(h)
+    if r < 0.25 or r > 4.0:
+        raise ValueError('"figratio" (aspect ratio)  must be between 0.25 and 4.0 (but is '+str(r)+')')
+    base      = (w,h)
     figscale  = config['figscale']
     fsize     = [d*figscale for d in base]
     
     fig = plt.figure()
     fig.set_size_inches(fsize)
 
-    # check if we need a lower panel for an additional plot.
-    #     if volume=True we will share the lower panel.
+    if config['volume'] and volumes is None:
+        raise ValueError('Request for volume, but NO volume data.')
+
+    # -------------------------------------------------------------
+    # For now (06-Feb-2020) to keep the code somewhat simpler for
+    # implementing `secondary_y` we are going to ALWAYS create
+    # secondary (twinx) axes, whether we need them or not, and 
+    # then they will be available to use later when we are plotting:
+    # -------------------------------------------------------------
 
     need_lower_panel = False
     addplot = config['addplot']
@@ -198,26 +239,27 @@ def plot( data, **kwargs ):
 
     #  fig.add_axes( [left, bottom, width, height] ) ... numbers are fraction of fig
     if need_lower_panel or config['volume']:
-        if config['volume'] and volumes is None:
-            raise ValueError('Request for volume, but NO volume data.')
         ax1 = fig.add_axes( [0.15, 0.38, 0.70, 0.50] )
         ax2 = fig.add_axes( [0.15, 0.18, 0.70, 0.20], sharex=ax1 )
+        plt.xticks(rotation=45) # must do this after creation of axis, and
+                                # after `sharex`, but must be BEFORE any 'twinx()'
+        ax2.set_axisbelow(True) # so grid does not show through volume bars.
+        ax4 = ax2.twinx()
+        ax4.grid(False)
     else:
         ax1 = fig.add_axes( [0.15, 0.18, 0.70, 0.70] )
+        plt.xticks(rotation=45) # must do this after creation of axis, but before any 'twinx()'
         ax2 = None
+        ax4 = None
+    ax3 = ax1.twinx()
+    ax3.grid(False)
 
     avg_days_between_points = (dates[-1] - dates[0]) / float(len(dates))
-
-    # Default logic for 'no_xgaps':  True for intraday data spanning 2 or more days, else False
-    # Caller provided 'no_xgaps' kwarg OVERRIDES default logic.
-
-    no_xgaps = False
 
     # avgerage of 3 or more data points per day we will call intraday data:
     if avg_days_between_points < 0.33:  # intraday
         if mdates.num2date(dates[-1]).date() != mdates.num2date(dates[0]).date():
             # intraday data for more than one day:
-            no_xgaps = True
             fmtstring = '%b %d, %H:%M'
         else:  # intraday data for a single day
             fmtstring = '%H:%M'
@@ -227,26 +269,24 @@ def plot( data, **kwargs ):
         else:
            fmtstring = '%b %d'
 
-    if config['no_xgaps'] is not None:  # override whatever was determined above.
-        no_xgaps = config['no_xgaps']
-
-    if no_xgaps:
-        formatter = IntegerIndexDateTimeFormatter(dates, fmtstring)
-        xdates = np.arange(len(dates))
-    else:
+    if config['show_nontrading']:
         formatter = mdates.DateFormatter(fmtstring)
         xdates = dates
+    else:
+        formatter = IntegerIndexDateTimeFormatter(dates, fmtstring)
+        xdates = np.arange(len(dates))
     
     ax1.xaxis.set_major_formatter(formatter)
-    plt.xticks(rotation=45)
 
     ptype = config['type']
 
     collections = None
     if ptype == 'candle' or ptype == 'candlestick':
-        collections = _construct_candlestick_collections(xdates, opens, highs, lows, closes )
+        collections = _construct_candlestick_collections(xdates, opens, highs, lows, closes,
+                                                         marketcolors=style['marketcolors'] )
     elif ptype == 'ohlc' or ptype == 'bars' or ptype == 'ohlc_bars':
-        collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes )
+        collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes,
+                                                         marketcolors=style['marketcolors'] )
     elif ptype == 'line':
         ax1.plot(xdates, closes, color='k')
     else:
@@ -262,9 +302,18 @@ def plot( data, **kwargs ):
             mavgs = mavgs,      # convert to tuple 
         if len(mavgs) > 7:
             mavgs = mavgs[0:7]  # take at most 7
+     
+        if style['mavcolors'] is not None:
+            mavc = cycle(style['mavcolors'])
+        else:
+            mavc = None
+            
         for mav in mavgs:
             mavprices = data['Close'].rolling(mav).mean().values 
-            ax1.plot(xdates, mavprices)
+            if mavc:
+                ax1.plot(xdates, mavprices, color=next(mavc))
+            else:
+                ax1.plot(xdates, mavprices)
 
     avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
     minx = xdates[0]  - avg_dist_between_points
@@ -274,8 +323,36 @@ def plot( data, **kwargs ):
     corners = (minx, miny), (maxx, maxy)
     ax1.update_datalim(corners)
 
+    if config['volume']:
+        vup,vdown = style['marketcolors']['volume'].values()
+        #-- print('vup,vdown=',vup,vdown)
+        vcolors = _updown_colors(vup, vdown, opens, closes, use_prev_close=style['marketcolors']['vcdopcod'])
+        #-- print('len(vcolors),len(opens),len(closes)=',len(vcolors),len(opens),len(closes))
+        #-- print('vcolors=',vcolors)
+        width = 0.5*avg_dist_between_points
+        ax2.bar(xdates,volumes,width=width,color=vcolors)
+        miny = 0.3 * min(volumes)
+        maxy = 1.1 * max(volumes)
+        ax2.set_ylim( miny, maxy )
+        ax2.xaxis.set_major_formatter(formatter)
+    
+    used_ax3 = False
+    used_ax4 = False
     addplot = config['addplot']
     if addplot is not None:
+        # Calculate the Order of Magnitude Range
+        # If addplot['secondary_y'] == 'auto', then: If the addplot['data']
+        # is out of the Order of Magnitude Range, then use secondary_y.
+        # Calculate omrange for Main panel, and for Lower (volume) panel:
+        lo = math.log(math.fabs(min(lows )),10) - 0.5
+        hi = math.log(math.fabs(max(highs)),10) + 0.5
+        omrange = {'main' :{'lo':lo,'hi':hi},
+                   'lower':None             }
+        if config['volume']:
+            lo = math.log(math.fabs(min(volumes)),10) - 0.5
+            hi = math.log(math.fabs(max(volumes)),10) + 0.5
+            omrange.update(lower={'lo':lo,'hi':hi})
+
         if isinstance(addplot,dict):
             addplot = [addplot,]   # make list of dict to be consistent
 
@@ -292,35 +369,79 @@ def plot( data, **kwargs ):
                 havedf = False      # must be a single series or array
                 apdata = [apdata,]  # make it iterable
 
-            if apdict['panel'] == 'lower':
-                ax = ax2
-                if config['volume']:
-                    ax = ax2.twinx()
-            else:
-                ax = ax1
-
             for column in apdata:
                 if havedf:
                     ydata = apdata.loc[:,column]
                 else:
                     ydata = column
-                if apdict['scatter']:
-                    size = apdict['markersize']
-                    mark = apdict['marker']
-                    ax.scatter(xdates, ydata, s=size, marker=mark)
+                yd = [y for y in ydata if not math.isnan(y)]
+                ymhi = math.log(math.fabs(max(yd)),10)
+                ymlo = math.log(math.fabs(min(yd)),10)
+                secondary_y = False
+                if apdict['secondary_y'] == 'auto':
+                    if apdict['panel'] == 'lower':
+                        # If omrange['lower'] is not yet set by volume,
+                        # then set it here as this is the first ydata
+                        # to be plotted on the lower panel, so consider
+                        # it to be the 'primary' lower panel axis.
+                        if omrange['lower'] is None:
+                            omrange.update(lower={'lo':ymlo,'hi':ymhi})
+                        elif ymlo < omrange['lower']['lo'] or ymhi > omrange['lower']['hi']:
+                            secondary_y = True
+                    elif ymlo < omrange['main']['lo'] or ymhi > omrange['main']['hi']:
+                        secondary_y = True
+                    #   if secondary_y:
+                    #       print('auto says USE secondary_y')
+                    #   else:
+                    #       print('auto says do NOT use secondary_y')
                 else:
-                    ax.plot(xdates, ydata)
+                    secondary_y = apdict['secondary_y']
+                    #   print("apdict['secondary_y'] says secondary_y is",secondary_y)
 
+                if apdict['panel'] == 'lower':
+                    ax = ax4 if secondary_y else ax2
+                else:
+                    ax = ax3 if secondary_y else ax1
 
-    if config['volume']:
-        ax2.bar(xdates,volumes,width=0.7)
-        miny = 0.3 * min(volumes)
-        maxy = 1.1 * max(volumes)
-        ax2.set_ylim( miny, maxy )
-        #ax2.yaxis.set_label_position('right')
-        #ax2.yaxis.tick_right()
-        ax2.xaxis.set_major_formatter(formatter)
-     
+                if ax == ax3:
+                    used_ax3 = True
+                if ax == ax4:
+                    used_ax4 = True
+
+                if apdict['scatter']:
+                    size  = apdict['markersize']
+                    mark  = apdict['marker']
+                    color = apdict['color']
+                    ax.scatter(xdates, ydata, s=size, marker=mark, color=color)
+                else:
+                    ls    = apdict['linestyle']
+                    color = apdict['color']
+                    ax.plot(xdates, ydata, linestyle=ls, color=color)
+
+    # put the twinx() on the "other" side:
+    if style['y_on_right']:
+        ax1.yaxis.set_label_position('right')
+        ax1.yaxis.tick_right()
+        ax3.yaxis.set_label_position('left')
+        ax3.yaxis.tick_left()
+        if ax2 and ax4:
+            ax2.yaxis.set_label_position('right')
+            ax2.yaxis.tick_right()
+            if ax4 != ax2:
+                 ax4.yaxis.set_label_position('left')
+                 ax4.yaxis.tick_left()
+    else:
+        ax1.yaxis.set_label_position('left')
+        ax1.yaxis.tick_left()
+        ax3.yaxis.set_label_position('right')
+        ax3.yaxis.tick_right()
+        if ax2 and ax4:
+            ax2.yaxis.set_label_position('left')
+            ax2.yaxis.tick_left()
+            if ax4 != ax2:
+                ax4.yaxis.set_label_position('right')
+                ax4.yaxis.tick_right()
+
     if need_lower_panel or config['volume']:
         ax1.spines['bottom'].set_linewidth(0.25)
         ax2.spines['top'   ].set_linewidth(0.25)
@@ -346,16 +467,30 @@ def plot( data, **kwargs ):
 
     ax1.autoscale_view()  # Is this really necessary??
 
-    #  really use rcParams: call plt.rc('axes', grid=True)
-    #  plt.rc('grid', color='0.75', linestyle='-', linewidth=0.5)
-    ax1.set_ylabel('Price',size='x-large',weight='semibold')
+    ax1.set_ylabel(config['ylabel'])
 
     if config['volume']:
         ax2.figure.canvas.draw()  # This is needed to calculate offset
         offset = ax2.yaxis.get_major_formatter().get_offset()
         ax2.yaxis.offsetText.set_visible(False)
-        vol_label = 'Volume x '+str(offset)
-        ax2.set_ylabel(vol_label,size='x-large',weight='semibold')
+        if len(offset) > 0:
+            offset = (' x '+offset)
+        if config['ylabel_lower'] is None:
+            vol_label = 'Volume'+offset
+        else:
+            if len(offset) > 0:
+                offset = '\n'+offset
+            vol_label = config['ylabel_lower'] + offset
+        ax2.set_ylabel(vol_label)
+
+    if config['title'] is not None:
+        fig.suptitle(config['title'],size='x-large',weight='semibold')
+
+    if not used_ax3 and ax3 is not None:
+        ax3.get_yaxis().set_visible(False)
+
+    if not used_ax4 and ax4 is not None:
+        ax4.get_yaxis().set_visible(False)
 
     if config['savefig'] is not None:
         save = config['savefig']
@@ -364,7 +499,16 @@ def plot( data, **kwargs ):
         else:
             plt.savefig(save)
     else:
-        plt.show()
+        # https://stackoverflow.com/a/13361748/1639359 suggests plt.show(block=False)
+        plt.show(block=config['block'])
+
+    # rcp   = copy.deepcopy(plt.rcParams)
+    # rcpdf = rcParams_to_df(rcp)
+    # print('type(rcpdf)=',type(rcpdf))
+    # print('rcpdfhead(3)=',rcpdf.head(3))
+    # return # rcpdf
+    
+
 
 def _valid_addplot_kwargs_table():
 
@@ -372,31 +516,37 @@ def _valid_addplot_kwargs_table():
                      's', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd', '|', '_', 'P',
                      'X', 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 'None', None, ' ', '']
 
+
+    valid_linestyles = ['-','solid','--','dashed','-.','dashdot','.','dotted',None,' ','']
+
     vkwargs = {
         'scatter'     : { 'Default'     : False,
-
                           'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,bool) },
 
         'panel'       : { 'Default'     : 'main',
-    
                           'Implemented' : True,
                           'Validator'   : lambda value: value in ['main','lower'] },
 
         'marker'      : { 'Default'     : 'o',
-    
                           'Implemented' : True,
                           'Validator'   : lambda value: value in valid_markers },
 
         'markersize'  : { 'Default'     : 18,
-    
                           'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,(int,float)) },
 
-        'secondary_y' : { 'Default' : None,
+        'color'       : { 'Default'     : None,
+                          'Implemented' : True,
+                          'Validator'   : lambda value: mcolors.is_color_like(value) },
 
-                          'Implemented' : False,
-                          'Validator'   : lambda value: value in [] },
+        'linestyle'   : { 'Default'     : None,
+                          'Implemented' : True,
+                          'Validator'   : lambda value: value in valid_linestyles },
+
+        'secondary_y' : { 'Default'     : 'auto',
+                          'Implemented' : True,
+                          'Validator'   : lambda value: isinstance(value,bool) or value == 'auto' }
     }
 
     # Check that we didn't make a typo in any of the things above

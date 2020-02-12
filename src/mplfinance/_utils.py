@@ -2,7 +2,6 @@
 A collection of utilities for analyzing and plotting financial data.
 
 """
-#from __future__ import (absolute_import, division, print_function, unicode_literals)
 
 import numpy as np
 import matplotlib.dates as mdates
@@ -10,11 +9,10 @@ import datetime
 
 from matplotlib import colors as mcolors
 from matplotlib.collections import LineCollection, PolyCollection
-from matplotlib.lines import TICKLEFT, TICKRIGHT, Line2D
-from matplotlib.patches import Rectangle
-from matplotlib.transforms import Affine2D
 
-from six.moves import xrange, zip
+from six.moves import zip
+
+from mplfinance._styles import _get_mpfstyle
 
 def _check_input(opens, closes, highs, lows, miss=-1):
     """Checks that *opens*, *highs*, *lows* and *closes* have the same length.
@@ -83,7 +81,18 @@ def roundTime(dt=None, roundTo=60):
    rounding = (seconds+roundTo/2) // roundTo * roundTo
    return dt + datetime.timedelta(0,rounding-seconds,-dt.microsecond)
 
-def _construct_ohlc_collections(dates, opens, highs, lows, closes, colorup='k', colordown='k'):
+def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False):
+    if upcolor == downcolor:
+        return upcolor
+    cmap = {True : upcolor, False : downcolor}
+    if not use_prev_close:
+        return [ cmap[opn < cls] for opn,cls in zip(opens,closes) ]
+    else:
+        first = cmap[opens[0] < closes[0]] 
+        _list = [ cmap[pre < cls] for cls,pre in zip(closes[1:], closes) ]
+        return [first] + _list
+
+def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=None):
     """Represent the time, open, high, low, close as a vertical line
     ranging from low to high.  The left tick is the open and the right
     tick is the close.
@@ -101,10 +110,7 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, colorup='k', 
         sequence of low values
     closes : sequence
         sequence of closing values
-    colorup : color
-        the color of the lines where close >= open
-    colordown : color
-        the color of the lines where close <  open
+    marketcolors : dict of colors: 'up', 'down'
 
     Returns
     -------
@@ -113,6 +119,12 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, colorup='k', 
     """
 
     _check_input(opens, highs, lows, closes)
+
+    if marketcolors is None:
+        mktcolors = _get_mpfstyle('classic')['marketcolors']['ohlc']
+        print('default mktcolors=',mktcolors)
+    else:
+        mktcolors = marketcolors['ohlc']
 
     rangeSegments = [((dt, low), (dt, high)) for dt, low, high in
                      zip(dates, lows, highs) if low != -1]
@@ -130,13 +142,14 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, colorup='k', 
     # we'll translate these to the date, close location
     closeSegments = [((dt, close), (dt+ticksize, close)) for dt, close in zip(dates, closes) if close != -1]
 
-    colorup = mcolors.to_rgba(colorup)
-    colordown = mcolors.to_rgba(colordown)
-    colord = {True: colorup, False: colordown}
-    colors = [colord[open < close] for open, close in
-              zip(opens, closes) if open != -1 and close != -1]
-
-    #    avg_dist_between_points = (dates[-1] - dates[0]) / float(len(dates))
+    if mktcolors['up'] == mktcolors['down']:
+        colors = mktcolors['up']
+    else:
+        colorup = mcolors.to_rgba(mktcolors['up'])
+        colordown = mcolors.to_rgba(mktcolors['down'])
+        colord = {True: colorup, False: colordown}
+        colors = [colord[open < close] for open, close in
+                  zip(opens, closes) if open != -1 and close != -1]
 
     useAA = 0,    # use tuple here
     lw    = 0.5,  # use tuple here
@@ -159,25 +172,10 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, colorup='k', 
                                      linewidths=lw
                                      )
 
-    #    minx = dates[0]  - avg_dist_between_points
-    #    maxx = dates[-1] + avg_dist_between_points
-    #
-    #    miny = min([low for low in lows if low != -1])
-    #    maxy = max([high for high in highs if high != -1])
-    #    corners = (minx, miny), (maxx, maxy)
-    #    ax.update_datalim(corners)
-    #    ax.autoscale_view()
-    #
-    #    # add these last
-    #    ax.add_collection(rangeCollection)
-    #    ax.add_collection(openCollection)
-    #    ax.add_collection(closeCollection)
-
     return rangeCollection, openCollection, closeCollection
 
 
-def _construct_candlestick_collections(dates, opens, highs, lows, closes,
-                                       colorup='w', colordown='k', alpha=0.90):
+def _construct_candlestick_collections(dates, opens, highs, lows, closes, marketcolors=None):
     """Represent the open, close as a bar line and high low range as a
     vertical line.
 
@@ -195,10 +193,7 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes,
         sequence of low values
     closes : sequence
         sequence of closing values
-    colorup : color
-        the color of the lines where close >= open
-    colordown : color
-        the color of the lines where close <  open
+    marketcolors : dict of colors: up, down, edge, wick, alpha
     alpha : float
         bar transparency
 
@@ -209,6 +204,10 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes,
     """
     
     _check_input(opens, highs, lows, closes)
+
+    if marketcolors is None:
+        marketcolors = _get_mpfstyle('classic')['marketcolors']
+        print('default market colors:',marketcolors)
 
     avg_dist_between_points = (dates[-1] - dates[0]) / float(len(dates))
 
@@ -231,21 +230,25 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes,
                       
     rangeSegments = rangeSegLow + rangeSegHigh
 
-    colorup = mcolors.to_rgba(colorup, alpha)
-    colordown = mcolors.to_rgba(colordown, alpha)
-    colorup = mcolors.to_rgba(colorup, 1.0)
-    colordown = mcolors.to_rgba(colordown, alpha)
-    colord = {True: colorup, False: colordown}
-    colors = [colord[open < close]
-              for open, close in zip(opens, closes)
-              if open != -1 and close != -1]
-    edgecolor = mcolors.to_rgba('k',1.0)
+    alpha  = marketcolors['alpha']
+
+    uc     = mcolors.to_rgba(marketcolors['candle'][ 'up' ], alpha)
+    dc     = mcolors.to_rgba(marketcolors['candle']['down'], alpha)
+    colors = _updown_colors(uc, dc, opens, closes)
+
+    uc     = mcolors.to_rgba(marketcolors['edge'][ 'up' ], 1.0)
+    dc     = mcolors.to_rgba(marketcolors['edge']['down'], 1.0)
+    edgecolor = _updown_colors(uc, dc, opens, closes)
+    
+    uc     = mcolors.to_rgba(marketcolors['wick'][ 'up' ], 1.0)
+    dc     = mcolors.to_rgba(marketcolors['wick']['down'], 1.0)
+    wickcolor = _updown_colors(uc, dc, opens, closes)
 
     useAA = 0,    # use tuple here
     lw    = 0.5,  # use tuple here
     lw = None
     rangeCollection = LineCollection(rangeSegments,
-                                     colors='k',
+                                     colors=wickcolor,
                                      linewidths=lw,
                                      antialiaseds=useAA
                                      )

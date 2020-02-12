@@ -1,0 +1,23 @@
+style = {'base_mpl_style': 'fast',
+         'marketcolors': {'candle': {'up': '#fedf00', 'down': '#002776'},
+                          'edge'  : {'up': '#fedf00', 'down': '#002776'},
+                          'wick'  : {'up': '#fedf00', 'down': '#002776'},
+                          'ohlc'  : {'up': '#fedf00', 'down': '#002776'},
+                          'volume': {'up': '#fedf00', 'down': '#002776'},
+                          'vcedge': {'up': '#1f77b4', 'down': '#1f77b4'},
+                          'vcdopcod': False,
+                          'alpha': 0.9},
+         'mavcolors' : None,
+         'facecolor' : None,
+         'gridcolor' : None,
+         'gridstyle' : None,
+         'y_on_right': True,
+         'rc': {'axes.grid'     :  True,
+                'axes.grid.axis': 'y',
+                'grid.color'    : '#fedf00',
+                'grid.linestyle': '--',
+                'axes.facecolor': '#009b3a',
+                'axes.edgecolor': '#002776'
+               },
+         'base_mpf_style': 'brasil'
+        }
