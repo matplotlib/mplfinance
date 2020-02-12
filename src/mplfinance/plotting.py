@@ -107,7 +107,7 @@ def _valid_kwargs_table():
                           'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,float) or isinstance(value,int) },
  
-        'figratio'   : { 'Default'     : ( 7.,5.), # aspect ration; will equal fig size when figscale=1.0
+        'figratio'   : { 'Default'      : (8.00,5.75), # aspect ratio; will equal fig size when figscale=1.0
                                           
                           'Implemented' : True,
                           'Validator'   : lambda value: isinstance(value,(tuple,list))

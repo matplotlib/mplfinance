@@ -55,7 +55,6 @@ Start with a Pandas DataFrame containing OHLC data.  For example,
 
 
 ```python
-import pandas as pd
 daily = pd.read_csv('examples/data/SP500_NOV2019_Hist.csv',index_col=0,parse_dates=True)
 daily.index.name = 'Date'
 daily.shape
@@ -124,6 +123,7 @@ daily.tail(3)
 
 
 
+
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -170,6 +170,7 @@ daily.tail(3)
     </tr>
   </tbody>
 </table>
+
 
 
 ---
@@ -332,6 +333,8 @@ intraday.tail(3)
 
 
 
+
+
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -377,6 +380,7 @@ intraday.tail(3)
 
 
 
+
 The above dataframe contains Open,High,Low,Close data at 1 minute intervervals for the S&P 500 stock index for November 5, 6, 7 and 8, 2019.  Let's look at the last hour of trading on November 6th, with a 7 minute and 12 minute moving average.
 
 
@@ -418,7 +422,7 @@ Below: 4 days of intraday data with `show_nontrading=True`
 
 
 ```python
-mpf.plot(intraday,type='ohlc',show_nontrading=True)  # 4 day of intraday with show_nontrading=True
+mpf.plot(intraday,type='ohlc',show_nontrading=True)
 ```
 
 
@@ -513,6 +517,8 @@ df.tail(3)
 
 
 
+
+
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -567,6 +573,7 @@ df.tail(3)
 
 
 
+
 ```python
 mpf.plot(df[700:850],type='bars',volume=True,mav=(20,40))
 ```
@@ -583,7 +590,7 @@ For more examples of using mplfinance, please see the jupyter notebooks in the *
 
 | Version  |  Description   | Release Date |
 |:---------|:-------------|:---------------|
-| 0.12.3a0   | - kwarg `block=False` for non-blocking call to `mpf.plot()`<br> - customize aspect ratio, title, y-labels<br> - customize colors and other `style` aspects of plot<br> - `no_xgaps` now default to True: use `show_nontrading=True` to set no_xgaps to false<br> - secondary y-axis available to `make_addplot()`<br> - bug fix for volume widths | 2020-02-11 |
+| 0.12.3a0   | - kwarg `block=False` for non-blocking call to `mpf.plot()`<br> - customize aspect ratio, figure title, y-labels<br> - customize colors and other `style` aspects of plot<br> - `no_xgaps` now defaults to True: use `show_nontrading=True` to set no_xgaps to false<br> - secondary y-axis available to `make_addplot()`<br> - bug fix for volume widths | 2020-02-11 |
 | 0.12.0a3   | Increase mav limit from 3 to 7 different mavs  | 2020-01-16 |
 | 0.12.0a2   | Ability to save plot to a file (pdf, svg, png, jpg, ...) | 2020-01-14 |
 | 0.12.0a1   | Ability to plot arbitrary user data (in addition to basic OHLCV data).<br> - both line and scatter plots available.<br> - optionally plot on either the "main" or "lower" (aka "volume") axis. | 2020-01-09 |
@@ -623,3 +630,8 @@ where `<method>` indicates the method you want to import, for example:
 ```
 
 ---
+
+
+```python
+
+```
