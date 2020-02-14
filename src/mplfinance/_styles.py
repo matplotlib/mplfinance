@@ -56,51 +56,39 @@ def _apply_mpfstyle(style):
 def _valid_make_mpf_style_kwargs():
     vkwargs = {
         'base_mpf_style': { 'Default'     : None,
-                            'Implemented' : True,
                             'Validator'   : lambda value: value in _styles.keys() },
 
         'base_mpl_style': { 'Default'     : None,
-                            'Implemented' : True,
                             'Validator'   : lambda value: isinstance(value,str) }, # and is in plt.style.available
 
         'marketcolors'  : { 'Default'     : None, # 
-                            'Implemented' : True,
                             'Validator'   : lambda value: isinstance(value,dict)  },
 
         'mavcolors'     : { 'Default'     : None,
-                            'Implemented' : True,
                             'Validator'   : lambda value: isinstance(value,list) },  # TODO: all([mcolors.is_color_like(v) for v in value.values()])
 
         'facecolor'     : { 'Default'     : None,
-                            'Implemented' : True,
                             'Validator'   : lambda value: isinstance(value,str) },
 
         'edgecolor'     : { 'Default'     : None,
-                            'Implemented' : True,
                             'Validator'   : lambda value: isinstance(value,str) },
 
         'figcolor'      : { 'Default'     : None,
-                            'Implemented' : True,
                             'Validator'   : lambda value: isinstance(value,str) },
 
         'gridcolor'     : { 'Default'     : None,
-                            'Implemented' : True,
                             'Validator'   : lambda value: isinstance(value,str) },
 
         'gridstyle'     : { 'Default'     : None,
-                            'Implemented' : True,  
                             'Validator'   : lambda value: isinstance(value,str) },
 
         'gridaxis'      : { 'Default'     : None,
-                            'Implemented' : True,
                             'Validator'   : lambda value: value in [ 'vertical'[0:len(value)], 'horizontal'[0:len(value)], 'both'[0:len(value)] ] },
 
         'y_on_right'    : { 'Default'     : None,
-                            'Implemented' : True,
                             'Validator'   : lambda value: isinstance(value,bool) },
 
         'rc'            : { 'Default'     : None,
-                            'Implemented' : True,
                             'Validator'   : lambda value: isinstance(value,dict) },
 
     }
@@ -137,46 +125,37 @@ def _valid_mpf_color_spec(value):
 def _valid_make_marketcolors_kwargs():
     vkwargs = {
         'up'         : { 'Default'     : None,
-                         'Implemented' : True,
                          'Validator'   : lambda value: mcolors.is_color_like(value) },
 
         'down'       : { 'Default'     : None,
-                         'Implemented' : True,
                          'Validator'   : lambda value: mcolors.is_color_like(value) },
 
         'alpha'       : { 'Default'     : None,
-                         'Implemented' : True,
                          'Validator'   : lambda value: ( isinstance(value,float) and
                                                          0.0 <= value and 1.0 >= value ) },
 
         'edge'       : { 'Default'     : None,
-                         'Implemented' : True,
                          'Validator'   : lambda value: _valid_mpf_color_spec(value) },
 
         'wick'       : { 'Default'     : None,
-                         'Implemented' : True,
                          'Validator'   : lambda value: isinstance(value,dict)
                                                        or isinstance(value,str) 
                                                        or mcolors.is_color_like(value) },
 
         'ohlc'       : { 'Default'     : None,
-                         'Implemented' : True,
                          'Validator'   : lambda value: isinstance(value,dict)
                                                        or isinstance(value,str) 
                                                        or mcolors.is_color_like(value) },
 
         'volume'     : { 'Default'   : None,
-                         'Implemented' : True,
                          'Validator'   : lambda value: isinstance(value,dict)
                                                        or isinstance(value,str) 
                                                        or mcolors.is_color_like(value) },
 
         'inherit'    : { 'Default'     : False,
-                         'Implemented' : True,
                          'Validator'   : lambda value: isinstance(value,bool) },
 
         'base_mpf_style': { 'Default'     : None,
-                            'Implemented' : True,
                             'Validator'   : lambda value: isinstance(value,str) },
     }
     _validate_vkwargs_dict(vkwargs)
