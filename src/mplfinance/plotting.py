@@ -296,13 +296,13 @@ def plot( data, **kwargs ):
         # If addplot['secondary_y'] == 'auto', then: If the addplot['data']
         # is out of the Order of Magnitude Range, then use secondary_y.
         # Calculate omrange for Main panel, and for Lower (volume) panel:
-        lo = math.log(math.fabs(min(lows )),10) - 0.5
-        hi = math.log(math.fabs(max(highs)),10) + 0.5
+        lo = math.log(max(math.fabs(min(lows)),1e-7),10) - 0.5
+        hi = math.log(max(math.fabs(max(highs)),1e-7),10) + 0.5
         omrange = {'main' :{'lo':lo,'hi':hi},
                    'lower':None             }
         if config['volume']:
-            lo = math.log(math.fabs(min(volumes)),10) - 0.5
-            hi = math.log(math.fabs(max(volumes)),10) + 0.5
+            lo = math.log(max(math.fabs(min(volumes)),1e-7),10) - 0.5
+            hi = math.log(max(math.fabs(max(volumes)),1e-7),10) + 0.5
             omrange.update(lower={'lo':lo,'hi':hi})
 
         if isinstance(addplot,dict):
@@ -327,8 +327,8 @@ def plot( data, **kwargs ):
                 else:
                     ydata = column
                 yd = [y for y in ydata if not math.isnan(y)]
-                ymhi = math.log(math.fabs(max(yd)),10)
-                ymlo = math.log(math.fabs(min(yd)),10)
+                ymhi = math.log(max(math.fabs(max(yd)),1e-7),10)
+                ymlo = math.log(max(math.fabs(min(yd)),1e-7),10)
                 secondary_y = False
                 if apdict['secondary_y'] == 'auto':
                     if apdict['panel'] == 'lower':
