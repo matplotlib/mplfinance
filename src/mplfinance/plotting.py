@@ -480,7 +480,7 @@ def _valid_addplot_kwargs():
                           'Validator'   : lambda value: value in ['main','lower'] },
 
         'marker'      : { 'Default'     : 'o',
-                          'Validator'   : lambda value: value in valid_markers },
+                          'Validator'   : lambda value: not isinstance(value,bool) },
 
         'markersize'  : { 'Default'     : 18,
                           'Validator'   : lambda value: isinstance(value,(int,float)) },
