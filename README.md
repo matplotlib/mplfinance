@@ -555,6 +555,7 @@ For more examples of using mplfinance, please see the jupyter notebooks in the *
 
 | Version  |  Description   | Release Date |
 |:---------|:-------------|:---------------|
+| 0.12.3a1   | - fix issue#28: math.log crash on zero in data<br> - remove "Implemented" field from kwarg dicts<br> - yahoo style show colors for `ohlc bars` | 2020-02-16 |
 | 0.12.3a0   | - kwarg `block=False` for non-blocking call to `mpf.plot()`<br> - customize aspect ratio, figure title, y-labels<br> - customize colors and other `style` aspects of plot<br> - `no_xgaps` now defaults to True: use `show_nontrading=True` to set no_xgaps to false<br> - secondary y-axis available to `make_addplot()`<br> - bug fix for volume widths | 2020-02-12 |
 | 0.12.0a3   | Increase mav limit from 3 to 7 different mavs  | 2020-01-16 |
 | 0.12.0a2   | Ability to save plot to a file (pdf, svg, png, jpg, ...) | 2020-01-14 |
