@@ -60,7 +60,7 @@ def _valid_plot_kwargs():
 
     vkwargs = {
         'type'        : { 'Default'     : 'ohlc',
-                          'Validator'   : lambda value: value in ['candle','candlestick','ohlc','bars','ohlc bars','line'] },
+                          'Validator'   : lambda value: value in ['candle','candlestick','ohlc','bars','ohlc_bars','line'] },
  
         'style'       : { 'Default'     : 'default',
                           'Validator'   : lambda value: value in _styles.available_styles() or isinstance(value,dict) },
