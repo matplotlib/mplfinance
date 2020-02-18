@@ -464,11 +464,6 @@ def plot( data, **kwargs ):
 
 def _valid_addplot_kwargs():
 
-    valid_markers = ['.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', '8',
-                     's', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd', '|', '_', 'P',
-                     'X', 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 'None', None, ' ', '']
-
-
     valid_linestyles = ['-','solid','--','dashed','-.','dashdot','.','dotted',None,' ','']
 
 
@@ -480,7 +475,7 @@ def _valid_addplot_kwargs():
                           'Validator'   : lambda value: value in ['main','lower'] },
 
         'marker'      : { 'Default'     : 'o',
-                          'Validator'   : lambda value: value in valid_markers },
+                          'Validator'   : lambda value: not isinstance(value,bool)  },
 
         'markersize'  : { 'Default'     : 18,
                           'Validator'   : lambda value: isinstance(value,(int,float)) },
