@@ -56,6 +56,23 @@ def _mav_validator(mav_value):
             return False
     return True
 
+def _bypass_kwarg_validation(value):
+    ''' For some kwargs, we either don't know enough, or
+        the validation is too complex to make it worth while,
+        so we bypass kwarg validation.  If the kwarg is 
+        invalid, then eventually an exception will be 
+        raised at the time the kwarg value is actually used.
+    '''
+    return True
+
+def _kwarg_not_implemented(value):
+    ''' If you want to list a kwarg in a valid_kwargs dict for a given
+        function, but you have not yet, or don't yet want to, implement
+        the kwarg; or you simply want to (temporarily) disable the kwarg,
+        then use this function as the kwarg validator
+    '''
+    raise NotImplementedError('kwarg NOT implemented.')
+
 def _validate_vkwargs_dict(vkwargs):
     # Check that we didn't make a typo in any of the things
     # that should be the same for all vkwargs dict items:
