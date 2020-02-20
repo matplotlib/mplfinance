@@ -20,6 +20,7 @@ from mplfinance import _styles
 
 from mplfinance._arg_validators import _check_and_prepare_data, _mav_validator
 from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
+from mplfinance._arg_validators import _kwarg_not_implemented, _bypass_kwarg_validation
 
 
 def with_rc_context(func):
@@ -72,7 +73,8 @@ def _valid_plot_kwargs():
                           'Validator'   : _mav_validator },
  
         'study'       : { 'Default'     : None,
-                          'Validator'   : lambda value: isinstance(value,dict) }, #{'studyname': {study parms}} example: {'TE':{'mav':20,'upper':2,'lower':2}}
+                         #'Validator'   : lambda value: isinstance(value,dict) }, #{'studyname': {study parms}} example: {'TE':{'mav':20,'upper':2,'lower':2}}
+                          'Validator'   : lambda value: _kwarg_not_implemented(value) }, 
  
         'marketcolors': { 'Default'     : None, # use 'style' for default, instead.
                           'Validator'   : lambda value: isinstance(value,dict) },
@@ -475,7 +477,7 @@ def _valid_addplot_kwargs():
                           'Validator'   : lambda value: value in ['main','lower'] },
 
         'marker'      : { 'Default'     : 'o',
-                          'Validator'   : lambda value: not isinstance(value,bool)  },
+                          'Validator'   : lambda value: _bypass_kwarg_validation(value)  },
 
         'markersize'  : { 'Default'     : 18,
                           'Validator'   : lambda value: isinstance(value,(int,float)) },
