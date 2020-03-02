@@ -94,6 +94,9 @@ def _valid_plot_kwargs():
                                                         and isinstance(value[0],(float,int))
                                                         and isinstance(value[1],(float,int)) },
  
+        'linecolor'   : { 'Default'     : 'k', # line color in line plot
+                          'Validator'   : lambda value: isinstance(value,str) },
+
         'title'       : { 'Default'     : None, # Plot Title
                           'Validator'   : lambda value: isinstance(value,str) },
  
@@ -242,7 +245,7 @@ def plot( data, **kwargs ):
         collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes,
                                                          marketcolors=style['marketcolors'] )
     elif ptype == 'line':
-        ax1.plot(xdates, closes, color='k')
+        ax1.plot(xdates, closes, color=config['linecolor'])
     else:
         raise ValueError('Unrecognized plot type = "'+ptype+'"')
 
