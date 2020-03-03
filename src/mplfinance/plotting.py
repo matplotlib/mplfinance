@@ -4,6 +4,7 @@ import matplotlib.colors as mcolors
 import pandas as pd
 import numpy  as np
 import copy
+import io
 import math
 import warnings
 
@@ -113,7 +114,7 @@ def _valid_plot_kwargs():
                           'Validator'   : lambda value: isinstance(value,dict) or (isinstance(value,list) and all([isinstance(d,dict) for d in value])) },
  
         'savefig'     : { 'Default'     : None, 
-                          'Validator'   : lambda value: isinstance(value,dict) or isinstance(value,str) },
+                          'Validator'   : lambda value: isinstance(value,dict) or isinstance(value,str) or isinstance(value, io.BytesIO)},
  
         'block'       : { 'Default'     : True, 
                           'Validator'   : lambda value: isinstance(value,bool) },
