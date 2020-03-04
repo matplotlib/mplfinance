@@ -544,7 +544,7 @@ mpf.plot(df[700:850],type='bars',volume=True,mav=(20,40))
 ```
 
 
-![png](readme_files/readme_29_1.png)
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_29_1.png)
 
 
 For more examples of using mplfinance, please see the jupyter notebooks in the **[`examples`](https://github.com/matplotlib/mplfinance/blob/master/examples/)** directory.
@@ -555,6 +555,7 @@ For more examples of using mplfinance, please see the jupyter notebooks in the *
 
 | Version  |  Description   | Release Date |
 |:---------|:-------------|:---------------|
+| 0.12.3a3   | - `linecolor` kwarg for line plots<br> - implement save figure to in-memory buffer<br> -- Thank you Caleb Coffin @coffincw for contributing the above. | 2020-03-04 |
 | 0.12.3a2   | - implement custom markers (issue#30)<br> - fix minor issue with chart `type` validator<br> -- Thank you Amir Atashin @amiaty for contributing the above.<br> - add internal functions: `_bypass_kwarg_validation()` and `_kwarg_not_implemented()` | 2020-02-21 |
 | 0.12.3a1   | - fix issue#28: math.log crash on zero in data<br> - remove "Implemented" field from kwarg dicts<br> - yahoo style show colors for `ohlc bars` | 2020-02-16 |
 | 0.12.3a0   | - kwarg `block=False` for non-blocking call to `mpf.plot()`<br> - customize aspect ratio, figure title, y-labels<br> - customize colors and other `style` aspects of plot<br> - `no_xgaps` now defaults to True: use `show_nontrading=True` to set no_xgaps to false<br> - secondary y-axis available to `make_addplot()`<br> - bug fix for volume widths | 2020-02-12 |
