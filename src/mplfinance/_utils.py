@@ -279,7 +279,7 @@ def _construct_renko_collections(renko_params, closes, marketcolors=None):
     Returns
     -------
     ret : tuple
-        PatchCollection
+        rectCollection
     """
     if marketcolors is None:
         marketcolors = _get_mpfstyle('classic')['marketcolors']
@@ -289,11 +289,18 @@ def _construct_renko_collections(renko_params, closes, marketcolors=None):
     brick_size = renko_params['brick_size']
     atr_length = renko_params['atr_length']
 
+    alpha  = marketcolors['alpha']
+
+    uc     = mcolors.to_rgba(marketcolors['candle'][ 'up' ], alpha)
+    dc     = mcolors.to_rgba(marketcolors['candle']['down'], alpha)
+
     cdiff = [(closes[i+1] - closes[i])/brick_size for i in range(len(closes)-1)] # fill cdiff with close price change
 
     bricks = []
 
     prev_num = 0
+    start_price = closes[0]
+    
 
     for diff in cdiff:
         if diff > 0:
@@ -301,25 +308,33 @@ def _construct_renko_collections(renko_params, closes, marketcolors=None):
         else:
             bricks.extend([-1]*abs(int(round(diff, 0))))
 
-    patches = []
+    verts = []
+    colors = []
     for index, number in enumerate(bricks):
         if number == 1: # positive
-            facecolor='green'
+            colors.append(uc)
         else: # negative
-            facecolor='red'
+            colors.append(dc)
 
         prev_num += number
+        x, y = index, start_price + (prev_num * brick_size)
 
-        renko = Rectangle(
-            xy=(index, prev_num * brick_size),
-            width=1,
-            height=brick_size,
-            facecolor=facecolor,
-            alpha=0.5
-        )
-        patches.append(renko) # add rectangle to the plot
+        verts.append((
+            (x, y),
+            (x, y+brick_size),
+            (x+1, y+brick_size),
+            (x+1, y)))
+            
     
-    return (PatchCollection(patches, match_original=False), )
+    useAA = 0,    # use tuple here
+    lw = None
+    rectCollection = PolyCollection(verts,
+                                   facecolors=colors,
+                                   antialiaseds=useAA,
+                                   linewidths=lw
+                                   )
+    
+    return (rectCollection, )
 
 from matplotlib.ticker import Formatter
 class IntegerIndexDateTimeFormatter(Formatter):
