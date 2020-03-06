@@ -2,6 +2,7 @@ import os                as os
 import pandas            as pd
 import mplfinance        as mpf
 import matplotlib.pyplot as plt
+from matplotlib.testing.compare import compare_images
 
 print('pd.__version__  =',pd.__version__ )                 # for the record
 print('mpf.__version__ =',mpf.__version__)                 # for the record
@@ -20,24 +21,32 @@ print('df.tail(3)=', df.tail(3))
 prefix='addplot'
 tdir='test_images/'
 refd='reference_images/'
-os.system('rm -f '+tdir+prefix+'*.jpg')
+#os.system('rm -f '+tdir+prefix+'*.jpg')
 os.system('rm -f '+tdir+prefix+'*.png')
+
+IMGCOMP_TOLERANCE = 7.0
 
 # ---- Test 01 -----
 
-fname=prefix+'01.jpg'
+fname=prefix+'01.png'
 mpf.plot(df,volume=True,savefig=tdir+fname)
 
 os.system('ls -l '+tdir+fname)
-rc = os.system('diff '+tdir+fname+' '+refd+fname)
-assert rc == 0
+
+result = compare_images(refd+fname,tdir+fname,tol=IMGCOMP_TOLERANCE)
+if result is not None:
+   print('result=',result)
+assert result is None
 
 # ---- Test 02 -----
 
-fname=prefix+'02.jpg'
+fname=prefix+'02.png'
 apdict = mpf.make_addplot(df['LowerB'])
 mpf.plot(df,volume=True,addplot=apdict,savefig=tdir+fname)
 
 os.system('ls -l '+tdir+fname)
-rc = os.system('diff '+tdir+fname+' '+refd+fname)
-assert rc == 0
+
+result = compare_images(refd+fname,tdir+fname,tol=IMGCOMP_TOLERANCE)
+if result is not None:
+   print('result=',result)
+assert result is None
