@@ -21,7 +21,7 @@ from mplfinance._utils import IntegerIndexDateTimeFormatter
 
 from mplfinance import _styles
 
-from mplfinance._arg_validators import _check_and_prepare_data, _mav_validator, _renko_params_validator
+from mplfinance._arg_validators import _check_and_prepare_data, _mav_validator
 from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 from mplfinance._arg_validators import _kwarg_not_implemented, _bypass_kwarg_validation
 
@@ -75,8 +75,8 @@ def _valid_plot_kwargs():
         'mav'         : { 'Default'     : None,
                           'Validator'   : _mav_validator },
         
-        'renko_params': { 'Default'     : dict(type='pmove', brick_size='atr', atr_length=14),
-                          'Validator'   : _renko_params_validator },
+        'renko_params': { 'Default'     : dict(),
+                          'Validator'   : lambda value: isinstance(value,dict) },
  
         'study'       : { 'Default'     : None,
                          #'Validator'   : lambda value: isinstance(value,dict) }, #{'studyname': {study parms}} example: {'TE':{'mav':20,'upper':2,'lower':2}}
@@ -129,7 +129,33 @@ def _valid_plot_kwargs():
     _validate_vkwargs_dict(vkwargs)
 
     return vkwargs
-   
+
+
+def _valid_renko_kwargs():
+    '''
+    Construct and return the "valid renko kwargs table" for the mplfinance.plot(type='renko') function.
+    A valid kwargs table is a `dict` of `dict`s.  The keys of the outer dict are the
+    valid key-words for the function.  The value for each key is a dict containing
+    2 specific keys: "Default", and "Validator" with the following values:
+        "Default"      - The default value for the kwarg if none is specified.
+        "Validator"    - A function that takes the caller specified value for the kwarg,
+                         and validates that it is the correct type, and (for kwargs with 
+                         a limited set of allowed values) may also validate that the
+                         kwarg value is one of the allowed values.
+    '''
+    vkwargs = {
+        'type'        : { 'Default'     : 'pmove',
+                          'Validator'   : lambda value: value in ['pmove','pclose'] },
+        'brick_size'  : { 'Default'     : 2.0,
+                          'Validator'   : lambda value: isinstance(value,float) or isinstance(value,int) or value == 'atr' },
+        'atr_length'  : { 'Default'     : 14,
+                          'Validator'   : lambda value: isinstance(value,int) },               
+    }
+
+    _validate_vkwargs_dict(vkwargs)
+
+    return vkwargs
+
 
 def rcParams_to_df(rcp,name=None):
     keys = []
@@ -253,6 +279,7 @@ def plot( data, **kwargs ):
         collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes,
                                                          marketcolors=style['marketcolors'] )
     elif ptype == 'renko':
+        renko_params = _process_kwargs(kwargs['renko_params'], _valid_renko_kwargs())
         collections = _construct_renko_collections(xdates, renko_params, closes,
                                                          marketcolors=style['marketcolors'] )                                                     
     elif ptype == 'line':

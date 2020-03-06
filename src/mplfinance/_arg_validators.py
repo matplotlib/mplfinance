@@ -55,48 +55,7 @@ def _mav_validator(mav_value):
         if not isinstance(num,int) and num > 1:
             return False
     return True
-
-def _renko_params_validator(params_dict):
-    ''' 
-    Ranko params may not have > 3 parameters, their values may be:
-    type: must be either 'pmove' or 'pclose'
-    brick_size: must be either an int/float greater than 0 or 'atr'
-    atr_length: must only exist if brick_size is 'atr', must be an int greater than 0
-    '''
-    if len(params_dict) > 3:
-        return False
-
-    # Validate type
-    if 'type' in params_dict:
-        if params_dict['type'] not in ['pmove', 'pclose']:
-            return False
-    else:
-        params_dict['type'] = 'pmove' # Set default value of type to price movement
-    
-    # Validate brick_size and atr_length
-    if 'brick_size' in params_dict:
-        brick_size = params_dict['brick_size']
-        if not isinstance(brick_size, int) and not isinstance(brick_size, float):
-            if brick_size != 'atr':
-                return False
-            else:
-                if 'atr_length' not in params_dict:
-                    params_dict['atr_length'] = 14 # Set default value of atr_length to 14
-                else:
-                    if not isinstance(params_dict['atr_length'], int) or params_dict['atr_length'] < 1:
-                        return False
-        else: 
-            if brick_size < 0 or 'atr_length' in params_dict: 
-                return False
-    else:
-        params_dict['brick_size'] = 'atr'
-        params_dict['atr_length'] = 14
-        
-    return True
-                
-        
-
-
+             
 
 def _bypass_kwarg_validation(value):
     ''' For some kwargs, we either don't know enough, or
@@ -142,24 +101,24 @@ def _process_kwargs(kwargs, vkwargs):
     # now validate kwargs, and for any valid kwargs
     #  replace the appropriate value in config:
     for key in kwargs.keys():
-       if key not in vkwargs:
-           raise KeyError('Unrecognized kwarg="'+str(key)+'"')
-       else:
-           value = kwargs[key]
-           try:
-               valid = vkwargs[key]['Validator'](value)
-           except Exception as ex:
-               raise ValueError('kwarg "'+key+'" validator raised exception to value: "'+str(value)+'"') from ex
-           if not valid:
-               import inspect
-               v = inspect.getsource(vkwargs[key]['Validator']).strip()
-               raise ValueError('kwarg "'+key+'" validator returned False for value: "'+str(value)+'"\n    '+v)
+        if key not in vkwargs:
+            raise KeyError('Unrecognized kwarg="'+str(key)+'"')
+        else:
+            value = kwargs[key]
+            try:
+                valid = vkwargs[key]['Validator'](value)
+            except Exception as ex:
+                raise ValueError('kwarg "'+key+'" validator raised exception to value: "'+str(value)+'"') from ex
+            if not valid:
+                import inspect
+                v = inspect.getsource(vkwargs[key]['Validator']).strip()
+                raise ValueError('kwarg "'+key+'" validator returned False for value: "'+str(value)+'"\n    '+v)
 
        # ---------------------------------------------------------------
        #  At this point in the loop, if we have not raised an exception,
        #      then kwarg is valid as far as we can tell, therefore, 
        #      go ahead and replace the appropriate value in config:
 
-       config[key] = value
+        config[key] = value
 
     return config

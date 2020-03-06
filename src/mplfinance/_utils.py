@@ -262,6 +262,26 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
 
     return rangeCollection, barCollection
 
+def _construct_renko_collections(dates, renko_params, closes, marketcolors=None):
+    """Represent the price change with bricks
+
+    Parameters
+    ----------
+    renko_params : dictionary
+        type : type of renko chart
+        brick_size : size of each brick
+        atr_legnth : length of time used for calculating atr
+    closes : sequence
+        sequence of closing values
+    marketcolors : dict of colors: up, down, edge, wick, alpha
+
+    Returns
+    -------
+    ret : tuple
+        (lineCollection, barCollection)
+    """
+    return True
+
 from matplotlib.ticker import Formatter
 class IntegerIndexDateTimeFormatter(Formatter):
     """
