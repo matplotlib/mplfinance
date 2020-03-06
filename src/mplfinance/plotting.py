@@ -64,7 +64,7 @@ def _valid_plot_kwargs():
 
     vkwargs = {
         'type'        : { 'Default'     : 'ohlc',
-                          'Validator'   : lambda value: value in ['candle','candlestick','ohlc','bars','ohlc_bars','line'] },
+                          'Validator'   : lambda value: value in ['candle','candlestick','ohlc','bars','ohlc_bars','line', 'renko'] },
  
         'style'       : { 'Default'     : 'default',
                           'Validator'   : lambda value: value in _styles.available_styles() or isinstance(value,dict) },
@@ -280,7 +280,7 @@ def plot( data, **kwargs ):
                                                          marketcolors=style['marketcolors'] )
     elif ptype == 'renko':
         renko_params = _process_kwargs(kwargs['renko_params'], _valid_renko_kwargs())
-        collections = _construct_renko_collections(xdates, renko_params, closes,
+        collections = _construct_renko_collections(renko_params, closes,
                                                          marketcolors=style['marketcolors'] )                                                     
     elif ptype == 'line':
         ax1.plot(xdates, closes, color=config['linecolor'])
@@ -310,13 +310,16 @@ def plot( data, **kwargs ):
             else:
                 ax1.plot(xdates, mavprices)
 
-    avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
-    minx = xdates[0]  - avg_dist_between_points
-    maxx = xdates[-1] + avg_dist_between_points
-    miny = min([low for low in lows if low != -1])
-    maxy = max([high for high in highs if high != -1])
-    corners = (minx, miny), (maxx, maxy)
-    ax1.update_datalim(corners)
+    if ptype == 'renko':
+        ax1.autoscale()
+    else:
+        avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
+        minx = xdates[0]  - avg_dist_between_points
+        maxx = xdates[-1] + avg_dist_between_points
+        miny = min([low for low in lows if low != -1])
+        maxy = max([high for high in highs if high != -1])
+        corners = (minx, miny), (maxx, maxy)
+        ax1.update_datalim(corners)
 
     if config['volume']:
         vup,vdown = style['marketcolors']['volume'].values()

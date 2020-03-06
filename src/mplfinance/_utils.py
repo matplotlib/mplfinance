@@ -8,7 +8,8 @@ import matplotlib.dates as mdates
 import datetime
 
 from matplotlib import colors as mcolors
-from matplotlib.collections import LineCollection, PolyCollection
+from matplotlib.patches import Rectangle
+from matplotlib.collections import LineCollection, PolyCollection, PatchCollection
 
 from six.moves import zip
 
@@ -262,7 +263,7 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
 
     return rangeCollection, barCollection
 
-def _construct_renko_collections(dates, renko_params, closes, marketcolors=None):
+def _construct_renko_collections(renko_params, closes, marketcolors=None):
     """Represent the price change with bricks
 
     Parameters
@@ -278,9 +279,47 @@ def _construct_renko_collections(dates, renko_params, closes, marketcolors=None)
     Returns
     -------
     ret : tuple
-        (lineCollection, barCollection)
+        PatchCollection
     """
-    return True
+    if marketcolors is None:
+        marketcolors = _get_mpfstyle('classic')['marketcolors']
+        print('default market colors:',marketcolors)
+    
+    renko_type = renko_params['type']
+    brick_size = renko_params['brick_size']
+    atr_length = renko_params['atr_length']
+
+    cdiff = [(closes[i+1] - closes[i])/brick_size for i in range(len(closes)-1)] # fill cdiff with close price change
+
+    bricks = []
+
+    prev_num = 0
+
+    for diff in cdiff:
+        if diff > 0:
+            bricks.extend([1]*int(round(diff, 0)))
+        else:
+            bricks.extend([-1]*abs(int(round(diff, 0))))
+
+    patches = []
+    for index, number in enumerate(bricks):
+        if number == 1: # positive
+            facecolor='green'
+        else: # negative
+            facecolor='red'
+
+        prev_num += number
+
+        renko = Rectangle(
+            xy=(index, prev_num * brick_size),
+            width=1,
+            height=brick_size,
+            facecolor=facecolor,
+            alpha=0.5
+        )
+        patches.append(renko) # add rectangle to the plot
+    
+    return (PatchCollection(patches, match_original=False), )
 
 from matplotlib.ticker import Formatter
 class IntegerIndexDateTimeFormatter(Formatter):
