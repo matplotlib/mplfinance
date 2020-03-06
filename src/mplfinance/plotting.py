@@ -14,12 +14,13 @@ from itertools import cycle
 
 from mplfinance._utils import _construct_ohlc_collections
 from mplfinance._utils import _construct_candlestick_collections
+
 from mplfinance._utils import _updown_colors
 from mplfinance._utils import IntegerIndexDateTimeFormatter
 
 from mplfinance import _styles
 
-from mplfinance._arg_validators import _check_and_prepare_data, _mav_validator
+from mplfinance._arg_validators import _check_and_prepare_data, _mav_validator, _renko_params_validator
 from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 from mplfinance._arg_validators import _kwarg_not_implemented, _bypass_kwarg_validation
 
@@ -72,6 +73,9 @@ def _valid_plot_kwargs():
  
         'mav'         : { 'Default'     : None,
                           'Validator'   : _mav_validator },
+        
+        'renko_params': { 'Default'     : dict(type='pmove', brick_size='atr', atr_length=14),
+                          'Validator'   : _renko_params_validator },
  
         'study'       : { 'Default'     : None,
                          #'Validator'   : lambda value: isinstance(value,dict) }, #{'studyname': {study parms}} example: {'TE':{'mav':20,'upper':2,'lower':2}}
