@@ -14,6 +14,7 @@ from itertools import cycle
 
 from mplfinance._utils import _construct_ohlc_collections
 from mplfinance._utils import _construct_candlestick_collections
+from mplfinance._utils import _construct_renko_collections
 
 from mplfinance._utils import _updown_colors
 from mplfinance._utils import IntegerIndexDateTimeFormatter
@@ -242,6 +243,8 @@ def plot( data, **kwargs ):
 
     ptype = config['type']
 
+    renko_params = config['renko_params']
+
     collections = None
     if ptype == 'candle' or ptype == 'candlestick':
         collections = _construct_candlestick_collections(xdates, opens, highs, lows, closes,
@@ -249,6 +252,9 @@ def plot( data, **kwargs ):
     elif ptype == 'ohlc' or ptype == 'bars' or ptype == 'ohlc_bars':
         collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes,
                                                          marketcolors=style['marketcolors'] )
+    elif ptype == 'renko':
+        collections = _construct_renko_collections(xdates, renko_params, closes,
+                                                         marketcolors=style['marketcolors'] )                                                     
     elif ptype == 'line':
         ax1.plot(xdates, closes, color=config['linecolor'])
     else:
