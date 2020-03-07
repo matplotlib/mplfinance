@@ -16,6 +16,7 @@ from mplfinance._utils import _construct_ohlc_collections
 from mplfinance._utils import _construct_candlestick_collections
 from mplfinance._utils import _construct_renko_collections
 
+from mplfinance._utils import renko_reformat_ydata
 from mplfinance._utils import _updown_colors
 from mplfinance._utils import IntegerIndexDateTimeFormatter
 
@@ -222,12 +223,10 @@ def plot( data, **kwargs ):
         for apdict in addplot:
             if apdict['panel'] == 'lower':
                 need_lower_panel = True
-                break
-    
-    ptype = config['type']            
+                break           
 
     #  fig.add_axes( [left, bottom, width, height] ) ... numbers are fraction of fig
-    if need_lower_panel or config['volume'] and ptype is not 'renko':
+    if need_lower_panel or config['volume']:
         ax1 = fig.add_axes( [0.15, 0.38, 0.70, 0.50] )
         ax2 = fig.add_axes( [0.15, 0.18, 0.70, 0.20], sharex=ax1 )
         plt.xticks(rotation=45) # must do this after creation of axis, and
@@ -258,7 +257,7 @@ def plot( data, **kwargs ):
         else:
            fmtstring = '%b %d'
 
-    
+    ptype = config['type'] 
 
     if ptype is not 'renko':
         if config['show_nontrading']:
@@ -270,10 +269,6 @@ def plot( data, **kwargs ):
         
         ax1.xaxis.set_major_formatter(formatter)
 
-    
-
-    renko_params = config['renko_params']
-
     collections = None
     if ptype == 'candle' or ptype == 'candlestick':
         collections = _construct_candlestick_collections(xdates, opens, highs, lows, closes,
@@ -282,8 +277,8 @@ def plot( data, **kwargs ):
         collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes,
                                                          marketcolors=style['marketcolors'] )
     elif ptype == 'renko':
-        renko_params = _process_kwargs(kwargs['renko_params'] if 'renko_params' in kwargs else dict(), _valid_renko_kwargs())
-        collections, new_dates = _construct_renko_collections(dates, highs, lows, renko_params, closes,
+        renko_params = _process_kwargs(config['renko_params'], _valid_renko_kwargs())
+        collections, new_dates, volumes = _construct_renko_collections(dates, highs, lows, volumes, renko_params, closes,
                                                          marketcolors=style['marketcolors'] )
         
         formatter = IntegerIndexDateTimeFormatter(new_dates, fmtstring)
@@ -312,25 +307,23 @@ def plot( data, **kwargs ):
             mavc = None
             
         for mav in mavgs:
-            mavprices = data['Close'].rolling(mav).mean().values 
+            mavprices = data['Close'].rolling(mav).mean().values
+            if ptype == 'renko':
+                mavprices = renko_reformat_ydata(mavprices, new_dates, dates) 
             if mavc:
                 ax1.plot(xdates, mavprices, color=next(mavc))
             else:
                 ax1.plot(xdates, mavprices)
 
-    
-    if ptype == 'renko':
-        ax1.autoscale()
-    else:
-        avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
-        minx = xdates[0]  - avg_dist_between_points
-        maxx = xdates[-1] + avg_dist_between_points
-        miny = min([low for low in lows if low != -1])
-        maxy = max([high for high in highs if high != -1])
-        corners = (minx, miny), (maxx, maxy)
-        ax1.update_datalim(corners)
+    avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
+    minx = xdates[0]  - avg_dist_between_points
+    maxx = xdates[-1] + avg_dist_between_points
+    miny = min([low for low in lows if low != -1])
+    maxy = max([high for high in highs if high != -1])
+    corners = (minx, miny), (maxx, maxy)
+    ax1.update_datalim(corners)
 
-    if config['volume'] and ptype is not 'renko':
+    if config['volume']:
         vup,vdown = style['marketcolors']['volume'].values()
         #-- print('vup,vdown=',vup,vdown)
         vcolors = _updown_colors(vup, vdown, opens, closes, use_prev_close=style['marketcolors']['vcdopcod'])
@@ -415,6 +408,9 @@ def plot( data, **kwargs ):
                 if ax == ax4:
                     used_ax4 = True
 
+                if ptype == 'renko':
+                    ydata = renko_reformat_ydata(ydata, new_dates, dates)
+
                 if apdict['scatter']:
                     size  = apdict['markersize']
                     mark  = apdict['marker']
@@ -449,7 +445,7 @@ def plot( data, **kwargs ):
                 ax4.yaxis.set_label_position('right')
                 ax4.yaxis.tick_right()
 
-    if need_lower_panel or config['volume'] and ptype is not 'renko':
+    if need_lower_panel or config['volume']:
         ax1.spines['bottom'].set_linewidth(0.25)
         ax2.spines['top'   ].set_linewidth(0.25)
         plt.setp(ax1.get_xticklabels(), visible=False)
@@ -476,7 +472,7 @@ def plot( data, **kwargs ):
 
     ax1.set_ylabel(config['ylabel'])
 
-    if config['volume'] and ptype is not 'renko':
+    if config['volume']:
         ax2.figure.canvas.draw()  # This is needed to calculate offset
         offset = ax2.yaxis.get_major_formatter().get_offset()
         ax2.yaxis.offsetText.set_visible(False)

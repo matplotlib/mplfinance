@@ -82,7 +82,7 @@ def roundTime(dt=None, roundTo=60):
    rounding = (seconds+roundTo/2) // roundTo * roundTo
    return dt + datetime.timedelta(0,rounding-seconds,-dt.microsecond)
 
-def calculate_atr(atr_length, highs, lows, closes):
+def _calculate_atr(atr_length, highs, lows, closes):
     """Calculate the average true range
     atr_length : time period to calculate over
     all_highs : list of highs
@@ -97,6 +97,30 @@ def calculate_atr(atr_length, highs, lows, closes):
         tr = max(abs(high-low), abs(high-close_prev), abs(low-close_prev))
         atr += tr
     return atr/atr_length
+
+def renko_reformat_ydata(ydata, dates, old_dates):
+    """Reformats ydata to work on renko charts, can lead to unexpected 
+    outputs for the user as the xaxis does not scale evenly with dates.
+    Missing dates ydata is averaged into the next date and dates that appear
+    more than once have the same ydata
+    ydata : y data likely coming from addplot
+    dates : x-axis dates for the renko chart
+    old_dates : original dates in the data set
+    """
+    new_ydata = [] # stores new ydata
+    prev_data = 0
+    skipped_dates = 0
+    count_skip = 0
+    for i in range(len(ydata)):
+        if old_dates[i] not in dates:
+            prev_data += ydata[i]
+            skipped_dates += 1
+        else:
+            dup_dates = dates.count(old_dates[i])
+            new_ydata.extend([(ydata[i]+prev_data)/(skipped_dates+1)]*dup_dates)
+            skipped_dates = 0
+            prev_data = 0
+    return new_ydata
 
 def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False):
     if upcolor == downcolor:
@@ -279,7 +303,7 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
 
     return rangeCollection, barCollection
 
-def _construct_renko_collections(dates, highs, lows, renko_params, closes, marketcolors=None):
+def _construct_renko_collections(dates, highs, lows, volumes, renko_params, closes, marketcolors=None):
     """Represent the price change with bricks
 
     Parameters
@@ -314,21 +338,25 @@ def _construct_renko_collections(dates, highs, lows, renko_params, closes, marke
         raise ValueError("Specified atr_length is larger than the length of the dataset: " + str(len(closes)))
 
     if brick_size == 'atr':
-        brick_size = calculate_atr(atr_length, highs, lows, closes)
-        print(brick_size)
+        brick_size = _calculate_atr(atr_length, highs, lows, closes)
 
     alpha  = marketcolors['alpha']
 
-    uc     = mcolors.to_rgba(marketcolors['candle'][ 'up' ], alpha)
-    dc     = mcolors.to_rgba(marketcolors['candle']['down'], alpha)
+    uc     = mcolors.to_rgba(marketcolors['candle'][ 'up' ], 1.0)
+    dc     = mcolors.to_rgba(marketcolors['candle']['down'], 1.0)
+    euc     = mcolors.to_rgba(marketcolors['edge'][ 'up' ], 1.0)
+    edc     = mcolors.to_rgba(marketcolors['edge']['down'], 1.0)
 
     cdiff = [(closes[i+1] - closes[i])/brick_size for i in range(len(closes)-1)] # fill cdiff with close price change
 
     bricks = [] # holds bricks, 1 for down bricks, -1 for up bricks
     new_dates = [] # holds the dates corresponding with the index
+    new_volumes = [] # holds the volumes corresponding with the index.  If more than one index for the same day then they all have the same volume.
 
     prev_num = 0
     start_price = closes[0]
+
+    volume_cache = 0 # holds the volumes for the dates that were skipped
     
 
     for i in range(len(cdiff)):
@@ -336,6 +364,10 @@ def _construct_renko_collections(dates, highs, lows, renko_params, closes, marke
 
         if num_bricks != 0:
             new_dates.extend([dates[i]]*num_bricks)
+            new_volumes.extend([volumes[i] + volume_cache]*num_bricks)
+            volume_cache = 0
+        else:
+            volume_cache += volumes[i]
 
         if cdiff[i] > 0:
             bricks.extend([1]*num_bricks)
@@ -344,11 +376,14 @@ def _construct_renko_collections(dates, highs, lows, renko_params, closes, marke
 
     verts = []
     colors = []
+    edge_colors = []
     for index, number in enumerate(bricks):
         if number == 1: # up brick
             colors.append(uc)
+            edge_colors.append(euc)
         else: # down brick
             colors.append(dc)
+            edge_colors.append(edc)
 
         prev_num += number
         x, y = index, start_price + (prev_num * brick_size)
@@ -365,10 +400,11 @@ def _construct_renko_collections(dates, highs, lows, renko_params, closes, marke
     rectCollection = PolyCollection(verts,
                                    facecolors=colors,
                                    antialiaseds=useAA,
+                                   edgecolors=edge_colors,
                                    linewidths=lw
                                    )
     
-    return (rectCollection, ), new_dates
+    return (rectCollection, ), new_dates, new_volumes
 
 from matplotlib.ticker import Formatter
 class IntegerIndexDateTimeFormatter(Formatter):
