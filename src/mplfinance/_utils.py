@@ -307,7 +307,6 @@ def _construct_renko_collections(dates, highs, lows, renko_params, closes, marke
         marketcolors = _get_mpfstyle('classic')['marketcolors']
         print('default market colors:',marketcolors)
     
-    renko_type = renko_params['type']
     brick_size = renko_params['brick_size']
     atr_length = renko_params['atr_length']
 
@@ -316,6 +315,7 @@ def _construct_renko_collections(dates, highs, lows, renko_params, closes, marke
 
     if brick_size == 'atr':
         brick_size = calculate_atr(atr_length, highs, lows, closes)
+        print(brick_size)
 
     alpha  = marketcolors['alpha']
 

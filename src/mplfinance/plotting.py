@@ -144,8 +144,6 @@ def _valid_renko_kwargs():
                          kwarg value is one of the allowed values.
     '''
     vkwargs = {
-        'type'        : { 'Default'     : 'pmove',
-                          'Validator'   : lambda value: value in ['pmove','pclose'] },
         'brick_size'  : { 'Default'     : 2.0,
                           'Validator'   : lambda value: isinstance(value,float) or isinstance(value,int) or value == 'atr' },
         'atr_length'  : { 'Default'     : 14,
