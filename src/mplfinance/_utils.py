@@ -82,6 +82,22 @@ def roundTime(dt=None, roundTo=60):
    rounding = (seconds+roundTo/2) // roundTo * roundTo
    return dt + datetime.timedelta(0,rounding-seconds,-dt.microsecond)
 
+def calculate_atr(atr_length, highs, lows, closes):
+    """Calculate the average true range
+    atr_length : time period to calculate over
+    all_highs : list of highs
+    all_lows : list of lows
+    all_closes : list of closes
+    """
+    atr = 0
+    for i in range(len(highs)-atr_length, len(highs)):
+        high = highs[i]
+        low = lows[i]
+        close_prev = closes[i-1]
+        tr = max(abs(high-low), abs(high-close_prev), abs(low-close_prev))
+        atr += tr
+    return atr/atr_length
+
 def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False):
     if upcolor == downcolor:
         return upcolor
@@ -263,11 +279,17 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
 
     return rangeCollection, barCollection
 
-def _construct_renko_collections(dates, renko_params, closes, marketcolors=None):
+def _construct_renko_collections(dates, highs, lows, renko_params, closes, marketcolors=None):
     """Represent the price change with bricks
 
     Parameters
     ----------
+    dates : sequence
+        sequence of dates
+    highs : sequence
+        sequence of high values
+    lows : sequence
+        sequence of low values
     renko_params : dictionary
         type : type of renko chart
         brick_size : size of each brick
@@ -288,6 +310,12 @@ def _construct_renko_collections(dates, renko_params, closes, marketcolors=None)
     renko_type = renko_params['type']
     brick_size = renko_params['brick_size']
     atr_length = renko_params['atr_length']
+
+    if atr_length > len(closes):
+        raise ValueError("Specified atr_length is larger than the length of the dataset: " + str(len(closes)))
+
+    if brick_size == 'atr':
+        brick_size = calculate_atr(atr_length, highs, lows, closes)
 
     alpha  = marketcolors['alpha']
 

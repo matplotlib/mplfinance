@@ -225,9 +225,11 @@ def plot( data, **kwargs ):
             if apdict['panel'] == 'lower':
                 need_lower_panel = True
                 break
+    
+    ptype = config['type']            
 
     #  fig.add_axes( [left, bottom, width, height] ) ... numbers are fraction of fig
-    if need_lower_panel or config['volume']:
+    if need_lower_panel or config['volume'] and ptype is not 'renko':
         ax1 = fig.add_axes( [0.15, 0.38, 0.70, 0.50] )
         ax2 = fig.add_axes( [0.15, 0.18, 0.70, 0.20], sharex=ax1 )
         plt.xticks(rotation=45) # must do this after creation of axis, and
@@ -258,7 +260,7 @@ def plot( data, **kwargs ):
         else:
            fmtstring = '%b %d'
 
-    ptype = config['type']
+    
 
     if ptype is not 'renko':
         if config['show_nontrading']:
@@ -282,8 +284,8 @@ def plot( data, **kwargs ):
         collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes,
                                                          marketcolors=style['marketcolors'] )
     elif ptype == 'renko':
-        renko_params = _process_kwargs(kwargs['renko_params'], _valid_renko_kwargs())
-        collections, new_dates = _construct_renko_collections(dates, renko_params, closes,
+        renko_params = _process_kwargs(kwargs['renko_params'] if 'renko_params' in kwargs else dict(), _valid_renko_kwargs())
+        collections, new_dates = _construct_renko_collections(dates, highs, lows, renko_params, closes,
                                                          marketcolors=style['marketcolors'] )
         
         formatter = IntegerIndexDateTimeFormatter(new_dates, fmtstring)
@@ -318,6 +320,7 @@ def plot( data, **kwargs ):
             else:
                 ax1.plot(xdates, mavprices)
 
+    
     if ptype == 'renko':
         ax1.autoscale()
     else:
@@ -329,7 +332,7 @@ def plot( data, **kwargs ):
         corners = (minx, miny), (maxx, maxy)
         ax1.update_datalim(corners)
 
-    if config['volume']:
+    if config['volume'] and ptype is not 'renko':
         vup,vdown = style['marketcolors']['volume'].values()
         #-- print('vup,vdown=',vup,vdown)
         vcolors = _updown_colors(vup, vdown, opens, closes, use_prev_close=style['marketcolors']['vcdopcod'])
@@ -448,7 +451,7 @@ def plot( data, **kwargs ):
                 ax4.yaxis.set_label_position('right')
                 ax4.yaxis.tick_right()
 
-    if need_lower_panel or config['volume']:
+    if need_lower_panel or config['volume'] and ptype is not 'renko':
         ax1.spines['bottom'].set_linewidth(0.25)
         ax2.spines['top'   ].set_linewidth(0.25)
         plt.setp(ax1.get_xticklabels(), visible=False)
@@ -475,7 +478,7 @@ def plot( data, **kwargs ):
 
     ax1.set_ylabel(config['ylabel'])
 
-    if config['volume']:
+    if config['volume'] and ptype is not 'renko':
         ax2.figure.canvas.draw()  # This is needed to calculate offset
         offset = ax2.yaxis.get_major_formatter().get_offset()
         ax2.yaxis.offsetText.set_visible(False)
