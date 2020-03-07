@@ -263,7 +263,7 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
 
     return rangeCollection, barCollection
 
-def _construct_renko_collections(renko_params, closes, marketcolors=None):
+def _construct_renko_collections(dates, renko_params, closes, marketcolors=None):
     """Represent the price change with bricks
 
     Parameters
@@ -296,24 +296,30 @@ def _construct_renko_collections(renko_params, closes, marketcolors=None):
 
     cdiff = [(closes[i+1] - closes[i])/brick_size for i in range(len(closes)-1)] # fill cdiff with close price change
 
-    bricks = []
+    bricks = [] # holds bricks, 1 for down bricks, -1 for up bricks
+    new_dates = [] # holds the dates corresponding with the index
 
     prev_num = 0
     start_price = closes[0]
     
 
-    for diff in cdiff:
-        if diff > 0:
-            bricks.extend([1]*int(round(diff, 0)))
+    for i in range(len(cdiff)):
+        num_bricks = abs(int(round(cdiff[i], 0)))
+
+        if num_bricks != 0:
+            new_dates.extend([dates[i]]*num_bricks)
+
+        if cdiff[i] > 0:
+            bricks.extend([1]*num_bricks)
         else:
-            bricks.extend([-1]*abs(int(round(diff, 0))))
+            bricks.extend([-1]*num_bricks)
 
     verts = []
     colors = []
     for index, number in enumerate(bricks):
-        if number == 1: # positive
+        if number == 1: # up brick
             colors.append(uc)
-        else: # negative
+        else: # down brick
             colors.append(dc)
 
         prev_num += number
@@ -334,7 +340,7 @@ def _construct_renko_collections(renko_params, closes, marketcolors=None):
                                    linewidths=lw
                                    )
     
-    return (rectCollection, )
+    return (rectCollection, ), new_dates
 
 from matplotlib.ticker import Formatter
 class IntegerIndexDateTimeFormatter(Formatter):

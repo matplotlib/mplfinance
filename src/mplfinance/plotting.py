@@ -258,16 +258,19 @@ def plot( data, **kwargs ):
         else:
            fmtstring = '%b %d'
 
-    if config['show_nontrading']:
-        formatter = mdates.DateFormatter(fmtstring)
-        xdates = dates
-    else:
-        formatter = IntegerIndexDateTimeFormatter(dates, fmtstring)
-        xdates = np.arange(len(dates))
-    
-    ax1.xaxis.set_major_formatter(formatter)
-
     ptype = config['type']
+
+    if ptype is not 'renko':
+        if config['show_nontrading']:
+            formatter = mdates.DateFormatter(fmtstring)
+            xdates = dates
+        else:
+            formatter = IntegerIndexDateTimeFormatter(dates, fmtstring)
+            xdates = np.arange(len(dates))
+        
+        ax1.xaxis.set_major_formatter(formatter)
+
+    
 
     renko_params = config['renko_params']
 
@@ -280,8 +283,13 @@ def plot( data, **kwargs ):
                                                          marketcolors=style['marketcolors'] )
     elif ptype == 'renko':
         renko_params = _process_kwargs(kwargs['renko_params'], _valid_renko_kwargs())
-        collections = _construct_renko_collections(renko_params, closes,
-                                                         marketcolors=style['marketcolors'] )                                                     
+        collections, new_dates = _construct_renko_collections(dates, renko_params, closes,
+                                                         marketcolors=style['marketcolors'] )
+        
+        formatter = IntegerIndexDateTimeFormatter(new_dates, fmtstring)
+        xdates = np.arange(len(new_dates))
+
+        ax1.xaxis.set_major_formatter(formatter)                                                     
     elif ptype == 'line':
         ax1.plot(xdates, closes, color=config['linecolor'])
     else:
