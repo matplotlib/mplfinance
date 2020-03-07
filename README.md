@@ -180,7 +180,7 @@ mpf.plot(daily)
 ---
 <br>
 
-The default plot type, as you can see above, is `'ohlc'`.  Other plot types can be specified with the keyword argument `type`, for example, `type='candle'` or `type='line'`
+The default plot type, as you can see above, is `'ohlc'`.  Other plot types can be specified with the keyword argument `type`, for example, `type='candle'`, `type='line'`, or `type='renko'`
 
 
 ```python
@@ -198,6 +198,15 @@ mpf.plot(daily,type='line')
 
 
 ![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_7_1.png)
+
+
+
+```python
+mpf.plot(daily,type='renko')
+```
+
+
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_8_1.png)
 
 
 ---
