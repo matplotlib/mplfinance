@@ -103,14 +103,13 @@ def renko_reformat_ydata(ydata, dates, old_dates):
     outputs for the user as the xaxis does not scale evenly with dates.
     Missing dates ydata is averaged into the next date and dates that appear
     more than once have the same ydata
-    ydata : y data likely coming from addplot
+    ydata : y data
     dates : x-axis dates for the renko chart
     old_dates : original dates in the data set
     """
     new_ydata = [] # stores new ydata
     prev_data = 0
     skipped_dates = 0
-    count_skip = 0
     for i in range(len(ydata)):
         if old_dates[i] not in dates:
             prev_data += ydata[i]
