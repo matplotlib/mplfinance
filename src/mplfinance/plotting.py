@@ -132,29 +132,6 @@ def _valid_plot_kwargs():
     return vkwargs
 
 
-def _valid_renko_kwargs():
-    '''
-    Construct and return the "valid renko kwargs table" for the mplfinance.plot(type='renko') function.
-    A valid kwargs table is a `dict` of `dict`s.  The keys of the outer dict are the
-    valid key-words for the function.  The value for each key is a dict containing
-    2 specific keys: "Default", and "Validator" with the following values:
-        "Default"      - The default value for the kwarg if none is specified.
-        "Validator"    - A function that takes the caller specified value for the kwarg,
-                         and validates that it is the correct type, and (for kwargs with 
-                         a limited set of allowed values) may also validate that the
-                         kwarg value is one of the allowed values.
-    '''
-    vkwargs = {
-        'brick_size'  : { 'Default'     : 2.0,
-                          'Validator'   : lambda value: isinstance(value,float) or isinstance(value,int) or value == 'atr' },
-        'atr_length'  : { 'Default'     : 14,
-                          'Validator'   : lambda value: isinstance(value,int) },               
-    }
-
-    _validate_vkwargs_dict(vkwargs)
-
-    return vkwargs
-
 
 def rcParams_to_df(rcp,name=None):
     keys = []
@@ -277,8 +254,7 @@ def plot( data, **kwargs ):
         collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes,
                                                          marketcolors=style['marketcolors'] )
     elif ptype == 'renko':
-        renko_params = _process_kwargs(config['renko_params'], _valid_renko_kwargs())
-        collections, new_dates, volumes = _construct_renko_collections(dates, highs, lows, volumes, renko_params, closes,
+        collections, new_dates, volumes, brick_values = _construct_renko_collections(dates, highs, lows, volumes, config['renko_params'], closes,
                                                          marketcolors=style['marketcolors'] )
         
         formatter = IntegerIndexDateTimeFormatter(new_dates, fmtstring)
@@ -307,9 +283,10 @@ def plot( data, **kwargs ):
             mavc = None
             
         for mav in mavgs:
-            mavprices = data['Close'].rolling(mav).mean().values
             if ptype == 'renko':
-                mavprices = renko_reformat_ydata(mavprices, new_dates, dates) 
+                mavprices = brick_values.rolling(mav).mean().values
+            else:
+                mavprices = data['Close'].rolling(mav).mean().values
             if mavc:
                 ax1.plot(xdates, mavprices, color=next(mavc))
             else:

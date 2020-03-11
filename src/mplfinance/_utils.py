@@ -4,12 +4,13 @@ A collection of utilities for analyzing and plotting financial data.
 """
 
 import numpy as np
+import pandas as pd
 import matplotlib.dates as mdates
 import datetime
 
 from matplotlib import colors as mcolors
-from matplotlib.patches import Rectangle
-from matplotlib.collections import LineCollection, PolyCollection, PatchCollection
+from matplotlib.collections import LineCollection, PolyCollection
+from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 
 from six.moves import zip
 
@@ -89,6 +90,10 @@ def _calculate_atr(atr_length, highs, lows, closes):
     all_lows : list of lows
     all_closes : list of closes
     """
+    if atr_length < 0:
+        raise ValueError("Specified atr_length may not be less than 0")
+    elif atr_length > len(closes):
+        raise ValueError("Specified atr_length is larger than the length of the dataset: " + str(len(closes)))
     atr = 0
     for i in range(len(highs)-atr_length, len(highs)):
         high = highs[i]
@@ -103,7 +108,7 @@ def renko_reformat_ydata(ydata, dates, old_dates):
     outputs for the user as the xaxis does not scale evenly with dates.
     Missing dates ydata is averaged into the next date and dates that appear
     more than once have the same ydata
-    ydata : y data
+    ydata : y data likely coming from addplot
     dates : x-axis dates for the renko chart
     old_dates : original dates in the data set
     """
@@ -131,6 +136,29 @@ def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False):
         first = cmap[opens[0] < closes[0]] 
         _list = [ cmap[pre < cls] for cls,pre in zip(closes[1:], closes) ]
         return [first] + _list
+
+def _valid_renko_kwargs():
+    '''
+    Construct and return the "valid renko kwargs table" for the mplfinance.plot(type='renko') function.
+    A valid kwargs table is a `dict` of `dict`s.  The keys of the outer dict are the
+    valid key-words for the function.  The value for each key is a dict containing
+    2 specific keys: "Default", and "Validator" with the following values:
+        "Default"      - The default value for the kwarg if none is specified.
+        "Validator"    - A function that takes the caller specified value for the kwarg,
+                         and validates that it is the correct type, and (for kwargs with 
+                         a limited set of allowed values) may also validate that the
+                         kwarg value is one of the allowed values.
+    '''
+    vkwargs = {
+        'brick_size'  : { 'Default'     : 2.0,
+                          'Validator'   : lambda value: isinstance(value,float) or isinstance(value,int) or value == 'atr' },
+        'atr_length'  : { 'Default'     : 14,
+                          'Validator'   : lambda value: isinstance(value,int) },               
+    }
+
+    _validate_vkwargs_dict(vkwargs)
+
+    return vkwargs
 
 def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=None):
     """Represent the time, open, high, low, close as a vertical line
@@ -302,7 +330,7 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
 
     return rangeCollection, barCollection
 
-def _construct_renko_collections(dates, highs, lows, volumes, renko_params, closes, marketcolors=None):
+def _construct_renko_collections(dates, highs, lows, volumes, config_renko_params, closes, marketcolors=None):
     """Represent the price change with bricks
 
     Parameters
@@ -326,15 +354,14 @@ def _construct_renko_collections(dates, highs, lows, volumes, renko_params, clos
     ret : tuple
         rectCollection
     """
+    renko_params = _process_kwargs(config_renko_params, _valid_renko_kwargs())
     if marketcolors is None:
         marketcolors = _get_mpfstyle('classic')['marketcolors']
         print('default market colors:',marketcolors)
     
     brick_size = renko_params['brick_size']
     atr_length = renko_params['atr_length']
-
-    if atr_length > len(closes):
-        raise ValueError("Specified atr_length is larger than the length of the dataset: " + str(len(closes)))
+    
 
     if brick_size == 'atr':
         brick_size = _calculate_atr(atr_length, highs, lows, closes)
@@ -363,6 +390,8 @@ def _construct_renko_collections(dates, highs, lows, volumes, renko_params, clos
 
         if num_bricks != 0:
             new_dates.extend([dates[i]]*num_bricks)
+            if volumes[i] is None: # No values passed in for volume and volume=True
+                volumes[i] = 0
             new_volumes.extend([volumes[i] + volume_cache]*num_bricks)
             volume_cache = 0
         else:
@@ -376,6 +405,7 @@ def _construct_renko_collections(dates, highs, lows, volumes, renko_params, clos
     verts = []
     colors = []
     edge_colors = []
+    brick_values = []
     for index, number in enumerate(bricks):
         if number == 1: # up brick
             colors.append(uc)
@@ -385,7 +415,9 @@ def _construct_renko_collections(dates, highs, lows, volumes, renko_params, clos
             edge_colors.append(edc)
 
         prev_num += number
-        x, y = index, start_price + (prev_num * brick_size)
+        brick_y = start_price + (prev_num * brick_size)
+        brick_values.append(brick_y)
+        x, y = index, brick_y
 
         verts.append((
             (x, y),
@@ -394,6 +426,8 @@ def _construct_renko_collections(dates, highs, lows, volumes, renko_params, clos
             (x+1, y)))
             
     
+    bricks_df = pd.DataFrame(brick_values) # turn brick_values into a dataframe to be able to call .rolling to calculate mav 
+
     useAA = 0,    # use tuple here
     lw = None
     rectCollection = PolyCollection(verts,
@@ -403,7 +437,7 @@ def _construct_renko_collections(dates, highs, lows, volumes, renko_params, clos
                                    linewidths=lw
                                    )
     
-    return (rectCollection, ), new_dates, new_volumes
+    return (rectCollection, ), new_dates, new_volumes, bricks_df
 
 from matplotlib.ticker import Formatter
 class IntegerIndexDateTimeFormatter(Formatter):
