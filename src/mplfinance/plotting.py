@@ -264,7 +264,7 @@ def plot( data, **kwargs ):
     elif ptype == 'line':
         ax1.plot(xdates, closes, color=config['linecolor'])
     else:
-        raise ValueError('Unrecognized plot type = "'+ptype+'"')
+        raise ValueError('Unrecognized plot type = "'+ ptype + '"')
 
     if collections is not None:
         for collection in collections:
@@ -284,7 +284,7 @@ def plot( data, **kwargs ):
             
         for mav in mavgs:
             if ptype == 'renko':
-                mavprices = brick_values.rolling(mav).mean().values
+                mavprices = pd.Series(brick_values).rolling(mav).mean().values
             else:
                 mavprices = data['Close'].rolling(mav).mean().values
             if mavc:
@@ -316,7 +316,7 @@ def plot( data, **kwargs ):
     used_ax3 = False
     used_ax4 = False
     addplot = config['addplot']
-    if addplot is not None:
+    if addplot is not None and ptype is not 'renko':
         # Calculate the Order of Magnitude Range
         # If addplot['secondary_y'] == 'auto', then: If the addplot['data']
         # is out of the Order of Magnitude Range, then use secondary_y.

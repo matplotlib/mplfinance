@@ -4,7 +4,6 @@ A collection of utilities for analyzing and plotting financial data.
 """
 
 import numpy as np
-import pandas as pd
 import matplotlib.dates as mdates
 import datetime
 
@@ -90,9 +89,9 @@ def _calculate_atr(atr_length, highs, lows, closes):
     all_lows : list of lows
     all_closes : list of closes
     """
-    if atr_length < 0:
-        raise ValueError("Specified atr_length may not be less than 0")
-    elif atr_length > len(closes):
+    if atr_length < 1:
+        raise ValueError("Specified atr_length may not be less than 1")
+    elif atr_length >= len(closes):
         raise ValueError("Specified atr_length is larger than the length of the dataset: " + str(len(closes)))
     atr = 0
     for i in range(len(highs)-atr_length, len(highs)):
@@ -150,8 +149,8 @@ def _valid_renko_kwargs():
                          kwarg value is one of the allowed values.
     '''
     vkwargs = {
-        'brick_size'  : { 'Default'     : 2.0,
-                          'Validator'   : lambda value: isinstance(value,float) or isinstance(value,int) or value == 'atr' },
+        'brick_size'  : { 'Default'     : 'atr',
+                          'Validator'   : lambda value: isinstance(value,(float,int)) or value == 'atr' },
         'atr_length'  : { 'Default'     : 14,
                           'Validator'   : lambda value: isinstance(value,int) },               
     }
@@ -365,11 +364,19 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
 
     if brick_size == 'atr':
         brick_size = _calculate_atr(atr_length, highs, lows, closes)
+    else: # is an integer or float
+        total_atr = _calculate_atr(len(closes)-1, highs, lows, closes)
+        upper_limit = 1.5*total_atr
+        lower_limit = 0.01*total_atr
+        if brick_size > upper_limit:
+            raise ValueError("Specified brick_size may not be larger than (1.5* the Average True Value of the dataset) which has value: "+ str(upper_limit))
+        elif brick_size < lower_limit:
+            raise ValueError("Specified brick_size may not be smaller than (0.01* the Average True Value of the dataset) which has value: "+ str(lower_limit))
 
     alpha  = marketcolors['alpha']
 
-    uc     = mcolors.to_rgba(marketcolors['candle'][ 'up' ], 1.0)
-    dc     = mcolors.to_rgba(marketcolors['candle']['down'], 1.0)
+    uc     = mcolors.to_rgba(marketcolors['candle'][ 'up' ], alpha)
+    dc     = mcolors.to_rgba(marketcolors['candle']['down'], alpha)
     euc     = mcolors.to_rgba(marketcolors['edge'][ 'up' ], 1.0)
     edc     = mcolors.to_rgba(marketcolors['edge']['down'], 1.0)
 
@@ -390,12 +397,13 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
 
         if num_bricks != 0:
             new_dates.extend([dates[i]]*num_bricks)
-            if volumes[i] is None: # No values passed in for volume and volume=True
-                volumes[i] = 0
-            new_volumes.extend([volumes[i] + volume_cache]*num_bricks)
-            volume_cache = 0
-        else:
-            volume_cache += volumes[i]
+            
+        if volumes is not None: # only adds volumes if there are volume values when volume=True
+            if num_bricks != 0:
+                new_volumes.extend([volumes[i] + volume_cache]*num_bricks)
+                volume_cache = 0
+            else:
+                volume_cache += volumes[i]
 
         if cdiff[i] > 0:
             bricks.extend([1]*num_bricks)
@@ -424,9 +432,6 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
             (x, y+brick_size),
             (x+1, y+brick_size),
             (x+1, y)))
-            
-    
-    bricks_df = pd.DataFrame(brick_values) # turn brick_values into a dataframe to be able to call .rolling to calculate mav 
 
     useAA = 0,    # use tuple here
     lw = None
@@ -437,7 +442,7 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
                                    linewidths=lw
                                    )
     
-    return (rectCollection, ), new_dates, new_volumes, bricks_df
+    return (rectCollection, ), new_dates, new_volumes, brick_values
 
 from matplotlib.ticker import Formatter
 class IntegerIndexDateTimeFormatter(Formatter):
