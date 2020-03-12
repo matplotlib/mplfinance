@@ -9,6 +9,7 @@ import datetime
 
 from matplotlib import colors as mcolors
 from matplotlib.collections import LineCollection, PolyCollection
+from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 
 from six.moves import zip
 
@@ -81,6 +82,49 @@ def roundTime(dt=None, roundTo=60):
    rounding = (seconds+roundTo/2) // roundTo * roundTo
    return dt + datetime.timedelta(0,rounding-seconds,-dt.microsecond)
 
+def _calculate_atr(atr_length, highs, lows, closes):
+    """Calculate the average true range
+    atr_length : time period to calculate over
+    all_highs : list of highs
+    all_lows : list of lows
+    all_closes : list of closes
+    """
+    if atr_length < 1:
+        raise ValueError("Specified atr_length may not be less than 1")
+    elif atr_length >= len(closes):
+        raise ValueError("Specified atr_length is larger than the length of the dataset: " + str(len(closes)))
+    atr = 0
+    for i in range(len(highs)-atr_length, len(highs)):
+        high = highs[i]
+        low = lows[i]
+        close_prev = closes[i-1]
+        tr = max(abs(high-low), abs(high-close_prev), abs(low-close_prev))
+        atr += tr
+    return atr/atr_length
+
+def renko_reformat_ydata(ydata, dates, old_dates):
+    """Reformats ydata to work on renko charts, can lead to unexpected 
+    outputs for the user as the xaxis does not scale evenly with dates.
+    Missing dates ydata is averaged into the next date and dates that appear
+    more than once have the same ydata
+    ydata : y data likely coming from addplot
+    dates : x-axis dates for the renko chart
+    old_dates : original dates in the data set
+    """
+    new_ydata = [] # stores new ydata
+    prev_data = 0
+    skipped_dates = 0
+    for i in range(len(ydata)):
+        if old_dates[i] not in dates:
+            prev_data += ydata[i]
+            skipped_dates += 1
+        else:
+            dup_dates = dates.count(old_dates[i])
+            new_ydata.extend([(ydata[i]+prev_data)/(skipped_dates+1)]*dup_dates)
+            skipped_dates = 0
+            prev_data = 0
+    return new_ydata
+
 def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False):
     if upcolor == downcolor:
         return upcolor
@@ -91,6 +135,29 @@ def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False):
         first = cmap[opens[0] < closes[0]] 
         _list = [ cmap[pre < cls] for cls,pre in zip(closes[1:], closes) ]
         return [first] + _list
+
+def _valid_renko_kwargs():
+    '''
+    Construct and return the "valid renko kwargs table" for the mplfinance.plot(type='renko') function.
+    A valid kwargs table is a `dict` of `dict`s.  The keys of the outer dict are the
+    valid key-words for the function.  The value for each key is a dict containing
+    2 specific keys: "Default", and "Validator" with the following values:
+        "Default"      - The default value for the kwarg if none is specified.
+        "Validator"    - A function that takes the caller specified value for the kwarg,
+                         and validates that it is the correct type, and (for kwargs with 
+                         a limited set of allowed values) may also validate that the
+                         kwarg value is one of the allowed values.
+    '''
+    vkwargs = {
+        'brick_size'  : { 'Default'     : 'atr',
+                          'Validator'   : lambda value: isinstance(value,(float,int)) or value == 'atr' },
+        'atr_length'  : { 'Default'     : 14,
+                          'Validator'   : lambda value: isinstance(value,int) },               
+    }
+
+    _validate_vkwargs_dict(vkwargs)
+
+    return vkwargs
 
 def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=None):
     """Represent the time, open, high, low, close as a vertical line
@@ -261,6 +328,121 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
                                    )
 
     return rangeCollection, barCollection
+
+def _construct_renko_collections(dates, highs, lows, volumes, config_renko_params, closes, marketcolors=None):
+    """Represent the price change with bricks
+
+    Parameters
+    ----------
+    dates : sequence
+        sequence of dates
+    highs : sequence
+        sequence of high values
+    lows : sequence
+        sequence of low values
+    renko_params : dictionary
+        type : type of renko chart
+        brick_size : size of each brick
+        atr_legnth : length of time used for calculating atr
+    closes : sequence
+        sequence of closing values
+    marketcolors : dict of colors: up, down, edge, wick, alpha
+
+    Returns
+    -------
+    ret : tuple
+        rectCollection
+    """
+    renko_params = _process_kwargs(config_renko_params, _valid_renko_kwargs())
+    if marketcolors is None:
+        marketcolors = _get_mpfstyle('classic')['marketcolors']
+        print('default market colors:',marketcolors)
+    
+    brick_size = renko_params['brick_size']
+    atr_length = renko_params['atr_length']
+    
+
+    if brick_size == 'atr':
+        brick_size = _calculate_atr(atr_length, highs, lows, closes)
+    else: # is an integer or float
+        total_atr = _calculate_atr(len(closes)-1, highs, lows, closes)
+        upper_limit = 1.5*total_atr
+        lower_limit = 0.01*total_atr
+        if brick_size > upper_limit:
+            raise ValueError("Specified brick_size may not be larger than (1.5* the Average True Value of the dataset) which has value: "+ str(upper_limit))
+        elif brick_size < lower_limit:
+            raise ValueError("Specified brick_size may not be smaller than (0.01* the Average True Value of the dataset) which has value: "+ str(lower_limit))
+
+    alpha  = marketcolors['alpha']
+
+    uc     = mcolors.to_rgba(marketcolors['candle'][ 'up' ], alpha)
+    dc     = mcolors.to_rgba(marketcolors['candle']['down'], alpha)
+    euc     = mcolors.to_rgba(marketcolors['edge'][ 'up' ], 1.0)
+    edc     = mcolors.to_rgba(marketcolors['edge']['down'], 1.0)
+
+    cdiff = [(closes[i+1] - closes[i])/brick_size for i in range(len(closes)-1)] # fill cdiff with close price change
+
+    bricks = [] # holds bricks, 1 for down bricks, -1 for up bricks
+    new_dates = [] # holds the dates corresponding with the index
+    new_volumes = [] # holds the volumes corresponding with the index.  If more than one index for the same day then they all have the same volume.
+
+    prev_num = 0
+    start_price = closes[0]
+
+    volume_cache = 0 # holds the volumes for the dates that were skipped
+    
+
+    for i in range(len(cdiff)):
+        num_bricks = abs(int(round(cdiff[i], 0)))
+
+        if num_bricks != 0:
+            new_dates.extend([dates[i]]*num_bricks)
+            
+        if volumes is not None: # only adds volumes if there are volume values when volume=True
+            if num_bricks != 0:
+                new_volumes.extend([volumes[i] + volume_cache]*num_bricks)
+                volume_cache = 0
+            else:
+                volume_cache += volumes[i]
+
+        if cdiff[i] > 0:
+            bricks.extend([1]*num_bricks)
+        else:
+            bricks.extend([-1]*num_bricks)
+
+    verts = []
+    colors = []
+    edge_colors = []
+    brick_values = []
+    for index, number in enumerate(bricks):
+        if number == 1: # up brick
+            colors.append(uc)
+            edge_colors.append(euc)
+        else: # down brick
+            colors.append(dc)
+            edge_colors.append(edc)
+
+        prev_num += number
+        brick_y = start_price + (prev_num * brick_size)
+        brick_values.append(brick_y)
+        x, y = index, brick_y
+
+        verts.append((
+            (x, y),
+            (x, y+brick_size),
+            (x+1, y+brick_size),
+            (x+1, y)))
+
+    useAA = 0,    # use tuple here
+    lw = None
+    rectCollection = PolyCollection(verts,
+                                   facecolors=colors,
+                                   antialiaseds=useAA,
+                                   edgecolors=edge_colors,
+                                   linewidths=lw
+                                   )
+    
+    return (rectCollection, ), new_dates, new_volumes, brick_values
 
 from matplotlib.ticker import Formatter
 class IntegerIndexDateTimeFormatter(Formatter):
