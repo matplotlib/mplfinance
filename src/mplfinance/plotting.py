@@ -161,6 +161,10 @@ def plot( data, **kwargs ):
     dates,opens,highs,lows,closes,volumes = _check_and_prepare_data(data)
 
     config = _process_kwargs(kwargs, _valid_plot_kwargs())
+    
+    if config['type'] == 'renko' and config['addplot'] is not None:
+        err = "`addplot` is not supported for `type='renko'`"
+        raise ValueError(err)
 
     style = config['style']
     if isinstance(style,str):
