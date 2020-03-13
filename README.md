@@ -18,6 +18,7 @@
   - **[Adding Your Own Technical Studies to Plots](https://github.com/matplotlib/mplfinance/blob/master/examples/addplot.ipynb)**
   - **[Saving the Plot to a File](https://github.com/matplotlib/mplfinance/blob/master/examples/savefig.ipynb)**
   - **[Customizing the Appearance of Plots](https://github.com/matplotlib/mplfinance/blob/master/examples/customization_and_styles.ipynb)**
+  - **[Renko Plots](https://github.com/matplotlib/mplfinance/blob/master/examples/renko_charts.ipynb)**
   - Technical Studies (presently in development)
   - **[Latest Release Info](https://github.com/matplotlib/mplfinance#release)**
   - **[Some Background History About This Package](https://github.com/matplotlib/mplfinance#history)**
@@ -180,7 +181,7 @@ mpf.plot(daily)
 ---
 <br>
 
-The default plot type, as you can see above, is `'ohlc'`.  Other plot types can be specified with the keyword argument `type`, for example, `type='candle'` or `type='line'`
+The default plot type, as you can see above, is `'ohlc'`.  Other plot types can be specified with the keyword argument `type`, for example, `type='candle'`, `type='line'`, or `type='renko'`
 
 
 ```python
@@ -198,6 +199,15 @@ mpf.plot(daily,type='line')
 
 
 ![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_7_1.png)
+
+
+
+```python
+mpf.plot(daily,type='renko')
+```
+
+
+![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_8_1.png)
 
 
 ---

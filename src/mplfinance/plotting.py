@@ -14,6 +14,9 @@ from itertools import cycle
 
 from mplfinance._utils import _construct_ohlc_collections
 from mplfinance._utils import _construct_candlestick_collections
+from mplfinance._utils import _construct_renko_collections
+
+from mplfinance._utils import renko_reformat_ydata
 from mplfinance._utils import _updown_colors
 from mplfinance._utils import IntegerIndexDateTimeFormatter
 
@@ -62,7 +65,7 @@ def _valid_plot_kwargs():
 
     vkwargs = {
         'type'        : { 'Default'     : 'ohlc',
-                          'Validator'   : lambda value: value in ['candle','candlestick','ohlc','bars','ohlc_bars','line'] },
+                          'Validator'   : lambda value: value in ['candle','candlestick','ohlc','bars','ohlc_bars','line', 'renko'] },
  
         'style'       : { 'Default'     : 'default',
                           'Validator'   : lambda value: value in _styles.available_styles() or isinstance(value,dict) },
@@ -72,6 +75,9 @@ def _valid_plot_kwargs():
  
         'mav'         : { 'Default'     : None,
                           'Validator'   : _mav_validator },
+        
+        'renko_params': { 'Default'     : dict(),
+                          'Validator'   : lambda value: isinstance(value,dict) },
  
         'study'       : { 'Default'     : None,
                          #'Validator'   : lambda value: isinstance(value,dict) }, #{'studyname': {study parms}} example: {'TE':{'mav':20,'upper':2,'lower':2}}
@@ -124,7 +130,8 @@ def _valid_plot_kwargs():
     _validate_vkwargs_dict(vkwargs)
 
     return vkwargs
-   
+
+
 
 def rcParams_to_df(rcp,name=None):
     keys = []
@@ -154,6 +161,10 @@ def plot( data, **kwargs ):
     dates,opens,highs,lows,closes,volumes = _check_and_prepare_data(data)
 
     config = _process_kwargs(kwargs, _valid_plot_kwargs())
+    
+    if config['type'] == 'renko' and config['addplot'] is not None:
+        err = "`addplot` is not supported for `type='renko'`"
+        raise ValueError(err)
 
     style = config['style']
     if isinstance(style,str):
@@ -193,7 +204,7 @@ def plot( data, **kwargs ):
         for apdict in addplot:
             if apdict['panel'] == 'lower':
                 need_lower_panel = True
-                break
+                break           
 
     #  fig.add_axes( [left, bottom, width, height] ) ... numbers are fraction of fig
     if need_lower_panel or config['volume']:
@@ -227,16 +238,17 @@ def plot( data, **kwargs ):
         else:
            fmtstring = '%b %d'
 
-    if config['show_nontrading']:
-        formatter = mdates.DateFormatter(fmtstring)
-        xdates = dates
-    else:
-        formatter = IntegerIndexDateTimeFormatter(dates, fmtstring)
-        xdates = np.arange(len(dates))
-    
-    ax1.xaxis.set_major_formatter(formatter)
+    ptype = config['type'] 
 
-    ptype = config['type']
+    if ptype is not 'renko':
+        if config['show_nontrading']:
+            formatter = mdates.DateFormatter(fmtstring)
+            xdates = dates
+        else:
+            formatter = IntegerIndexDateTimeFormatter(dates, fmtstring)
+            xdates = np.arange(len(dates))
+        
+        ax1.xaxis.set_major_formatter(formatter)
 
     collections = None
     if ptype == 'candle' or ptype == 'candlestick':
@@ -245,10 +257,18 @@ def plot( data, **kwargs ):
     elif ptype == 'ohlc' or ptype == 'bars' or ptype == 'ohlc_bars':
         collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes,
                                                          marketcolors=style['marketcolors'] )
+    elif ptype == 'renko':
+        collections, new_dates, volumes, brick_values = _construct_renko_collections(dates, highs, lows, volumes, config['renko_params'], closes,
+                                                         marketcolors=style['marketcolors'] )
+        
+        formatter = IntegerIndexDateTimeFormatter(new_dates, fmtstring)
+        xdates = np.arange(len(new_dates))
+
+        ax1.xaxis.set_major_formatter(formatter)                                                     
     elif ptype == 'line':
         ax1.plot(xdates, closes, color=config['linecolor'])
     else:
-        raise ValueError('Unrecognized plot type = "'+ptype+'"')
+        raise ValueError('Unrecognized plot type = "'+ ptype + '"')
 
     if collections is not None:
         for collection in collections:
@@ -267,7 +287,10 @@ def plot( data, **kwargs ):
             mavc = None
             
         for mav in mavgs:
-            mavprices = data['Close'].rolling(mav).mean().values 
+            if ptype == 'renko':
+                mavprices = pd.Series(brick_values).rolling(mav).mean().values
+            else:
+                mavprices = data['Close'].rolling(mav).mean().values
             if mavc:
                 ax1.plot(xdates, mavprices, color=next(mavc))
             else:
@@ -297,7 +320,7 @@ def plot( data, **kwargs ):
     used_ax3 = False
     used_ax4 = False
     addplot = config['addplot']
-    if addplot is not None:
+    if addplot is not None and ptype is not 'renko':
         # Calculate the Order of Magnitude Range
         # If addplot['secondary_y'] == 'auto', then: If the addplot['data']
         # is out of the Order of Magnitude Range, then use secondary_y.
@@ -365,6 +388,9 @@ def plot( data, **kwargs ):
                     used_ax3 = True
                 if ax == ax4:
                     used_ax4 = True
+
+                if ptype == 'renko':
+                    ydata = renko_reformat_ydata(ydata, new_dates, dates)
 
                 if apdict['scatter']:
                     size  = apdict['markersize']
