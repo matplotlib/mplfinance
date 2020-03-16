@@ -13,6 +13,7 @@ from mplfinance._styledata import sas
 from mplfinance._styledata import brasil
 from mplfinance._styledata import yahoo
 from mplfinance._styledata import checkers
+from mplfinance._styledata import binance
 
 _style_names = [n for n in dir() if not n.startswith('_')]
 
