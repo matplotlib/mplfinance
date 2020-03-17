@@ -108,11 +108,12 @@ def _process_kwargs(kwargs, vkwargs):
             try:
                 valid = vkwargs[key]['Validator'](value)
             except Exception as ex:
-                raise ValueError('kwarg "'+key+'" validator raised exception to value: "'+str(value)+'"') from ex
+                ex.extra_info = 'kwarg "'+key+'" validator raised exception to value: "'+str(value)+'"'
+                raise
             if not valid:
                 import inspect
                 v = inspect.getsource(vkwargs[key]['Validator']).strip()
-                raise ValueError('kwarg "'+key+'" validator returned False for value: "'+str(value)+'"\n    '+v)
+                raise TypeError('kwarg "'+key+'" validator returned False for value: "'+str(value)+'"\n    '+v)
 
        # ---------------------------------------------------------------
        #  At this point in the loop, if we have not raised an exception,
