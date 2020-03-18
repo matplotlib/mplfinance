@@ -1,4 +1,6 @@
-import os                as os
+import os
+import os.path
+import glob
 import mplfinance        as mpf
 import matplotlib.pyplot as plt
 from   matplotlib.testing.compare import compare_images
@@ -6,10 +8,18 @@ from   matplotlib.testing.compare import compare_images
 print('mpf.__version__ =',mpf.__version__)                 # for the record
 print("plt.rcParams['backend'] =",plt.rcParams['backend']) # for the record
 
-prefix='addplot'
-tdir='tests/test_images/'
-refd='tests/reference_images/'
-os.system('rm -f '+tdir+prefix+'*.png')
+base='addplot'
+tdir = os.path.join('tests','test_images')
+refd = os.path.join('tests','reference_images')
+
+globpattern = os.path.join(tdir,base+'*.png')
+oldtestfiles = glob.glob(globpattern)
+
+for fn in oldtestfiles:
+    try:
+        os.remove(fn)
+    except:
+        print('Error removing file "'+fn+'"')
 
 IMGCOMP_TOLERANCE = 7.0
 
@@ -17,27 +27,43 @@ def test_addplot01(bolldata):
 
     df = bolldata
 
-    fname=prefix+'01.png'
-    mpf.plot(df,volume=True,savefig=tdir+fname)
+    fname = base+'01.png'
+    tname = os.path.join(tdir,fname)
+    rname = os.path.join(refd,fname)
 
-    os.system('ls -l '+tdir+fname)
+    mpf.plot(df,volume=True,savefig=tname)
+   
+    tsize = os.path.getsize(tname)
+    print(glob.glob(tname),'[',tsize,'bytes',']')
 
-    result = compare_images(refd+fname,tdir+fname,tol=IMGCOMP_TOLERANCE)
+    rsize = os.path.getsize(rname)
+    print(glob.glob(rname),'[',rsize,'bytes',']')
+
+    result = compare_images(rname,tname,tol=IMGCOMP_TOLERANCE)
     if result is not None:
        print('result=',result)
     assert result is None
 
 def test_addplot02(bolldata):
     df = bolldata
-    fname=prefix+'02.png'
+
+    fname = base+'02.png'
+    tname = os.path.join(tdir,fname)
+    rname = os.path.join(refd,fname)
+
     apdict = mpf.make_addplot(df['LowerB'])
-    mpf.plot(df,volume=True,addplot=apdict,savefig=tdir+fname)
+    mpf.plot(df,volume=True,addplot=apdict,savefig=tname)
 
-    os.system('ls -l '+tdir+fname)
+    tsize = os.path.getsize(tname)
+    print(glob.glob(tname),'[',tsize,'bytes',']')
 
-    result = compare_images(refd+fname,tdir+fname,tol=IMGCOMP_TOLERANCE)
+    rsize = os.path.getsize(rname)
+    print(glob.glob(rname),'[',rsize,'bytes',']')
+
+    result = compare_images(rname,tname,tol=IMGCOMP_TOLERANCE)
     if result is not None:
        print('result=',result)
+    assert result is None
 
 def percentB_aboveone(percentB,price):
     import numpy as np
@@ -65,7 +91,10 @@ def percentB_belowzero(percentB,price):
 
 def test_addplot03(bolldata):
     df = bolldata
-    fname=prefix+'03.png'
+
+    fname = base+'03.png'
+    tname = os.path.join(tdir,fname)
+    rname = os.path.join(refd,fname)
 
     tcdf = df[['LowerB','UpperB']]  # DataFrame with two columns
 
@@ -78,18 +107,25 @@ def test_addplot03(bolldata):
              mpf.make_addplot((df['PercentB']),panel='lower',color='g')
            ]
 
-    mpf.plot(df,addplot=apds,figscale=1.3,volume=True,savefig=tdir+fname)
+    mpf.plot(df,addplot=apds,figscale=1.3,volume=True,savefig=tname)
 
-    os.system('ls -l '+tdir+fname)
+    tsize = os.path.getsize(tname)
+    print(glob.glob(tname),'[',tsize,'bytes',']')
 
-    result = compare_images(refd+fname,tdir+fname,tol=IMGCOMP_TOLERANCE)
+    rsize = os.path.getsize(rname)
+    print(glob.glob(rname),'[',rsize,'bytes',']')
+
+    result = compare_images(rname,tname,tol=IMGCOMP_TOLERANCE)
     if result is not None:
        print('result=',result)
     assert result is None
 
 def test_addplot04(bolldata):
     df = bolldata
-    fname=prefix+'04.png'
+
+    fname = base+'04.png'
+    tname = os.path.join(tdir,fname)
+    rname = os.path.join(refd,fname)
 
     tcdf = df[['LowerB','UpperB']]  # DataFrame with two columns
 
@@ -103,11 +139,15 @@ def test_addplot04(bolldata):
            ]
 
     mpf.plot(df,addplot=apds,figscale=1.5,volume=True,
-             style='starsandstripes',savefig=tdir+fname)
+             style='starsandstripes',savefig=tname)
 
-    os.system('ls -l '+tdir+fname)
+    tsize = os.path.getsize(tname)
+    print(glob.glob(tname),'[',tsize,'bytes',']')
 
-    result = compare_images(refd+fname,tdir+fname,tol=IMGCOMP_TOLERANCE)
+    rsize = os.path.getsize(rname)
+    print(glob.glob(rname),'[',rsize,'bytes',']')
+
+    result = compare_images(rname,tname,tol=IMGCOMP_TOLERANCE)
     if result is not None:
        print('result=',result)
     assert result is None
