@@ -10,17 +10,22 @@ import pandas as pd
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
 
+import os.path
 from six.moves import urllib
 
 start_date = "2004-8-19"
 end_date = '2018-1-20'
 
 # grab the price data off yahoo csv quotes
-r1 = pd.read_csv('data/yahoofinance-AAPL-20040819-20180120.csv',
+
+infile1 = os.path.join('data','yahoofinance-AAPL-20040819-20180120.csv')
+r1 = pd.read_csv(infile1,
                  index_col=0,
                  parse_dates=True,
                  infer_datetime_format=True)
-r2 = pd.read_csv('data/yahoofinance-GOOG-20040819-20180120.csv',
+
+infile2 = os.path.join('data','yahoofinance-GOOG-20040819-20180120.csv')
+r2 = pd.read_csv(infile2,
                  index_col=0,
                  parse_dates=True,
                  infer_datetime_format=True)

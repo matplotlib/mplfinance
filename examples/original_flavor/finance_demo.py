@@ -6,6 +6,7 @@ import pandas as pd
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
 from matplotlib.dates import MONDAY, DateFormatter, DayLocator, WeekdayLocator
+import os.path
 
 from mplfinance.original_flavor import candlestick_ohlc
 
@@ -18,7 +19,8 @@ alldays = DayLocator()              # minor ticks on the days
 weekFormatter = DateFormatter('%b %d')  # e.g., Jan 12
 dayFormatter = DateFormatter('%d')      # e.g., 12
 
-quotes = pd.read_csv('data/yahoofinance-INTC-19950101-20040412.csv',
+infile = os.path.join('data','yahoofinance-INTC-19950101-20040412.csv')
+quotes = pd.read_csv(infile,
                      index_col=0,
                      parse_dates=True,
                      infer_datetime_format=True)
