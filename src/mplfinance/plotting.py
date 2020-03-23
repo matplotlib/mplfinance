@@ -253,6 +253,14 @@ def plot( data, **kwargs ):
         
         ax1.xaxis.set_major_formatter(formatter)
 
+    avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
+    minx = xdates[0]  - avg_dist_between_points
+    maxx = xdates[-1] + avg_dist_between_points
+    miny = min([low for low in lows if low != -1])
+    maxy = max([high for high in highs if high != -1])
+    corners = (minx, miny), (maxx, maxy)
+    ax1.update_datalim(corners)
+
     collections = None
     if ptype == 'candle' or ptype == 'candlestick':
         collections = _construct_candlestick_collections(xdates, opens, highs, lows, closes,
@@ -298,14 +306,6 @@ def plot( data, **kwargs ):
                 ax1.plot(xdates, mavprices, color=next(mavc))
             else:
                 ax1.plot(xdates, mavprices)
-
-    avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
-    minx = xdates[0]  - avg_dist_between_points
-    maxx = xdates[-1] + avg_dist_between_points
-    miny = min([low for low in lows if low != -1])
-    maxy = max([high for high in highs if high != -1])
-    corners = (minx, miny), (maxx, maxy)
-    ax1.update_datalim(corners)
 
     if config['volume']:
         vup,vdown = style['marketcolors']['volume'].values()
