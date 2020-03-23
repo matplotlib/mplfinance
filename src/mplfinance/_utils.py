@@ -136,6 +136,48 @@ def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False):
         _list = [ cmap[pre < cls] for cls,pre in zip(closes[1:], closes) ]
         return [first] + _list
 
+def _date_to_iloc(dtseries,date):
+    d1 = dtseries.loc[:date].index[-1]
+    d2 = dtseries.loc[date:].index[0]
+    loc1 = dtseries.index.get_loc(d1)
+    loc2 = dtseries.index.get_loc(d2)
+    return (loc1+loc2)/2.0
+
+def _date_to_mdate(date):
+    if isinstance(date,str):
+        pydt = pd.to_datetime(date).to_pydatetime()
+    elif isinstance(date,pd.Timestamp):
+        pydt = dt.to_pydatetime()
+    elif isinstance(date,(datetime.datetime,datetime.date)):
+        pydt = date
+    else:
+        return None
+    return mdates.date2num(pydt)
+
+def _convert_segment_dates(segments,dtindex,show_nontrading=False):
+    '''
+    Convert line segment dates to matplotlib dates (or integer for show_nontrading==True)
+    Inputted segment dates may be: pandas-parseable date-time string, pandas timestamp,
+                                   or a python datetime or date
+    A "segment" is a "sequence of lines",
+        see: https://matplotlib.org/api/collections_api.html#matplotlib.collections.LineCollection
+    '''
+    if not show_nontrading:
+        dtseries = dtindex.to_series()
+    converted = []
+    for line in segments:
+        new_line = []
+        for dt,value in line:
+            if show_nontrading:
+                date = _date_to_mdate(dt)
+            else:
+                date = _date_to_iloc(dtseries,dt)  
+            if date is None:
+                raise TypeError('NON-DATE in segment line='+str(line))
+            new_line.append((date,value))
+        converted.append(new_line)
+    return converted
+
 def _valid_renko_kwargs():
     '''
     Construct and return the "valid renko kwargs table" for the mplfinance.plot(type='renko') function.
@@ -239,7 +281,7 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=
                                      linewidths=lw
                                      )
 
-    return rangeCollection, openCollection, closeCollection
+    return [rangeCollection, openCollection, closeCollection]
 
 
 def _construct_candlestick_collections(dates, opens, highs, lows, closes, marketcolors=None):
@@ -327,7 +369,7 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
                                    linewidths=lw
                                    )
 
-    return rangeCollection, barCollection
+    return [rangeCollection, barCollection]
 
 def _construct_renko_collections(dates, highs, lows, volumes, config_renko_params, closes, marketcolors=None):
     """Represent the price change with bricks
@@ -442,7 +484,7 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
                                    linewidths=lw
                                    )
     
-    return (rectCollection, ), new_dates, new_volumes, brick_values
+    return [rectCollection,], new_dates, new_volumes, brick_values
 
 from matplotlib.ticker import Formatter
 class IntegerIndexDateTimeFormatter(Formatter):
