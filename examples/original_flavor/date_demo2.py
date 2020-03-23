@@ -10,6 +10,7 @@ from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
 from matplotlib.dates import (MONDAY, DateFormatter, MonthLocator,
                               WeekdayLocator)
+import os.path
 
 date1 = "2002-1-5"
 date2 = "2003-12-1"
@@ -22,7 +23,8 @@ months = MonthLocator(range(1, 13), bymonthday=1, interval=3)
 monthsFmt = DateFormatter("%b '%y")
 
 
-quotes = pd.read_csv('data/yahoofinance-INTC-19950101-20040412.csv',
+infile = os.path.join('data','yahoofinance-INTC-19950101-20040412.csv')
+quotes = pd.read_csv(infile,
                      index_col=0,
                      parse_dates=True,
                      infer_datetime_format=True)

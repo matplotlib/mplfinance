@@ -18,15 +18,15 @@ import pandas as pd
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
 from matplotlib.dates import DateFormatter, MonthLocator, YearLocator
+import os.path
 
 years = YearLocator()  # every year
 months = MonthLocator()  # every month
 yearsFmt = DateFormatter('%Y')
 
-quotes = pd.read_csv('data/yahoofinance-INTC-19950101-20040412.csv',
-                     index_col=0,
-                     parse_dates=True,
-                     infer_datetime_format=True)
+# make file paths OS independent
+infile = os.path.join('data','yahoofinance-INTC-19950101-20040412.csv')
+quotes = pd.read_csv(infile,index_col=0,parse_dates=True,infer_datetime_format=True)
 
 dates = quotes.index
 opens = quotes['Open']

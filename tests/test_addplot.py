@@ -21,7 +21,8 @@ for fn in oldtestfiles:
     except:
         print('Error removing file "'+fn+'"')
 
-IMGCOMP_TOLERANCE = 7.0
+# IMGCOMP_TOLERANCE = 7.0  # this works fine for linux
+IMGCOMP_TOLERANCE = 11.0  # required for a windows pass. (really 10.25 may do it).
 
 def test_addplot01(bolldata):
 

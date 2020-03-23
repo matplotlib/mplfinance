@@ -6,9 +6,11 @@ import numpy as np
 import pandas as pd
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
+import os.path
 
 ticker = 'SPY'
-r = pd.read_csv('data/yahoofinance-SPY-20080101-20180101.csv',
+infile = os.path.join('data','yahoofinance-SPY-20080101-20180101.csv')
+r = pd.read_csv(infile,
                 index_col=0,
                 parse_dates=True,
                 infer_datetime_format=True)
