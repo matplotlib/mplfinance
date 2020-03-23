@@ -35,7 +35,7 @@ def test_date_demo2():
     # select desired range of dates
     quotes = quotes[(quotes.index >= date1) & (quotes.index <= date2)]
     
-    dates = quotes.index
+    dates = quotes.index.values
     opens = quotes['Open']
     
     

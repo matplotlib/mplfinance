@@ -54,7 +54,7 @@ def test_longshort():
     
     # plot the return
     fig, ax = plt.subplots()
-    ax.plot(r.index, tr)
+    ax.plot(r.index.values, tr)
     ax.set_title('total return: long APPL, short GOOG')
     ax.grid()
     fig.autofmt_xdate()

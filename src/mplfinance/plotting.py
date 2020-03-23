@@ -125,6 +125,9 @@ def _valid_plot_kwargs():
         'block'       : { 'Default'     : True, 
                           'Validator'   : lambda value: isinstance(value,bool) },
  
+        'returnfig'   : { 'Default'     : False, 
+                          'Validator'   : lambda value: isinstance(value,bool) },
+ 
     }
 
     _validate_vkwargs_dict(vkwargs)
@@ -476,22 +479,29 @@ def plot( data, **kwargs ):
     if not used_ax4 and ax4 is not None:
         ax4.get_yaxis().set_visible(False)
 
+    if config['returnfig']:
+        axlist = [ax1, ax3]
+        if ax2: axlist.append(ax2)
+        if ax4: axlist.append(ax4)
+
     if config['savefig'] is not None:
         save = config['savefig']
         if isinstance(save,dict):
             plt.savefig(**save)
         else:
             plt.savefig(save)
-    else:
+    elif not config['returnfig']:
         # https://stackoverflow.com/a/13361748/1639359 suggests plt.show(block=False)
         plt.show(block=config['block'])
+    
+    if config['returnfig']:
+        return (fig, axlist)
 
     # rcp   = copy.deepcopy(plt.rcParams)
     # rcpdf = rcParams_to_df(rcp)
     # print('type(rcpdf)=',type(rcpdf))
     # print('rcpdfhead(3)=',rcpdf.head(3))
     # return # rcpdf
-    
 
 
 def _valid_addplot_kwargs():

@@ -31,7 +31,7 @@ def test_date_demo1():
     infile = os.path.join('examples','data','yahoofinance-INTC-19950101-20040412.csv')
     quotes = pd.read_csv(infile,index_col=0,parse_dates=True,infer_datetime_format=True)
     
-    dates = quotes.index
+    dates = quotes.index.values
     opens = quotes['Open']
     
     fig, ax = plt.subplots()

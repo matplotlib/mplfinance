@@ -109,12 +109,12 @@ def test_finance_work2():
     rsi = relative_strength(prices)
     fillcolor = 'darkgoldenrod'
     
-    ax1.plot(r.index, rsi, color=fillcolor)
+    ax1.plot(r.index.values, rsi, color=fillcolor)
     ax1.axhline(70, color=fillcolor)
     ax1.axhline(30, color=fillcolor)
-    ax1.fill_between(r.index, rsi, 70, where=(rsi >= 70),
+    ax1.fill_between(r.index.values, rsi, 70, where=(rsi >= 70),
                      facecolor=fillcolor, edgecolor=fillcolor)
-    ax1.fill_between(r.index, rsi, 30, where=(rsi <= 30),
+    ax1.fill_between(r.index.values, rsi, 30, where=(rsi <= 30),
                      facecolor=fillcolor, edgecolor=fillcolor)
     ax1.text(0.6, 0.9, '>70 = overbought', va='top',
              transform=ax1.transAxes, fontsize=textsize)
@@ -140,8 +140,8 @@ def test_finance_work2():
     ma20 = moving_average(prices, 20, type='simple')
     ma200 = moving_average(prices, 200, type='simple')
     
-    linema20, = ax2.plot(r.index, ma20, color='blue', lw=2, label='MA (20)')
-    linema200, = ax2.plot(r.index, ma200, color='red', lw=2, label='MA (200)')
+    linema20, = ax2.plot(r.index.values, ma20, color='blue', lw=2, label='MA (20)')
+    linema200, = ax2.plot(r.index.values, ma200, color='red', lw=2, label='MA (200)')
     
     last = r.tail(1)
     s = '%s O:%1.2f H:%1.2f L:%1.2f C:%1.2f, V:%1.1fM Chg:%+1.2f' % (
@@ -173,8 +173,8 @@ def test_finance_work2():
     emaslow, emafast, macd = moving_average_convergence(
         prices, nslow=nslow, nfast=nfast)
     ema9 = moving_average(macd, nema, type='exponential')
-    ax3.plot(r.index, macd, color='black', lw=2)
-    ax3.plot(r.index, ema9, color='blue', lw=1)
+    ax3.plot(r.index.values, macd, color='black', lw=2)
+    ax3.plot(r.index.values, ema9, color='blue', lw=1)
     ax3.fill_between(r.index, macd - ema9, 0, alpha=0.5,
                      facecolor=fillcolor, edgecolor=fillcolor)
     
