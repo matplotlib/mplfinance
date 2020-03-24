@@ -25,6 +25,8 @@ def _check_and_prepare_data(data):
     if not isinstance(data.index,pd.core.indexes.datetimes.DatetimeIndex):
         raise TypeError('Expect data.index as DatetimeIndex')
 
+    cols = ['Open','High','Low','Close']
+
     dates   = mdates.date2num(data.index.to_pydatetime())
     opens   = data['Open'].values
     highs   = data['High'].values
@@ -32,8 +34,13 @@ def _check_and_prepare_data(data):
     closes  = data['Close'].values
     if 'Volume' in data.columns:
         volumes = data['Volume'].values
+        cols.append('Volume')
     else:
         volumes = None
+
+    for col in cols:
+        if not all( isinstance(v,(float,int)) for v in data[col] ):
+            raise ValueError('Data for column "'+str(col)+'" must be ALL float or int.')
 
     return dates, opens, highs, lows, closes, volumes
 
