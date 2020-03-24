@@ -1,6 +1,7 @@
 import matplotlib.dates  as mdates
-import pandas as pd
-import numpy  as np
+import pandas   as pd
+import numpy    as np
+import datetime
 
 def _check_and_prepare_data(data):
     '''
@@ -62,7 +63,54 @@ def _mav_validator(mav_value):
         if not isinstance(num,int) and num > 1:
             return False
     return True
-             
+
+def _hlines_validator(value):
+    return ( isinstance(value,(float,int)) or (isinstance(value,(list,tuple)) and
+             all([isinstance(v,(float,int)) for v in value])) )
+
+def _is_datelike(value):
+    if isinstance(value, (pd.Timestamp,datetime.datetime,datetime.date)):
+        return True
+    if isinstance(value,str):
+        try:
+            dt = pd.to_datetime(value)
+            return True
+        except:
+            return False
+    return False
+
+def _vlines_validator(value):
+    '''Validate `vlines` kwarg value:  must be "datelike" or sequence of "datelike"
+    '''
+    if _is_datelike(value): return True
+    if not isinstance(value,(list,tuple)): return False
+    if not all([_is_datelike(v) for v in value]): return False
+    return True
+
+def _lines_validator(value):
+    '''
+    Value for segments to be passed into LineCollection constructor must be:
+    - a sequence of `lines`, where
+    - a `lines` is a sequence of 2 or more vertices, where
+    - a vertex is a `pair`, aka a sequence of two values, an x and a y point.
+
+    From matplotlib.collections:
+        `segments` are:
+        A sequence of (line0, line1, line2), where:
+
+        linen = (x0, y0), (x1, y1), ... (xm, ym)
+       
+        or the equivalent numpy array with two columns. Each line can be a different length.
+    '''
+    if not isinstance(value,(list,tuple)):
+        return False
+    if not all([isinstance(line,(list,tuple)) and len(line) > 1 for line in value]):
+        return False
+    #point_list = [point for line in value for point in line]
+    #print('point_list=',point_list)
+    if not all([isinstance(point,(list,tuple)) and len(point)==2 for line in value for point in line]):
+        return False
+    return True
 
 def _bypass_kwarg_validation(value):
     ''' For some kwargs, we either don't know enough, or

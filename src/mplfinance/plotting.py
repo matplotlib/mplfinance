@@ -15,6 +15,7 @@ from itertools import cycle
 from mplfinance._utils import _construct_ohlc_collections
 from mplfinance._utils import _construct_candlestick_collections
 from mplfinance._utils import _construct_renko_collections
+from mplfinance._utils import _construct_line_collections
 
 from mplfinance._utils import renko_reformat_ydata
 from mplfinance._utils import _updown_colors
@@ -25,6 +26,7 @@ from mplfinance import _styles
 from mplfinance._arg_validators import _check_and_prepare_data, _mav_validator
 from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 from mplfinance._arg_validators import _kwarg_not_implemented, _bypass_kwarg_validation
+from mplfinance._arg_validators import _hlines_validator, _vlines_validator, _lines_validator
 
 
 def with_rc_context(func):
@@ -127,6 +129,15 @@ def _valid_plot_kwargs():
  
         'returnfig'   : { 'Default'     : False, 
                           'Validator'   : lambda value: isinstance(value,bool) },
+ 
+        'lines'       : { 'Default'     : None, 
+                          'Validator'   : lambda value: _lines_validator(value) },
+ 
+        'hlines'      : { 'Default'     : None, 
+                          'Validator'   : lambda value: _hlines_validator(value) },
+ 
+        'vlines'      : { 'Default'     : None, 
+                          'Validator'   : lambda value: _vlines_validator(value) },
  
     }
 
@@ -243,23 +254,15 @@ def plot( data, **kwargs ):
 
     ptype = config['type'] 
 
-    if ptype is not 'renko':
-        if config['show_nontrading']:
-            formatter = mdates.DateFormatter(fmtstring)
-            xdates = dates
-        else:
-            formatter = IntegerIndexDateTimeFormatter(dates, fmtstring)
-            xdates = np.arange(len(dates))
-        
-        ax1.xaxis.set_major_formatter(formatter)
-
-    avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
-    minx = xdates[0]  - avg_dist_between_points
-    maxx = xdates[-1] + avg_dist_between_points
-    miny = min([low for low in lows if low != -1])
-    maxy = max([high for high in highs if high != -1])
-    corners = (minx, miny), (maxx, maxy)
-    ax1.update_datalim(corners)
+    #if ptype is not 'renko':
+    if config['show_nontrading']:
+        formatter = mdates.DateFormatter(fmtstring)
+        xdates = dates
+    else:
+        formatter = IntegerIndexDateTimeFormatter(dates, fmtstring)
+        xdates = np.arange(len(dates))
+    
+    ax1.xaxis.set_major_formatter(formatter)
 
     collections = None
     if ptype == 'candle' or ptype == 'candlestick':
@@ -274,12 +277,29 @@ def plot( data, **kwargs ):
         
         formatter = IntegerIndexDateTimeFormatter(new_dates, fmtstring)
         xdates = np.arange(len(new_dates))
+        print('len(dates),len(new_dates) =',len(dates),len(new_dates))
+        ax1.xaxis.set_major_formatter(formatter)
 
-        ax1.xaxis.set_major_formatter(formatter)                                                     
     elif ptype == 'line':
         ax1.plot(xdates, closes, color=config['linecolor'])
     else:
         raise ValueError('Unrecognized plot type = "'+ ptype + '"')
+
+    if (config['hlines'] is not None or
+        config['vlines'] is not None or
+        config['lines' ] is not None   ):
+       if ptype == 'renko':
+           dtix = pd.DatetimeIndex([dt.date() for dt in mdates.num2date(new_dates)])
+           snt  = False
+       else:
+           dtix = data.index
+           snt  = config['show_nontrading']
+       lcollections = _construct_line_collections( config['hlines'], config['vlines'],
+                              config['lines' ], dtix, snt )
+       if collections is not None:
+           collections.extend(lcollections)
+       else:
+           collections = lcollections
 
     if collections is not None:
         for collection in collections:
@@ -306,6 +326,14 @@ def plot( data, **kwargs ):
                 ax1.plot(xdates, mavprices, color=next(mavc))
             else:
                 ax1.plot(xdates, mavprices)
+
+    avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
+    minx = xdates[0]  - avg_dist_between_points
+    maxx = xdates[-1] + avg_dist_between_points
+    miny = min([low for low in lows if low != -1])
+    maxy = max([high for high in highs if high != -1])
+    corners = (minx, miny), (maxx, maxy)
+    ax1.update_datalim(corners)
 
     if config['volume']:
         vup,vdown = style['marketcolors']['volume'].values()

@@ -3,7 +3,8 @@ A collection of utilities for analyzing and plotting financial data.
 
 """
 
-import numpy as np
+import numpy  as np
+import pandas as pd
 import matplotlib.dates as mdates
 import datetime
 
@@ -139,8 +140,12 @@ def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False):
 def _date_to_iloc(dtseries,date):
     d1 = dtseries.loc[:date].index[-1]
     d2 = dtseries.loc[date:].index[0]
+    # If there are duplicate dates in the series, for example in a renko plot
+    # then .get_loc(date) will return a slice containing all the dups, so:
     loc1 = dtseries.index.get_loc(d1)
+    if isinstance(loc1,slice): loc1 = loc1.stop - 1
     loc2 = dtseries.index.get_loc(d2)
+    if isinstance(loc2,slice): loc2 = loc2.start
     return (loc1+loc2)/2.0
 
 def _date_to_mdate(date):
@@ -156,12 +161,14 @@ def _date_to_mdate(date):
 
 def _convert_segment_dates(segments,dtindex,show_nontrading=False):
     '''
-    Convert line segment dates to matplotlib dates (or integer for show_nontrading==True)
+    Convert line segment dates to matplotlib dates (or integer for show_nontrading==False)
     Inputted segment dates may be: pandas-parseable date-time string, pandas timestamp,
                                    or a python datetime or date
     A "segment" is a "sequence of lines",
         see: https://matplotlib.org/api/collections_api.html#matplotlib.collections.LineCollection
     '''
+    #import pdb
+    #pdb.set_trace()
     if not show_nontrading:
         dtseries = dtindex.to_series()
     converted = []
@@ -308,7 +315,7 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
 
     Returns
     -------
-    ret : tuple
+    ret : list
         (lineCollection, barCollection)
     """
     
@@ -392,7 +399,7 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
 
     Returns
     -------
-    ret : tuple
+    ret : list
         rectCollection
     """
     renko_params = _process_kwargs(config_renko_params, _valid_renko_kwargs())
@@ -485,6 +492,47 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
                                    )
     
     return [rectCollection,], new_dates, new_volumes, brick_values
+
+def _construct_line_collections(hlines,vlines,lines,dtix,show_nontrading):
+    """Represent the price change with bricks
+
+    Parameters
+    ----------
+    hlines : sequence
+        sequence of [price] values at which to draw horizontal lines
+    vlines : sequence
+        sequence of dates or datetimes at which to draw vertical lines
+        dates/datetimes may be (a) pandas.to_datetime parseable string,
+                               (b) pandas Timestamp
+                               (c) python datetime.datetime or datetime.date
+    lines : sequence
+        sequences of segments, which are sequences of lines,
+        which are sequences of two or more points (date[time],price) or (x,y)
+
+    Each of the above (hlines,vlines,lines) may also be a dict, containing
+    the following keys:
+        'data'   : the same as defined above: sequence of price, or dates, or segments
+        'colors' : colors for the above data
+        'ltypes' : line types for the above data
+
+    Returns
+    -------
+    ret : list
+        lines collections
+    """
+    print('_construct_line_collections() called:',
+          '\nhlines=',hlines,'\nvlines=',vlines,
+          '\nlines=',lines,'\ndtix=',dtix,'\nshow_nontrading=',show_nontrading)
+
+    newlines = _convert_segment_dates(lines,dtix,show_nontrading)
+
+    useAA  = 0,    # use tuple here
+    lw     = None
+    colors = None
+    segs   = newlines
+    lcollection = LineCollection(segs,colors=colors,linewidths=lw,antialiaseds=useAA)
+    return [ lcollection, ]
+
 
 from matplotlib.ticker import Formatter
 class IntegerIndexDateTimeFormatter(Formatter):
