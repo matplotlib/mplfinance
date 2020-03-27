@@ -127,6 +127,9 @@ def _valid_plot_kwargs():
  
         'returnfig'   : { 'Default'     : False, 
                           'Validator'   : lambda value: isinstance(value,bool) },
+
+        'return_calculated_values': {'Default': None,
+                                     'Validator': lambda value: isinstance(value, dict) and len(value) == 0},
  
     }
 
@@ -298,6 +301,17 @@ def plot( data, **kwargs ):
                 ax1.plot(xdates, mavprices, color=next(mavc))
             else:
                 ax1.plot(xdates, mavprices)
+
+    if config['return_calculated_values'] is not None:
+        retdict = config['return_calculated_values']
+        if ptype == 'renko':
+            retdict['renko_bricks'] = brick_values
+            retdict['renko_dates'] = mdates.num2date(new_dates)
+            if config['volume']:
+                retdict['renko_volumes'] = volumes
+        if mavgs is not None:
+            for i in range(0, len(mavgs)):
+                retdict['mav' + str(mavgs[i])] = mavprices
 
     avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
     minx = xdates[0]  - avg_dist_between_points
