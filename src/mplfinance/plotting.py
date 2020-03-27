@@ -285,17 +285,24 @@ def plot( data, **kwargs ):
     else:
         raise ValueError('Unrecognized plot type = "'+ ptype + '"')
 
+    avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
+    minx = xdates[0]  - avg_dist_between_points
+    maxx = xdates[-1] + avg_dist_between_points
+    miny = min([low for low in lows if low != -1])
+    maxy = max([high for high in highs if high != -1])
+
     if (config['hlines'] is not None or
         config['vlines'] is not None or
         config['lines' ] is not None   ):
        if ptype == 'renko':
            dtix = pd.DatetimeIndex([dt.date() for dt in mdates.num2date(new_dates)])
-           snt  = False
+           xvals_are_esi = True  # esi = evenly spaced integers
        else:
            dtix = data.index
-           snt  = config['show_nontrading']
+           xtyp = 'mpd' 
+           xvals_are_esi = not config['show_nontrading']
        lcollections = _construct_line_collections( config['hlines'], config['vlines'],
-                              config['lines' ], dtix, snt )
+                              config['lines' ], minx, maxx, miny, maxy, dtix, xvals_are_esi )
        if collections is not None:
            collections.extend(lcollections)
        else:
@@ -327,11 +334,6 @@ def plot( data, **kwargs ):
             else:
                 ax1.plot(xdates, mavprices)
 
-    avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
-    minx = xdates[0]  - avg_dist_between_points
-    maxx = xdates[-1] + avg_dist_between_points
-    miny = min([low for low in lows if low != -1])
-    maxy = max([high for high in highs if high != -1])
     corners = (minx, miny), (maxx, maxy)
     ax1.update_datalim(corners)
 

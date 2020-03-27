@@ -159,9 +159,9 @@ def _date_to_mdate(date):
         return None
     return mdates.date2num(pydt)
 
-def _convert_segment_dates(segments,dtindex,show_nontrading=False):
+def _convert_segment_dates(segments,dtindex,xvals_are_esi=True):
     '''
-    Convert line segment dates to matplotlib dates (or integer for show_nontrading==False)
+    Convert line segment dates to matplotlib dates (or to float for xvals_are_esi==True)
     Inputted segment dates may be: pandas-parseable date-time string, pandas timestamp,
                                    or a python datetime or date
     A "segment" is a "sequence of lines",
@@ -169,16 +169,16 @@ def _convert_segment_dates(segments,dtindex,show_nontrading=False):
     '''
     #import pdb
     #pdb.set_trace()
-    if not show_nontrading:
+    if xvals_are_esi:
         dtseries = dtindex.to_series()
     converted = []
     for line in segments:
         new_line = []
         for dt,value in line:
-            if show_nontrading:
-                date = _date_to_mdate(dt)
-            else:
+            if xvals_are_esi:
                 date = _date_to_iloc(dtseries,dt)  
+            else:
+                date = _date_to_mdate(dt)
             if date is None:
                 raise TypeError('NON-DATE in segment line='+str(line))
             new_line.append((date,value))
@@ -493,7 +493,7 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
     
     return [rectCollection,], new_dates, new_volumes, brick_values
 
-def _construct_line_collections(hlines,vlines,lines,dtix,show_nontrading):
+def _construct_line_collections(hlines,vlines,lines,minx,maxx,miny,maxy,dtix,xvals_are_esi):
     """Represent the price change with bricks
 
     Parameters
@@ -522,9 +522,9 @@ def _construct_line_collections(hlines,vlines,lines,dtix,show_nontrading):
     """
     print('_construct_line_collections() called:',
           '\nhlines=',hlines,'\nvlines=',vlines,
-          '\nlines=',lines,'\ndtix=',dtix,'\nshow_nontrading=',show_nontrading)
+          '\nlines=',lines,'\ndtix=',dtix,'\nxvals_are_esi=',xvals_are_esi)
 
-    newlines = _convert_segment_dates(lines,dtix,show_nontrading)
+    newlines = _convert_segment_dates(lines,dtix,xvals_are_esi)
 
     useAA  = 0,    # use tuple here
     lw     = None
