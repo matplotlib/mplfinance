@@ -524,6 +524,17 @@ def _construct_line_collections(hlines,vlines,lines,minx,maxx,miny,maxy,dtix,xva
           '\nhlines=',hlines,'\nvlines=',vlines,
           '\nlines=',lines,'\ndtix=',dtix,'\nxvals_are_esi=',xvals_are_esi)
 
+    if lines is None:
+        lines = []
+
+    if hlines is not None: # minx,maxx,miny,maxy
+        minxdt = mdates.num2date(minx)
+        maxxdt = mdates.num2date(maxx)
+        for val in hlines:
+            lines.append( [(minxdt,val),(maxxdt,val)] )
+
+    print('... now lines=',lines)
+
     newlines = _convert_segment_dates(lines,dtix,xvals_are_esi)
 
     useAA  = 0,    # use tuple here
