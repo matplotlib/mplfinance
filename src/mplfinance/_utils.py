@@ -534,7 +534,7 @@ def _construct_pf_collections(dates, highs, lows, volumes, config_renko_params, 
         
         for i in range(len(x)): # x and y have the same length
             height = box_size * 0.9
-            width = min(0.5 * (box_size * 0.2), 0.9)
+            width = min(max(0.5 * (box_size * 0.2), 0.3), 0.9)
             if height < 0.5:
                 width = height
             if sign == 1: # X
