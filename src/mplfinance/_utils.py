@@ -508,7 +508,7 @@ def _construct_pf_collections(dates, highs, lows, volumes, config_renko_params, 
         diff = abs(int(round(difference, 0)))
         if volumes is not None: # only adds volumes if there are volume values when volume=True
             if diff != 0:
-                new_volumes.extend([volumes[diff_index] + volume_cache]*diff)
+                new_volumes.append(volumes[diff_index] + volume_cache)
                 volume_cache = 0
             else:
                 volume_cache += volumes[diff_index]
@@ -521,21 +521,27 @@ def _construct_pf_collections(dates, highs, lows, volumes, config_renko_params, 
 
 
         sign = (difference / abs(difference)) # -1 or 1
-        x = [index] * (diff)
         start_iteration = 0 if sign > 0 else 1
         start_iteration += 0 if (last_trend_positive and sign > 0) or (not last_trend_positive and sign < 0) else 1
         
-        y = [(curr_price + (i * box_size * sign)) for i in range(start_iteration, diff+start_iteration)]
-        box_values.extend(y)
+        x = [index] * (diff)
+        y = [(curr_price + ((i+(box_size * 0.01)) * box_size * sign)) for i in range(start_iteration, diff+start_iteration)]
+        
 
         spacing = 0.1 * box_size
         curr_price += (box_size * sign * (diff)) + spacing
+        box_values.append(curr_price - spacing - box_size)
+        
         for i in range(len(x)): # x and y have the same length
+            height = box_size * 0.9
+            width = min(0.5 * (box_size * 0.2), 0.9)
+            if height < 0.5:
+                width = height
             if sign == 1: # X
-                line_seg.append([(x[i]-0.25, y[i]-(box_size/2)), (x[i]+0.25, y[i]+(box_size/2))]) # create / part of the X
-                line_seg.append([(x[i]-0.25, y[i]+(box_size/2)), (x[i]+0.25, y[i]-(box_size/2))]) # create \ part of the X
+                line_seg.append([(x[i]-width/2, y[i]-(height/2)), (x[i]+width/2, y[i]+(height/2))]) # create / part of the X
+                line_seg.append([(x[i]-width/2, y[i]+(height/2)), (x[i]+width/2, y[i]-(height/2))]) # create \ part of the X
             else: # O
-                circle_patches.append(Ellipse((x[i], y[i]), 0.5, box_size/0.9))
+                circle_patches.append(Ellipse((x[i], y[i]), width, height))
     useAA = 0,    # use tuple here
     lw = 0.5        
 
