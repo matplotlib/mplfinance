@@ -499,12 +499,12 @@ def _construct_pf_collections(dates, highs, lows, volumes, config_tip_params, cl
     new_dates = [] # holds the dates corresponding with the index
     new_volumes = [] # holds the volumes corresponding with the index.  If more than one index for the same day then they all have the same volume.
     box_values = [] # y values for the boxes
-    circle_patches = []
+    circle_patches = [] # list of circle patches to be used to create the cirCollection
     line_seg = [] # line segments that make up the Xs
 
     volume_cache = 0 # holds the volumes for the dates that were skipped
-    index = -1
-    last_trend_positive = True
+    index = -1 # only incremented when difference > 0
+
     for diff_index, difference in enumerate(cdiff):
         diff = abs(int(round(difference, 0)))
         if volumes is not None: # only adds volumes if there are volume values when volume=True
@@ -522,8 +522,7 @@ def _construct_pf_collections(dates, highs, lows, volumes, config_tip_params, cl
 
 
         sign = (difference / abs(difference)) # -1 or 1
-        start_iteration = 0 if sign > 0 else 1
-        start_iteration += 0 if (last_trend_positive and sign > 0) or (not last_trend_positive and sign < 0) else 1
+        start_iteration = 0 if sign > 0 else 2
         
         x = [index] * (diff)
         y = [(curr_price + ((i+(box_size * 0.005)) * box_size * sign)) for i in range(start_iteration, diff+start_iteration)]
@@ -549,6 +548,7 @@ def _construct_pf_collections(dates, highs, lows, volumes, config_tip_params, cl
     cirCollection = PatchCollection(circle_patches)
     cirCollection.set_facecolor([tfc] * len(circle_patches))
     cirCollection.set_edgecolor([dc] * len(circle_patches))
+    
     xCollection = LineCollection(line_seg,
                                  colors=[uc] * len(line_seg),
                                  linewidths=lw,
