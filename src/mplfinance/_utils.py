@@ -8,7 +8,8 @@ import matplotlib.dates as mdates
 import datetime
 
 from matplotlib import colors as mcolors
-from matplotlib.collections import LineCollection, PolyCollection
+from matplotlib.patches import Ellipse
+from matplotlib.collections import LineCollection, PolyCollection, CircleCollection, PatchCollection
 from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 
 from six.moves import zip
@@ -341,9 +342,8 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
     lows : sequence
         sequence of low values
     renko_params : dictionary
-        type : type of renko chart
         brick_size : size of each brick
-        atr_legnth : length of time used for calculating atr
+        atr_length : length of time used for calculating atr
     closes : sequence
         sequence of closing values
     marketcolors : dict of colors: up, down, edge, wick, alpha
@@ -436,13 +436,121 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
     useAA = 0,    # use tuple here
     lw = None
     rectCollection = PolyCollection(verts,
-                                   facecolors=colors,
-                                   antialiaseds=useAA,
-                                   edgecolors=edge_colors,
-                                   linewidths=lw
-                                   )
+                                    facecolors=colors,
+                                    antialiaseds=useAA,
+                                    edgecolors=edge_colors,
+                                    linewidths=lw
+                                    )
     
     return (rectCollection, ), new_dates, new_volumes, brick_values
+
+def _construct_pf_collections(dates, highs, lows, volumes, config_renko_params, closes, marketcolors=None):
+    """Represent the price change with Xs and Os
+
+    Parameters
+    ----------
+    dates : sequence
+        sequence of dates
+    highs : sequence
+        sequence of high values
+    lows : sequence
+        sequence of low values
+    renko_params : dictionary
+        brick_size : size of each brick/box
+        atr_length : length of time used for calculating atr
+    closes : sequence
+        sequence of closing values
+    marketcolors : dict of colors: up, down, edge, wick, alpha
+
+    Returns
+    -------
+    ret : tuple
+        rectCollection
+    """
+    renko_params = _process_kwargs(config_renko_params, _valid_renko_kwargs())
+    if marketcolors is None:
+        marketcolors = _get_mpfstyle('classic')['marketcolors']
+        print('default market colors:',marketcolors)
+    
+    box_size = renko_params['brick_size']
+    atr_length = renko_params['atr_length']
+    
+
+    if box_size == 'atr':
+        box_size = _calculate_atr(atr_length, highs, lows, closes)
+    else: # is an integer or float
+        total_atr = _calculate_atr(len(closes)-1, highs, lows, closes)
+        upper_limit = 1.5*total_atr
+        lower_limit = 0.01*total_atr
+        if box_size > upper_limit:
+            raise ValueError("Specified brick_size may not be larger than (1.5* the Average True Value of the dataset) which has value: "+ str(upper_limit))
+        elif box_size < lower_limit:
+            raise ValueError("Specified brick_size may not be smaller than (0.01* the Average True Value of the dataset) which has value: "+ str(lower_limit))
+
+    alpha  = marketcolors['alpha']
+
+    uc     = mcolors.to_rgba(marketcolors['candle'][ 'up' ], alpha)
+    dc     = mcolors.to_rgba(marketcolors['candle']['down'], alpha)
+    tfc    = mcolors.to_rgba(marketcolors['edge']['down'], 0) # transparent face color
+
+    cdiff = [(closes[i+1] - closes[i])/box_size for i in range(len(closes)-1)] # fill cdiff with close price change
+    curr_price = closes[0]
+    new_dates = [] # holds the dates corresponding with the index
+    new_volumes = [] # holds the volumes corresponding with the index.  If more than one index for the same day then they all have the same volume.
+    box_values = [] # y values for the boxes
+    circle_patches = []
+    line_seg = [] # line segments that make up the Xs
+
+    volume_cache = 0 # holds the volumes for the dates that were skipped
+    index = -1
+    last_trend_positive = True
+    for diff_index, difference in enumerate(cdiff):
+        diff = abs(int(round(difference, 0)))
+        if volumes is not None: # only adds volumes if there are volume values when volume=True
+            if diff != 0:
+                new_volumes.extend([volumes[diff_index] + volume_cache]*diff)
+                volume_cache = 0
+            else:
+                volume_cache += volumes[diff_index]
+
+        if diff != 0:
+            index += 1
+            new_dates.append(dates[diff_index])
+        else:
+            continue
+
+
+        sign = (difference / abs(difference)) # -1 or 1
+        x = [index] * (diff)
+        start_iteration = 0 if sign > 0 else 1
+        start_iteration += 0 if (last_trend_positive and sign > 0) or (not last_trend_positive and sign < 0) else 1
+        
+        y = [(curr_price + (i * box_size * sign)) for i in range(start_iteration, diff+start_iteration)]
+        box_values.extend(y)
+
+        spacing = 0.1 * box_size
+        curr_price += (box_size * sign * (diff)) + spacing
+        for i in range(len(x)): # x and y have the same length
+            if sign == 1: # X
+                line_seg.append([(x[i]-0.25, y[i]-(box_size/2)), (x[i]+0.25, y[i]+(box_size/2))]) # create / part of the X
+                line_seg.append([(x[i]-0.25, y[i]+(box_size/2)), (x[i]+0.25, y[i]-(box_size/2))]) # create \ part of the X
+            else: # O
+                circle_patches.append(Ellipse((x[i], y[i]), 0.5, box_size/0.9))
+    useAA = 0,    # use tuple here
+    lw = 0.5        
+
+    cirCollection = PatchCollection(circle_patches)
+    cirCollection.set_facecolor([tfc] * len(circle_patches))
+    cirCollection.set_edgecolor([dc] * len(circle_patches))
+    xCollection = LineCollection(line_seg,
+                                 colors=[uc] * len(line_seg),
+                                 linewidths=lw,
+                                 antialiaseds=useAA
+                                 )
+    
+    return (cirCollection, xCollection), new_dates, new_volumes, box_values
+
+
 
 from matplotlib.ticker import Formatter
 class IntegerIndexDateTimeFormatter(Formatter):

@@ -15,6 +15,7 @@ from itertools import cycle
 from mplfinance._utils import _construct_ohlc_collections
 from mplfinance._utils import _construct_candlestick_collections
 from mplfinance._utils import _construct_renko_collections
+from mplfinance._utils import _construct_pf_collections
 
 from mplfinance._utils import renko_reformat_ydata
 from mplfinance._utils import _updown_colors
@@ -65,7 +66,7 @@ def _valid_plot_kwargs():
 
     vkwargs = {
         'type'        : { 'Default'     : 'ohlc',
-                          'Validator'   : lambda value: value in ['candle','candlestick','ohlc','bars','ohlc_bars','line', 'renko'] },
+                          'Validator'   : lambda value: value in ['candle','candlestick','ohlc','bars','ohlc_bars','line', 'renko', 'pf', 'p&f'] },
  
         'style'       : { 'Default'     : 'default',
                           'Validator'   : lambda value: value in _styles.available_styles() or isinstance(value,dict) },
@@ -168,8 +169,8 @@ def plot( data, **kwargs ):
 
     config = _process_kwargs(kwargs, _valid_plot_kwargs())
     
-    if config['type'] == 'renko' and config['addplot'] is not None:
-        err = "`addplot` is not supported for `type='renko'`"
+    if config['type'] in ['renko', 'pf', 'p&f'] and config['addplot'] is not None:
+        err = "`addplot` is not supported for `type=" + config['type'] +"'`"
         raise ValueError(err)
 
     style = config['style']
@@ -246,7 +247,7 @@ def plot( data, **kwargs ):
 
     ptype = config['type'] 
 
-    if ptype is not 'renko':
+    if ptype not in ['renko', 'pf', 'p&f']:
         if config['show_nontrading']:
             formatter = mdates.DateFormatter(fmtstring)
             xdates = dates
@@ -266,15 +267,19 @@ def plot( data, **kwargs ):
     elif ptype == 'renko':
         collections, new_dates, volumes, brick_values = _construct_renko_collections(dates, highs, lows, volumes, config['renko_params'], closes,
                                                          marketcolors=style['marketcolors'] )
-        
-        formatter = IntegerIndexDateTimeFormatter(new_dates, fmtstring)
-        xdates = np.arange(len(new_dates))
-
-        ax1.xaxis.set_major_formatter(formatter)                                                     
+    elif ptype == 'pf' or ptype == 'p&f':
+        collections, new_dates, volumes, brick_values = _construct_pf_collections(dates, highs, lows, volumes, config['renko_params'], closes,
+                                                         marketcolors=style['marketcolors'] )                                                
     elif ptype == 'line':
         ax1.plot(xdates, closes, color=config['linecolor'])
     else:
         raise ValueError('Unrecognized plot type = "'+ ptype + '"')
+
+    if ptype in ['renko', 'pf', 'p&f']:
+        formatter = IntegerIndexDateTimeFormatter(new_dates, fmtstring)
+        xdates = np.arange(len(new_dates))
+
+        ax1.xaxis.set_major_formatter(formatter)
 
     if collections is not None:
         for collection in collections:
@@ -293,7 +298,7 @@ def plot( data, **kwargs ):
             mavc = None
             
         for mav in mavgs:
-            if ptype == 'renko':
+            if ptype in ['renko', 'pf', 'p&f']:
                 mavprices = pd.Series(brick_values).rolling(mav).mean().values
             else:
                 mavprices = data['Close'].rolling(mav).mean().values
@@ -312,7 +317,7 @@ def plot( data, **kwargs ):
         if mavgs is not None:
             for i in range(0, len(mavgs)):
                 retdict['mav' + str(mavgs[i])] = mavprices
-
+    
     avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
     minx = xdates[0]  - avg_dist_between_points
     maxx = xdates[-1] + avg_dist_between_points
@@ -337,7 +342,7 @@ def plot( data, **kwargs ):
     used_ax3 = False
     used_ax4 = False
     addplot = config['addplot']
-    if addplot is not None and ptype is not 'renko':
+    if addplot is not None and ptype not in ['renko', 'pf', 'p&f']:
         # Calculate the Order of Magnitude Range
         # If addplot['secondary_y'] == 'auto', then: If the addplot['data']
         # is out of the Order of Magnitude Range, then use secondary_y.
@@ -405,9 +410,6 @@ def plot( data, **kwargs ):
                     used_ax3 = True
                 if ax == ax4:
                     used_ax4 = True
-
-                if ptype == 'renko':
-                    ydata = renko_reformat_ydata(ydata, new_dates, dates)
 
                 if apdict['scatter']:
                     size  = apdict['markersize']
