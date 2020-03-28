@@ -170,7 +170,7 @@ def plot( data, **kwargs ):
     config = _process_kwargs(kwargs, _valid_plot_kwargs())
     
     if config['type'] in ['renko', 'pf', 'p&f'] and config['addplot'] is not None:
-        err = "`addplot` is not supported for `type=" + config['type'] +"'`"
+        err = "`addplot` is not supported for `type='" + config['type'] +"'`"
         raise ValueError(err)
 
     style = config['style']
