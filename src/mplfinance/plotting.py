@@ -77,7 +77,7 @@ def _valid_plot_kwargs():
         'mav'         : { 'Default'     : None,
                           'Validator'   : _mav_validator },
         
-        'renko_params': { 'Default'     : dict(),
+        'tip_params'  : { 'Default'     : dict(),
                           'Validator'   : lambda value: isinstance(value,dict) },
  
         'study'       : { 'Default'     : None,
@@ -128,9 +128,6 @@ def _valid_plot_kwargs():
  
         'returnfig'   : { 'Default'     : False, 
                           'Validator'   : lambda value: isinstance(value,bool) },
-
-        'return_calculated_values': {'Default': None,
-                                     'Validator': lambda value: isinstance(value, dict) and len(value) == 0},
  
     }
 
@@ -265,11 +262,11 @@ def plot( data, **kwargs ):
         collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes,
                                                          marketcolors=style['marketcolors'] )
     elif ptype == 'renko':
-        collections, new_dates, volumes, brick_values = _construct_renko_collections(dates, highs, lows, volumes, config['renko_params'], closes,
+        collections, new_dates, volumes, brick_values = _construct_renko_collections(dates, highs, lows, volumes, config['tip_params'], closes,
                                                          marketcolors=style['marketcolors'] )
     elif ptype == 'pf' or ptype == 'p&f':
-        collections, new_dates, volumes, brick_values = _construct_pf_collections(dates, highs, lows, volumes, config['renko_params'], closes,
-                                                         marketcolors=style['marketcolors'] )                                                
+        collections, new_dates, volumes, brick_values = _construct_pf_collections(dates, highs, lows, volumes, config['tip_params'], closes,
+                                                         marketcolors=style['marketcolors'] )                           
     elif ptype == 'line':
         ax1.plot(xdates, closes, color=config['linecolor'])
     else:
@@ -307,17 +304,6 @@ def plot( data, **kwargs ):
             else:
                 ax1.plot(xdates, mavprices)
 
-    if config['return_calculated_values'] is not None:
-        retdict = config['return_calculated_values']
-        if ptype == 'renko':
-            retdict['renko_bricks'] = brick_values
-            retdict['renko_dates'] = mdates.num2date(new_dates)
-            if config['volume']:
-                retdict['renko_volumes'] = volumes
-        if mavgs is not None:
-            for i in range(0, len(mavgs)):
-                retdict['mav' + str(mavgs[i])] = mavprices
-    
     avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
     minx = xdates[0]  - avg_dist_between_points
     maxx = xdates[-1] + avg_dist_between_points
