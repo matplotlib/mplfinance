@@ -9,7 +9,7 @@ import datetime
 
 from matplotlib import colors as mcolors
 from matplotlib.patches import Ellipse
-from matplotlib.collections import LineCollection, PolyCollection, CircleCollection, PatchCollection
+from matplotlib.collections import LineCollection, PolyCollection, PatchCollection
 from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 
 from six.moves import zip
