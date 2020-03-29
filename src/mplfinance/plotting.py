@@ -77,7 +77,7 @@ def _valid_plot_kwargs():
         'mav'         : { 'Default'     : None,
                           'Validator'   : _mav_validator },
         
-        'tip_params'  : { 'Default'     : dict(),
+        'pm_params'  : { 'Default'     : dict(),
                           'Validator'   : lambda value: isinstance(value,dict) },
  
         'study'       : { 'Default'     : None,
@@ -265,10 +265,10 @@ def plot( data, **kwargs ):
         collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes,
                                                          marketcolors=style['marketcolors'] )
     elif ptype == 'renko':
-        collections, new_dates, volumes, brick_values = _construct_renko_collections(dates, highs, lows, volumes, config['tip_params'], closes,
+        collections, new_dates, volumes, brick_values = _construct_renko_collections(dates, highs, lows, volumes, config['pm_params'], closes,
                                                          marketcolors=style['marketcolors'] )
     elif ptype == 'pf' or ptype == 'p&f':
-        collections, new_dates, volumes, brick_values = _construct_pf_collections(dates, highs, lows, volumes, config['tip_params'], closes,
+        collections, new_dates, volumes, brick_values = _construct_pf_collections(dates, highs, lows, volumes, config['pm_params'], closes,
                                                          marketcolors=style['marketcolors'] )                           
     elif ptype == 'line':
         ax1.plot(xdates, closes, color=config['linecolor'])

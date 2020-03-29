@@ -137,9 +137,9 @@ def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False):
         _list = [ cmap[pre < cls] for cls,pre in zip(closes[1:], closes) ]
         return [first] + _list
 
-def _valid_tip_kwargs():
+def _valid_pm_kwargs():
     '''
-    Construct and return the "valid tip kwargs table" for the mplfinance.plot(type='renko') 
+    Construct and return the "valid pm kwargs table" for the mplfinance.plot(type='renko') 
     or mplfinance.plot(type='pf') functions. A valid kwargs table is a `dict` of `dict`s.
     The keys of the outer dict are the valid key-words for the function.  The value
     for each key is a dict containing 2 specific keys: "Default", and "Validator"
@@ -331,7 +331,7 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
 
     return rangeCollection, barCollection
 
-def _construct_renko_collections(dates, highs, lows, volumes, config_tip_params, closes, marketcolors=None):
+def _construct_renko_collections(dates, highs, lows, volumes, config_pm_params, closes, marketcolors=None):
     """Represent the price change with bricks
 
     Parameters
@@ -342,7 +342,7 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_tip_params,
         sequence of high values
     lows : sequence
         sequence of low values
-    tip_params : dictionary
+    pm_params : dictionary
         brick_size : size of each brick
         atr_length : length of time used for calculating atr
     closes : sequence
@@ -354,13 +354,13 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_tip_params,
     ret : tuple
         rectCollection
     """
-    tip_params = _process_kwargs(config_tip_params, _valid_tip_kwargs())
+    pm_params = _process_kwargs(config_pm_params, _valid_pm_kwargs())
     if marketcolors is None:
         marketcolors = _get_mpfstyle('classic')['marketcolors']
         print('default market colors:',marketcolors)
     
-    brick_size = tip_params['brick_size']
-    atr_length = tip_params['atr_length']
+    brick_size = pm_params['brick_size']
+    atr_length = pm_params['atr_length']
     
 
     if brick_size == 'atr':
@@ -445,7 +445,7 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_tip_params,
     
     return (rectCollection, ), new_dates, new_volumes, brick_values
 
-def _construct_pf_collections(dates, highs, lows, volumes, config_tip_params, closes, marketcolors=None):
+def _construct_pf_collections(dates, highs, lows, volumes, config_pm_params, closes, marketcolors=None):
     """Represent the price change with Xs and Os
 
     Parameters
@@ -456,7 +456,7 @@ def _construct_pf_collections(dates, highs, lows, volumes, config_tip_params, cl
         sequence of high values
     lows : sequence
         sequence of low values
-    tip_params : dictionary
+    pm_params : dictionary
         brick_size : size of each brick/box
         atr_length : length of time used for calculating atr
     closes : sequence
@@ -468,13 +468,13 @@ def _construct_pf_collections(dates, highs, lows, volumes, config_tip_params, cl
     ret : tuple
         rectCollection
     """
-    tip_params = _process_kwargs(config_tip_params, _valid_tip_kwargs())
+    pm_params = _process_kwargs(config_pm_params, _valid_pm_kwargs())
     if marketcolors is None:
         marketcolors = _get_mpfstyle('classic')['marketcolors']
         print('default market colors:',marketcolors)
     
-    box_size = tip_params['brick_size']
-    atr_length = tip_params['atr_length']
+    box_size = pm_params['brick_size']
+    atr_length = pm_params['atr_length']
     
 
     if box_size == 'atr':
