@@ -314,14 +314,12 @@ def plot( data, **kwargs ):
                 retdict['mav' + str(mavgs[i])] = mavprices
 
     avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
-    
-    if ptype is not 'renko':
-        minx = xdates[0]  - avg_dist_between_points
-        maxx = xdates[-1] + avg_dist_between_points
-        miny = min([low for low in lows if low != -1])
-        maxy = max([high for high in highs if high != -1])
-        corners = (minx, miny), (maxx, maxy)
-        ax1.update_datalim(corners)
+    minx = xdates[0]  - avg_dist_between_points if ptype is not 'renko' else 0
+    maxx = xdates[-1] + avg_dist_between_points if ptype is not 'renko' else 0
+    miny = min([low for low in lows if low != -1])
+    maxy = max([high for high in highs if high != -1])
+    corners = (minx, miny), (maxx, maxy)
+    ax1.update_datalim(corners)
 
     if config['volume']:
         vup,vdown = style['marketcolors']['volume'].values()
