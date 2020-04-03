@@ -395,7 +395,7 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
     for i in range(len(cdiff)):
         num_bricks = abs(int(cdiff[i]))
         curr_diff_sign = cdiff[i]/abs(cdiff[i])
-        if last_diff_sign != 0 and curr_diff_sign != last_diff_sign:
+        if last_diff_sign != 0 and num_bricks > 0 and curr_diff_sign != last_diff_sign:
             num_bricks -= 1
         last_diff_sign = curr_diff_sign
 
