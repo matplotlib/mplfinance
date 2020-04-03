@@ -181,7 +181,7 @@ mpf.plot(daily)
 ---
 <br>
 
-The default plot type, as you can see above, is `'ohlc'`.  Other plot types can be specified with the keyword argument `type`, for example, `type='candle'`, `type='line'`, `type='renko'`, or `type='pf'`
+The default plot type, as you can see above, is `'ohlc'`.  Other plot types can be specified with the keyword argument `type`, for example, `type='candle'`, `type='line'`, `type='renko'`, or `type='pnf'`
 
 
 ```python
@@ -211,7 +211,7 @@ mpf.plot(daily,type='renko')
 
 
 ```python
-mpf.plot(daily,type='pf')
+mpf.plot(daily,type='pnf')
 ```
 
 
