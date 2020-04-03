@@ -18,7 +18,7 @@
   - **[Adding Your Own Technical Studies to Plots](https://github.com/matplotlib/mplfinance/blob/master/examples/addplot.ipynb)**
   - **[Saving the Plot to a File](https://github.com/matplotlib/mplfinance/blob/master/examples/savefig.ipynb)**
   - **[Customizing the Appearance of Plots](https://github.com/matplotlib/mplfinance/blob/master/examples/customization_and_styles.ipynb)**
-  - **[Time Independent Plots](https://github.com/matplotlib/mplfinance/blob/master/examples/time_independent_plots.ipynb)**
+  - **[Price-Movement Plots (Renko, P&F, etc)](https://github.com/matplotlib/mplfinance/blob/master/examples/price-movement_plots.ipynb)**
   - Technical Studies (presently in development)
   - **[Latest Release Info](https://github.com/matplotlib/mplfinance#release)**
   - **[Some Background History About This Package](https://github.com/matplotlib/mplfinance#history)**

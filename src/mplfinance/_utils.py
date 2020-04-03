@@ -137,9 +137,9 @@ def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False):
         _list = [ cmap[pre < cls] for cls,pre in zip(closes[1:], closes) ]
         return [first] + _list
 
-def _valid_pm_kwargs():
+def _valid_pmove_kwargs():
     '''
-    Construct and return the "valid pm kwargs table" for the mplfinance.plot(type='renko') 
+    Construct and return the "valid pmove kwargs table" for the mplfinance.plot(type='renko') 
     or mplfinance.plot(type='pf') functions. A valid kwargs table is a `dict` of `dict`s.
     The keys of the outer dict are the valid key-words for the function.  The value
     for each key is a dict containing 2 specific keys: "Default", and "Validator"
@@ -151,7 +151,7 @@ def _valid_pm_kwargs():
                          kwarg value is one of the allowed values.
     '''
     vkwargs = {
-        'brick_size'  : { 'Default'     : 'atr',
+        'size'        : { 'Default'     : 'atr',
                           'Validator'   : lambda value: isinstance(value,(float,int)) or value == 'atr' },
         'atr_length'  : { 'Default'     : 14,
                           'Validator'   : lambda value: isinstance(value,int) },               
@@ -331,7 +331,7 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
 
     return rangeCollection, barCollection
 
-def _construct_renko_collections(dates, highs, lows, volumes, config_pm_params, closes, marketcolors=None):
+def _construct_renko_collections(dates, highs, lows, volumes, config_pmove_params, closes, marketcolors=None):
     """Represent the price change with bricks
 
     Parameters
@@ -342,8 +342,8 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_pm_params, 
         sequence of high values
     lows : sequence
         sequence of low values
-    pm_params : dictionary
-        brick_size : size of each brick
+    pmove_params : dictionary
+        size : size of each brick
         atr_length : length of time used for calculating atr
     closes : sequence
         sequence of closing values
@@ -354,25 +354,25 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_pm_params, 
     ret : tuple
         rectCollection
     """
-    pm_params = _process_kwargs(config_pm_params, _valid_pm_kwargs())
+    pmove_params = _process_kwargs(config_pmove_params, _valid_pmove_kwargs())
     if marketcolors is None:
         marketcolors = _get_mpfstyle('classic')['marketcolors']
         print('default market colors:',marketcolors)
     
-    brick_size = pm_params['brick_size']
-    atr_length = pm_params['atr_length']
+    size = pmove_params['size']
+    atr_length = pmove_params['atr_length']
     
 
-    if brick_size == 'atr':
-        brick_size = _calculate_atr(atr_length, highs, lows, closes)
+    if size == 'atr':
+        size = _calculate_atr(atr_length, highs, lows, closes)
     else: # is an integer or float
         total_atr = _calculate_atr(len(closes)-1, highs, lows, closes)
         upper_limit = 1.5*total_atr
         lower_limit = 0.01*total_atr
-        if brick_size > upper_limit:
-            raise ValueError("Specified brick_size may not be larger than (1.5* the Average True Value of the dataset) which has value: "+ str(upper_limit))
-        elif brick_size < lower_limit:
-            raise ValueError("Specified brick_size may not be smaller than (0.01* the Average True Value of the dataset) which has value: "+ str(lower_limit))
+        if size > upper_limit:
+            raise ValueError("Specified size may not be larger than (1.5* the Average True Value of the dataset) which has value: "+ str(upper_limit))
+        elif size < lower_limit:
+            raise ValueError("Specified size may not be smaller than (0.01* the Average True Value of the dataset) which has value: "+ str(lower_limit))
 
     alpha  = marketcolors['alpha']
 
@@ -381,7 +381,7 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_pm_params, 
     euc     = mcolors.to_rgba(marketcolors['edge'][ 'up' ], 1.0)
     edc     = mcolors.to_rgba(marketcolors['edge']['down'], 1.0)
 
-    cdiff = [(closes[i+1] - closes[i])/brick_size for i in range(len(closes)-1)] # fill cdiff with close price change
+    cdiff = [(closes[i+1] - closes[i])/size for i in range(len(closes)-1)] # fill cdiff with close price change
 
     bricks = [] # holds bricks, 1 for down bricks, -1 for up bricks
     new_dates = [] # holds the dates corresponding with the index
@@ -424,14 +424,14 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_pm_params, 
             edge_colors.append(edc)
 
         prev_num += number
-        brick_y = start_price + (prev_num * brick_size)
+        brick_y = start_price + (prev_num * size)
         brick_values.append(brick_y)
         x, y = index, brick_y
 
         verts.append((
             (x, y),
-            (x, y+brick_size),
-            (x+1, y+brick_size),
+            (x, y+size),
+            (x+1, y+size),
             (x+1, y)))
 
     useAA = 0,    # use tuple here
@@ -445,7 +445,7 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_pm_params, 
     
     return (rectCollection, ), new_dates, new_volumes, brick_values
 
-def _construct_pf_collections(dates, highs, lows, volumes, config_pm_params, closes, marketcolors=None):
+def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pmove_params, closes, marketcolors=None):
     """Represent the price change with Xs and Os
 
     Parameters
@@ -456,8 +456,8 @@ def _construct_pf_collections(dates, highs, lows, volumes, config_pm_params, clo
         sequence of high values
     lows : sequence
         sequence of low values
-    pm_params : dictionary
-        brick_size : size of each brick/box
+    pmove_params : dictionary
+        size : size of each brick/box
         atr_length : length of time used for calculating atr
     closes : sequence
         sequence of closing values
@@ -468,13 +468,13 @@ def _construct_pf_collections(dates, highs, lows, volumes, config_pm_params, clo
     ret : tuple
         rectCollection
     """
-    pm_params = _process_kwargs(config_pm_params, _valid_pm_kwargs())
+    pmove_params = _process_kwargs(config_pmove_params, _valid_pmove_kwargs())
     if marketcolors is None:
         marketcolors = _get_mpfstyle('classic')['marketcolors']
         print('default market colors:',marketcolors)
     
-    box_size = pm_params['brick_size']
-    atr_length = pm_params['atr_length']
+    box_size = pmove_params['size']
+    atr_length = pmove_params['atr_length']
     
 
     if box_size == 'atr':
@@ -484,9 +484,9 @@ def _construct_pf_collections(dates, highs, lows, volumes, config_pm_params, clo
         upper_limit = 1.5*total_atr
         lower_limit = 0.01*total_atr
         if box_size > upper_limit:
-            raise ValueError("Specified brick_size may not be larger than (1.5* the Average True Value of the dataset) which has value: "+ str(upper_limit))
+            raise ValueError("Specified size may not be larger than (1.5* the Average True Value of the dataset) which has value: "+ str(upper_limit))
         elif box_size < lower_limit:
-            raise ValueError("Specified brick_size may not be smaller than (0.01* the Average True Value of the dataset) which has value: "+ str(lower_limit))
+            raise ValueError("Specified size may not be smaller than (0.01* the Average True Value of the dataset) which has value: "+ str(lower_limit))
 
     alpha  = marketcolors['alpha']
 

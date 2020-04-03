@@ -15,7 +15,7 @@ from itertools import cycle
 from mplfinance._utils import _construct_ohlc_collections
 from mplfinance._utils import _construct_candlestick_collections
 from mplfinance._utils import _construct_renko_collections
-from mplfinance._utils import _construct_pf_collections
+from mplfinance._utils import _construct_pointnfig_collections
 
 from mplfinance._utils import renko_reformat_ydata
 from mplfinance._utils import _updown_colors
@@ -27,6 +27,8 @@ from mplfinance._arg_validators import _check_and_prepare_data, _mav_validator
 from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 from mplfinance._arg_validators import _kwarg_not_implemented, _bypass_kwarg_validation
 
+
+VALID_PMOVE_TYPES = ['renko', 'pnf', 'p&f','pointnfigure']
 
 def with_rc_context(func):
     '''
@@ -66,7 +68,7 @@ def _valid_plot_kwargs():
 
     vkwargs = {
         'type'        : { 'Default'     : 'ohlc',
-                          'Validator'   : lambda value: value in ['candle','candlestick','ohlc','bars','ohlc_bars','line', 'renko', 'pf', 'p&f'] },
+                          'Validator'   : lambda value: value in ['candle','candlestick','ohlc','bars','ohlc_bars','line', 'renko', 'pnf', 'p&f', 'pointnfigure'] },
  
         'style'       : { 'Default'     : 'default',
                           'Validator'   : lambda value: value in _styles.available_styles() or isinstance(value,dict) },
@@ -77,7 +79,7 @@ def _valid_plot_kwargs():
         'mav'         : { 'Default'     : None,
                           'Validator'   : _mav_validator },
         
-        'pm_params'  : { 'Default'     : dict(),
+        'pmove_params': { 'Default'     : dict(),
                           'Validator'   : lambda value: isinstance(value,dict) },
  
         'study'       : { 'Default'     : None,
@@ -169,7 +171,7 @@ def plot( data, **kwargs ):
 
     config = _process_kwargs(kwargs, _valid_plot_kwargs())
     
-    if config['type'] in ['renko', 'pf', 'p&f'] and config['addplot'] is not None:
+    if config['type'] in VALID_PMOVE_TYPES and config['addplot'] is not None:
         err = "`addplot` is not supported for `type='" + config['type'] +"'`"
         raise ValueError(err)
 
@@ -247,7 +249,7 @@ def plot( data, **kwargs ):
 
     ptype = config['type'] 
 
-    if ptype not in ['renko', 'pf', 'p&f']:
+    if ptype not in VALID_PMOVE_TYPES:
         if config['show_nontrading']:
             formatter = mdates.DateFormatter(fmtstring)
             xdates = dates
@@ -265,17 +267,17 @@ def plot( data, **kwargs ):
         collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes,
                                                          marketcolors=style['marketcolors'] )
     elif ptype == 'renko':
-        collections, new_dates, volumes, brick_values = _construct_renko_collections(dates, highs, lows, volumes, config['pm_params'], closes,
+        collections, new_dates, volumes, brick_values = _construct_renko_collections(dates, highs, lows, volumes, config['pmove_params'], closes,
                                                          marketcolors=style['marketcolors'] )
-    elif ptype == 'pf' or ptype == 'p&f':
-        collections, new_dates, volumes, brick_values = _construct_pf_collections(dates, highs, lows, volumes, config['pm_params'], closes,
+    elif ptype == 'pnf' or ptype == 'p&f' or ptype == 'pointnfigure':
+        collections, new_dates, volumes, brick_values = _construct_pointnfig_collections(dates, highs, lows, volumes, config['pmove_params'], closes,
                                                          marketcolors=style['marketcolors'] )                           
     elif ptype == 'line':
         ax1.plot(xdates, closes, color=config['linecolor'])
     else:
         raise ValueError('Unrecognized plot type = "'+ ptype + '"')
 
-    if ptype in ['renko', 'pf', 'p&f']:
+    if ptype in VALID_PMOVE_TYPES:
         formatter = IntegerIndexDateTimeFormatter(new_dates, fmtstring)
         xdates = np.arange(len(new_dates))
 
@@ -298,7 +300,7 @@ def plot( data, **kwargs ):
             mavc = None
             
         for mav in mavgs:
-            if ptype in ['renko', 'pf', 'p&f']:
+            if ptype in VALID_PMOVE_TYPES:
                 mavprices = pd.Series(brick_values).rolling(mav).mean().values
             else:
                 mavprices = data['Close'].rolling(mav).mean().values
@@ -342,7 +344,7 @@ def plot( data, **kwargs ):
     used_ax3 = False
     used_ax4 = False
     addplot = config['addplot']
-    if addplot is not None and ptype not in ['renko', 'pf', 'p&f']:
+    if addplot is not None and ptype not in VALID_PMOVE_TYPES:
         # Calculate the Order of Magnitude Range
         # If addplot['secondary_y'] == 'auto', then: If the addplot['data']
         # is out of the Order of Magnitude Range, then use secondary_y.
