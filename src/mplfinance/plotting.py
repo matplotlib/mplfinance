@@ -315,7 +315,7 @@ def plot( data, **kwargs ):
 
     avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
     
-    if ptype not in VALID_PMOVE_TYPES:
+    if ptype is not 'renko':
         minx = xdates[0]  - avg_dist_between_points
         maxx = xdates[-1] + avg_dist_between_points
         miny = min([low for low in lows if low != -1])
