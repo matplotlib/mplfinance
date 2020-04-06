@@ -17,7 +17,6 @@ from mplfinance._utils import _construct_candlestick_collections
 from mplfinance._utils import _construct_renko_collections
 from mplfinance._utils import _construct_pointnfig_collections
 
-from mplfinance._utils import renko_reformat_ydata
 from mplfinance._utils import _updown_colors
 from mplfinance._utils import IntegerIndexDateTimeFormatter
 
@@ -67,71 +66,74 @@ def _valid_plot_kwargs():
     '''
 
     vkwargs = {
-        'type'        : { 'Default'     : 'ohlc',
-                          'Validator'   : lambda value: value in ['candle','candlestick','ohlc','bars','ohlc_bars','line', 'renko', 'pnf', 'p&f', 'pointnfigure'] },
+        'type'                      : { 'Default'     : 'ohlc',
+                                        'Validator'   : lambda value: value in ['candle','candlestick','ohlc','bars','ohlc_bars','line', 'renko', 'pnf', 'p&f', 'pointnfigure'] },
  
-        'style'       : { 'Default'     : 'default',
-                          'Validator'   : lambda value: value in _styles.available_styles() or isinstance(value,dict) },
+        'style'                     : { 'Default'     : 'default',
+                                        'Validator'   : lambda value: value in _styles.available_styles() or isinstance(value,dict) },
  
-        'volume'      : { 'Default'     : False,
-                          'Validator'   : lambda value: isinstance(value,bool) },
+        'volume'                    : { 'Default'     : False,
+                                        'Validator'   : lambda value: isinstance(value,bool) },
  
-        'mav'         : { 'Default'     : None,
-                          'Validator'   : _mav_validator },
+        'mav'                       : { 'Default'     : None,
+                                        'Validator'   : _mav_validator },
         
-        'pmove_params': { 'Default'     : dict(),
-                          'Validator'   : lambda value: isinstance(value,dict) },
- 
-        'study'       : { 'Default'     : None,
-                         #'Validator'   : lambda value: isinstance(value,dict) }, #{'studyname': {study parms}} example: {'TE':{'mav':20,'upper':2,'lower':2}}
-                          'Validator'   : lambda value: _kwarg_not_implemented(value) }, 
- 
-        'marketcolors': { 'Default'     : None, # use 'style' for default, instead.
-                          'Validator'   : lambda value: isinstance(value,dict) },
- 
-        'no_xgaps'    : { 'Default'     : True,  # None means follow default logic below:
-                          'Validator'   : lambda value: _warn_no_xgaps_deprecated(value) },
- 
-        'show_nontrading': { 'Default'  : False, 
-                          'Validator'   : lambda value: isinstance(value,bool) },
- 
-        'figscale'    : { 'Default'     : 1.0, # scale base figure size up or down.
-                          'Validator'   : lambda value: isinstance(value,float) or isinstance(value,int) },
- 
-        'figratio'    : { 'Default'     : (8.00,5.75), # aspect ratio; will equal fig size when figscale=1.0
-                          'Validator'   : lambda value: isinstance(value,(tuple,list))
-                                                        and len(value) == 2
-                                                        and isinstance(value[0],(float,int))
-                                                        and isinstance(value[1],(float,int)) },
- 
-        'linecolor'   : { 'Default'     : 'k', # line color in line plot
-                          'Validator'   : lambda value: mcolors.is_color_like(value) },
+        'renko_params'              : { 'Default'     : dict(),
+                                        'Validator'   : lambda value: isinstance(value,dict) },
 
-        'title'       : { 'Default'     : None, # Plot Title
-                          'Validator'   : lambda value: isinstance(value,str) },
+        'pointnfig_params'          : { 'Default'     : dict(),
+                                        'Validator'   : lambda value: isinstance(value,dict) },
  
-        'ylabel'      : { 'Default'     : 'Price', # y-axis label
-                          'Validator'   : lambda value: isinstance(value,str) },
+        'study'                     : { 'Default'     : None,
+                                        #'Validator'   : lambda value: isinstance(value,dict) }, #{'studyname': {study parms}} example: {'TE':{'mav':20,'upper':2,'lower':2}}
+                                        'Validator'   : lambda value: _kwarg_not_implemented(value) }, 
  
-        'ylabel_lower': { 'Default'     : None, # y-axis label default logic below
-                          'Validator'   : lambda value: isinstance(value,str) },
+        'marketcolors'              : { 'Default'     : None, # use 'style' for default, instead.
+                                        'Validator'   : lambda value: isinstance(value,dict) },
  
-       #'xlabel'      : { 'Default'     : None,  # x-axis label, default is None because obvious it's time or date
-       #                  'Validator'   : lambda value: isinstance(value,str) },
+        'no_xgaps'                  : { 'Default'     : True,  # None means follow default logic below:
+                                        'Validator'   : lambda value: _warn_no_xgaps_deprecated(value) },
  
-        'addplot'     : { 'Default'     : None, 
-                          'Validator'   : lambda value: isinstance(value,dict) or (isinstance(value,list) and all([isinstance(d,dict) for d in value])) },
+        'show_nontrading'           : { 'Default'  : False, 
+                                        'Validator'   : lambda value: isinstance(value,bool) },
  
-        'savefig'     : { 'Default'     : None, 
-                          'Validator'   : lambda value: isinstance(value,dict) or isinstance(value,str) or isinstance(value, io.BytesIO) },
+        'figscale'                  : { 'Default'     : 1.0, # scale base figure size up or down.
+                                        'Validator'   : lambda value: isinstance(value,float) or isinstance(value,int) },
  
-        'block'       : { 'Default'     : True, 
-                          'Validator'   : lambda value: isinstance(value,bool) },
+        'figratio'                  : { 'Default'     : (8.00,5.75), # aspect ratio; will equal fig size when figscale=1.0
+                                        'Validator'   : lambda value: isinstance(value,(tuple,list))
+                                                                      and len(value) == 2
+                                                                      and isinstance(value[0],(float,int))
+                                                                      and isinstance(value[1],(float,int)) },
  
-        'returnfig'   : { 'Default'     : False, 
-                          'Validator'   : lambda value: isinstance(value,bool) },
+        'linecolor'                 : { 'Default'     : 'k', # line color in line plot
+                                        'Validator'   : lambda value: mcolors.is_color_like(value) },
 
-        'return_calculated_values': {'Default': None,
+        'title'                     : { 'Default'     : None, # Plot Title
+                                        'Validator'   : lambda value: isinstance(value,str) },
+ 
+        'ylabel'                    : { 'Default'     : 'Price', # y-axis label
+                                        'Validator'   : lambda value: isinstance(value,str) },
+ 
+        'ylabel_lower'              : { 'Default'     : None, # y-axis label default logic below
+                                        'Validator'   : lambda value: isinstance(value,str) },
+ 
+       #'xlabel'                    : { 'Default'     : None,  # x-axis label, default is None because obvious it's time or date
+       #                                'Validator'   : lambda value: isinstance(value,str) },
+ 
+        'addplot'                   : { 'Default'     : None, 
+                                        'Validator'   : lambda value: isinstance(value,dict) or (isinstance(value,list) and all([isinstance(d,dict) for d in value])) },
+ 
+        'savefig'                   : { 'Default'     : None, 
+                                        'Validator'   : lambda value: isinstance(value,dict) or isinstance(value,str) or isinstance(value, io.BytesIO) },
+ 
+        'block'                     : { 'Default'     : True, 
+                                        'Validator'   : lambda value: isinstance(value,bool) },
+ 
+        'returnfig'                 : { 'Default'     : False, 
+                                        'Validator'   : lambda value: isinstance(value,bool) },
+
+        'return_calculated_values'  : {'Default': None,
                                      'Validator': lambda value: isinstance(value, dict) and len(value) == 0},
  
     }
@@ -267,10 +269,10 @@ def plot( data, **kwargs ):
         collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes,
                                                          marketcolors=style['marketcolors'] )
     elif ptype == 'renko':
-        collections, new_dates, volumes, brick_values = _construct_renko_collections(dates, highs, lows, volumes, config['pmove_params'], closes,
+        collections, new_dates, volumes, brick_values = _construct_renko_collections(dates, highs, lows, volumes, config['renko_params'], closes,
                                                          marketcolors=style['marketcolors'] )
     elif ptype == 'pnf' or ptype == 'p&f' or ptype == 'pointnfigure':
-        collections, new_dates, volumes, brick_values = _construct_pointnfig_collections(dates, highs, lows, volumes, config['pmove_params'], closes,
+        collections, new_dates, volumes, brick_values = _construct_pointnfig_collections(dates, highs, lows, volumes, config['pointnfig_params'], closes,
                                                          marketcolors=style['marketcolors'] )                           
     elif ptype == 'line':
         ax1.plot(xdates, closes, color=config['linecolor'])

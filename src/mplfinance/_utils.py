@@ -103,29 +103,6 @@ def _calculate_atr(atr_length, highs, lows, closes):
         atr += tr
     return atr/atr_length
 
-def renko_reformat_ydata(ydata, dates, old_dates):
-    """Reformats ydata to work on renko charts, can lead to unexpected 
-    outputs for the user as the xaxis does not scale evenly with dates.
-    Missing dates ydata is averaged into the next date and dates that appear
-    more than once have the same ydata
-    ydata : y data likely coming from addplot
-    dates : x-axis dates for the renko chart
-    old_dates : original dates in the data set
-    """
-    new_ydata = [] # stores new ydata
-    prev_data = 0
-    skipped_dates = 0
-    for i in range(len(ydata)):
-        if old_dates[i] not in dates:
-            prev_data += ydata[i]
-            skipped_dates += 1
-        else:
-            dup_dates = dates.count(old_dates[i])
-            new_ydata.extend([(ydata[i]+prev_data)/(skipped_dates+1)]*dup_dates)
-            skipped_dates = 0
-            prev_data = 0
-    return new_ydata
-
 def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False):
     if upcolor == downcolor:
         return upcolor
@@ -137,13 +114,12 @@ def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False):
         _list = [ cmap[pre < cls] for cls,pre in zip(closes[1:], closes) ]
         return [first] + _list
 
-def _valid_pmove_kwargs():
+def _valid_renko_kwargs():
     '''
-    Construct and return the "valid pmove kwargs table" for the mplfinance.plot(type='renko') 
-    or mplfinance.plot(type='pf') functions. A valid kwargs table is a `dict` of `dict`s.
-    The keys of the outer dict are the valid key-words for the function.  The value
-    for each key is a dict containing 2 specific keys: "Default", and "Validator"
-    with the following values:
+    Construct and return the "valid renko kwargs table" for the mplfinance.plot(type='renko') 
+    function. A valid kwargs table is a `dict` of `dict`s. The keys of the outer dict are 
+    the valid key-words for the function.  The value for each key is a dict containing 2 
+    specific keys: "Default", and "Validator" with the following values:
         "Default"      - The default value for the kwarg if none is specified.
         "Validator"    - A function that takes the caller specified value for the kwarg,
                          and validates that it is the correct type, and (for kwargs with 
@@ -151,7 +127,30 @@ def _valid_pmove_kwargs():
                          kwarg value is one of the allowed values.
     '''
     vkwargs = {
-        'size'        : { 'Default'     : 'atr',
+        'brick_size'  : { 'Default'     : 'atr',
+                          'Validator'   : lambda value: isinstance(value,(float,int)) or value == 'atr' },
+        'atr_length'  : { 'Default'     : 14,
+                          'Validator'   : lambda value: isinstance(value,int) },               
+    }
+
+    _validate_vkwargs_dict(vkwargs)
+
+    return vkwargs
+
+def _valid_pointnfig_kwargs():
+    '''
+    Construct and return the "valid pointnfig kwargs table" for the mplfinance.plot(type='pnf') 
+    function. A valid kwargs table is a `dict` of `dict`s. The keys of the outer dict are 
+    the valid key-words for the function.  The value for each key is a dict containing 2 
+    specific keys: "Default", and "Validator" with the following values:
+        "Default"      - The default value for the kwarg if none is specified.
+        "Validator"    - A function that takes the caller specified value for the kwarg,
+                         and validates that it is the correct type, and (for kwargs with 
+                         a limited set of allowed values) may also validate that the
+                         kwarg value is one of the allowed values.
+    '''
+    vkwargs = {
+        'box_size'    : { 'Default'     : 'atr',
                           'Validator'   : lambda value: isinstance(value,(float,int)) or value == 'atr' },
         'atr_length'  : { 'Default'     : 14,
                           'Validator'   : lambda value: isinstance(value,int) },               
@@ -331,7 +330,7 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
 
     return rangeCollection, barCollection
 
-def _construct_renko_collections(dates, highs, lows, volumes, config_pmove_params, closes, marketcolors=None):
+def _construct_renko_collections(dates, highs, lows, volumes, config_renko_params, closes, marketcolors=None):
     """Represent the price change with bricks
 
     Parameters
@@ -342,8 +341,8 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_pmove_param
         sequence of high values
     lows : sequence
         sequence of low values
-    pmove_params : dictionary
-        size : size of each brick
+    config_renko_params : kwargs table (dictionary)
+        brick_size : size of each brick
         atr_length : length of time used for calculating atr
     closes : sequence
         sequence of closing values
@@ -354,25 +353,25 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_pmove_param
     ret : tuple
         rectCollection
     """
-    pmove_params = _process_kwargs(config_pmove_params, _valid_pmove_kwargs())
+    renko_params = _process_kwargs(config_renko_params, _valid_renko_kwargs())
     if marketcolors is None:
         marketcolors = _get_mpfstyle('classic')['marketcolors']
         print('default market colors:',marketcolors)
     
-    size = pmove_params['size']
-    atr_length = pmove_params['atr_length']
+    brick_size = renko_params['brick_size']
+    atr_length = renko_params['atr_length']
     
 
-    if size == 'atr':
-        size = _calculate_atr(atr_length, highs, lows, closes)
+    if brick_size == 'atr':
+        brick_size = _calculate_atr(atr_length, highs, lows, closes)
     else: # is an integer or float
         total_atr = _calculate_atr(len(closes)-1, highs, lows, closes)
         upper_limit = 1.5*total_atr
         lower_limit = 0.01*total_atr
-        if size > upper_limit:
-            raise ValueError("Specified size may not be larger than (1.5* the Average True Value of the dataset) which has value: "+ str(upper_limit))
-        elif size < lower_limit:
-            raise ValueError("Specified size may not be smaller than (0.01* the Average True Value of the dataset) which has value: "+ str(lower_limit))
+        if brick_size > upper_limit:
+            raise ValueError("Specified brick_size may not be larger than (1.5* the Average True Value of the dataset) which has value: "+ str(upper_limit))
+        elif brick_size < lower_limit:
+            raise ValueError("Specified brick_size may not be smaller than (0.01* the Average True Value of the dataset) which has value: "+ str(lower_limit))
 
     alpha  = marketcolors['alpha']
 
@@ -381,7 +380,7 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_pmove_param
     euc     = mcolors.to_rgba(marketcolors['edge'][ 'up' ], 1.0)
     edc     = mcolors.to_rgba(marketcolors['edge']['down'], 1.0)
 
-    cdiff = [(closes[i+1] - closes[i])/size for i in range(len(closes)-1)] # fill cdiff with close price change
+    cdiff = [(closes[i+1] - closes[i])/brick_size for i in range(len(closes)-1)] # fill cdiff with close price change
 
     bricks = [] # holds bricks, 1 for down bricks, -1 for up bricks
     new_dates = [] # holds the dates corresponding with the index
@@ -424,14 +423,14 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_pmove_param
             edge_colors.append(edc)
 
         prev_num += number
-        brick_y = start_price + (prev_num * size)
+        brick_y = start_price + (prev_num * brick_size)
         brick_values.append(brick_y)
         x, y = index, brick_y
 
         verts.append((
             (x, y),
-            (x, y+size),
-            (x+1, y+size),
+            (x, y+brick_size),
+            (x+1, y+brick_size),
             (x+1, y)))
 
     useAA = 0,    # use tuple here
@@ -445,7 +444,7 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_pmove_param
     
     return (rectCollection, ), new_dates, new_volumes, brick_values
 
-def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pmove_params, closes, marketcolors=None):
+def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnfig_params, closes, marketcolors=None):
     """Represent the price change with Xs and Os
 
     Parameters
@@ -456,8 +455,8 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pmove_p
         sequence of high values
     lows : sequence
         sequence of low values
-    pmove_params : dictionary
-        size : size of each brick/box
+    config_pointnfig_params : kwargs table (dictionary)
+        box_size : size of each box
         atr_length : length of time used for calculating atr
     closes : sequence
         sequence of closing values
@@ -468,13 +467,13 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pmove_p
     ret : tuple
         rectCollection
     """
-    pmove_params = _process_kwargs(config_pmove_params, _valid_pmove_kwargs())
+    pointnfig_params = _process_kwargs(config_pointnfig_params, _valid_pointnfig_kwargs())
     if marketcolors is None:
         marketcolors = _get_mpfstyle('classic')['marketcolors']
         print('default market colors:',marketcolors)
     
-    box_size = pmove_params['size']
-    atr_length = pmove_params['atr_length']
+    box_size = pointnfig_params['box_size']
+    atr_length = pointnfig_params['atr_length']
     
 
     if box_size == 'atr':
@@ -484,9 +483,9 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pmove_p
         upper_limit = 1.5*total_atr
         lower_limit = 0.01*total_atr
         if box_size > upper_limit:
-            raise ValueError("Specified size may not be larger than (1.5* the Average True Value of the dataset) which has value: "+ str(upper_limit))
+            raise ValueError("Specified box_size may not be larger than (1.5* the Average True Value of the dataset) which has value: "+ str(upper_limit))
         elif box_size < lower_limit:
-            raise ValueError("Specified size may not be smaller than (0.01* the Average True Value of the dataset) which has value: "+ str(lower_limit))
+            raise ValueError("Specified box_size may not be smaller than (0.01* the Average True Value of the dataset) which has value: "+ str(lower_limit))
 
     alpha  = marketcolors['alpha']
 
@@ -506,7 +505,7 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pmove_p
     index = -1 # only incremented when difference > 0
 
     for diff_index, difference in enumerate(cdiff):
-        diff = abs(int(round(difference, 0)))
+        diff = abs(int(difference))
         if volumes is not None: # only adds volumes if there are volume values when volume=True
             if diff != 0:
                 new_volumes.append(volumes[diff_index] + volume_cache)
