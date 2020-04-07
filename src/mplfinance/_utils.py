@@ -446,7 +446,7 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
                                    linewidths=lw
                                    )
     
-    return (rectCollection, ), new_dates, new_volumes, brick_values
+    return (rectCollection, ), new_dates, new_volumes, brick_values, brick_size
 
 from matplotlib.ticker import Formatter
 class IntegerIndexDateTimeFormatter(Formatter):
