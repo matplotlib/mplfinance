@@ -391,9 +391,13 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
 
     volume_cache = 0 # holds the volumes for the dates that were skipped
     
-
+    last_diff_sign = 0 # direction the bricks were last going in -1 -> down, 1 -> up
     for i in range(len(cdiff)):
-        num_bricks = abs(int(round(cdiff[i], 0)))
+        num_bricks = abs(int(cdiff[i]))
+        curr_diff_sign = cdiff[i]/abs(cdiff[i])
+        if last_diff_sign != 0 and num_bricks > 0 and curr_diff_sign != last_diff_sign:
+            num_bricks -= 1
+        last_diff_sign = curr_diff_sign
 
         if num_bricks != 0:
             new_dates.extend([dates[i]]*num_bricks)
@@ -442,7 +446,7 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
                                     linewidths=lw
                                     )
     
-    return (rectCollection, ), new_dates, new_volumes, brick_values
+    return (rectCollection, ), new_dates, new_volumes, brick_values, brick_size
 
 def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnfig_params, closes, marketcolors=None):
     """Represent the price change with Xs and Os

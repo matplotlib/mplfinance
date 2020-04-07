@@ -269,7 +269,7 @@ def plot( data, **kwargs ):
         collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes,
                                                          marketcolors=style['marketcolors'] )
     elif ptype == 'renko':
-        collections, new_dates, volumes, brick_values = _construct_renko_collections(dates, highs, lows, volumes, config['renko_params'], closes,
+        collections, new_dates, volumes, brick_values, brick_size = _construct_renko_collections(dates, highs, lows, volumes, config['renko_params'], closes,
                                                          marketcolors=style['marketcolors'] )
     elif ptype == 'pnf' or ptype == 'p&f' or ptype == 'pointnfigure':
         collections, new_dates, volumes, brick_values = _construct_pointnfig_collections(dates, highs, lows, volumes, config['pointnfig_params'], closes,
@@ -325,8 +325,12 @@ def plot( data, **kwargs ):
     avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
     minx = xdates[0]  - avg_dist_between_points
     maxx = xdates[-1] + avg_dist_between_points
-    miny = min([low for low in lows if low != -1])
-    maxy = max([high for high in highs if high != -1])
+    if ptype is not 'renko':
+        miny = min([low for low in lows if low != -1])
+        maxy = max([high for high in highs if high != -1])
+    else:
+        miny = min([brick for brick in brick_values])
+        maxy = max([brick+brick_size for brick in brick_values])
     corners = (minx, miny), (maxx, maxy)
     ax1.update_datalim(corners)
 
