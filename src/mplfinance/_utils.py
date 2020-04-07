@@ -379,22 +379,27 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
     dc     = mcolors.to_rgba(marketcolors['candle']['down'], alpha)
     euc     = mcolors.to_rgba(marketcolors['edge'][ 'up' ], 1.0)
     edc     = mcolors.to_rgba(marketcolors['edge']['down'], 1.0)
-
-    cdiff = [(closes[i+1] - closes[i])/brick_size for i in range(len(closes)-1)] # fill cdiff with close price change
+    
+    cdiff = []
+    prev_close_brick = closes[0]
+    for i in range(len(closes)-1):
+        brick_diff = int((closes[i+1] - prev_close_brick) / brick_size)
+        cdiff.append(brick_diff)
+        prev_close_brick += brick_diff * brick_size
 
     bricks = [] # holds bricks, 1 for down bricks, -1 for up bricks
     new_dates = [] # holds the dates corresponding with the index
     new_volumes = [] # holds the volumes corresponding with the index.  If more than one index for the same day then they all have the same volume.
 
-    prev_num = 0
+    
     start_price = closes[0]
 
     volume_cache = 0 # holds the volumes for the dates that were skipped
     
     last_diff_sign = 0 # direction the bricks were last going in -1 -> down, 1 -> up
     for i in range(len(cdiff)):
-        num_bricks = abs(int(cdiff[i]))
-        curr_diff_sign = cdiff[i]/abs(cdiff[i])
+        num_bricks = abs(cdiff[i])
+        curr_diff_sign = cdiff[i]/abs(cdiff[i]) if cdiff[i] != 0 else 0
         if last_diff_sign != 0 and num_bricks > 0 and curr_diff_sign != last_diff_sign:
             num_bricks -= 1
         last_diff_sign = curr_diff_sign
@@ -418,6 +423,7 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
     colors = []
     edge_colors = []
     brick_values = []
+    prev_num = -1 if bricks[0] > 0 else 0
     for index, number in enumerate(bricks):
         if number == 1: # up brick
             colors.append(uc)
@@ -429,6 +435,7 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
         prev_num += number
         brick_y = start_price + (prev_num * brick_size)
         brick_values.append(brick_y)
+        
         x, y = index, brick_y
 
         verts.append((
@@ -484,7 +491,7 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
         box_size = _calculate_atr(atr_length, highs, lows, closes)
     else: # is an integer or float
         total_atr = _calculate_atr(len(closes)-1, highs, lows, closes)
-        upper_limit = 1.5*total_atr
+        upper_limit = 5*total_atr
         lower_limit = 0.01*total_atr
         if box_size > upper_limit:
             raise ValueError("Specified box_size may not be larger than (1.5* the Average True Value of the dataset) which has value: "+ str(upper_limit))
@@ -497,54 +504,70 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
     dc     = mcolors.to_rgba(marketcolors['candle']['down'], alpha)
     tfc    = mcolors.to_rgba(marketcolors['edge']['down'], 0) # transparent face color
 
-    cdiff = [(closes[i+1] - closes[i])/box_size for i in range(len(closes)-1)] # fill cdiff with close price change
-    curr_price = closes[0]
-    new_dates = [] # holds the dates corresponding with the index
+    cdiff = []
+    prev_close_box = closes[0]
     new_volumes = [] # holds the volumes corresponding with the index.  If more than one index for the same day then they all have the same volume.
+    new_dates = [] # holds the dates corresponding with the index
+    volume_cache = 0 # holds the volumes for the dates that were skipped
+    prev_sign = 0
+    current_cdiff_index = -1
+
+    for i in range(len(closes)-1):
+        box_diff = int((closes[i+1] - prev_close_box) / box_size)
+        if box_diff == 0:
+            if volumes is not None:
+                volume_cache += volumes[i]
+            continue
+        sign = box_diff / abs(box_diff)
+        if sign == prev_sign:
+            cdiff[current_cdiff_index] += box_diff
+            if volumes is not None:
+                new_volumes[current_cdiff_index] += volumes[i] + volume_cache
+                volume_cache = 0
+        else:
+            cdiff.append(box_diff)
+            if volumes is not None:
+                new_volumes.append(volumes[i] + volume_cache)
+                volume_cache = 0
+            new_dates.append(dates[i])
+            prev_sign = sign
+            current_cdiff_index += 1
+        
+        prev_close_box += box_diff *box_size
+
+
+    curr_price = closes[0]
+    
     box_values = [] # y values for the boxes
     circle_patches = [] # list of circle patches to be used to create the cirCollection
     line_seg = [] # line segments that make up the Xs
-
-    volume_cache = 0 # holds the volumes for the dates that were skipped
-    index = -1 # only incremented when difference > 0
-
-    for diff_index, difference in enumerate(cdiff):
-        diff = abs(int(difference))
-        if volumes is not None: # only adds volumes if there are volume values when volume=True
-            if diff != 0:
-                new_volumes.append(volumes[diff_index] + volume_cache)
-                volume_cache = 0
-            else:
-                volume_cache += volumes[diff_index]
-
-        if diff != 0:
-            index += 1
-            new_dates.append(dates[diff_index])
-        else:
-            continue
-
+    
+    for index, difference in enumerate(cdiff):
+        diff = abs(difference)
 
         sign = (difference / abs(difference)) # -1 or 1
-        start_iteration = 0 if sign > 0 else 2
+        start_iteration = 0 if sign > 0 else 1
         
         x = [index] * (diff)
-        y = [(curr_price + ((i+(box_size * 0.005)) * box_size * sign)) for i in range(start_iteration, diff+start_iteration)]
+        y = [curr_price + (i * box_size * sign) for i in range(start_iteration, diff+start_iteration)]
         
-
-        spacing = 0.1 * box_size
-        curr_price += (box_size * sign * (diff)) + spacing
-        box_values.append(curr_price - spacing - box_size)
+        
+        curr_price += (box_size * sign * (diff))
+        box_values.append(sum(y) / len(y))
         
         for i in range(len(x)): # x and y have the same length
-            height = box_size * 0.9
-            width = min(max(0.5 * (box_size * 0.2), 0.3), 0.9)
+            height = box_size * 0.85
+            width = (50/box_size)/len(new_dates)
             if height < 0.5:
                 width = height
+            
+            padding = (box_size * 0.075)
             if sign == 1: # X
-                line_seg.append([(x[i]-width/2, y[i]-(height/2)), (x[i]+width/2, y[i]+(height/2))]) # create / part of the X
-                line_seg.append([(x[i]-width/2, y[i]+(height/2)), (x[i]+width/2, y[i]-(height/2))]) # create \ part of the X
+                line_seg.append([(x[i]-width/2, y[i] + padding), (x[i]+width/2, y[i]+height + padding)]) # create / part of the X
+                line_seg.append([(x[i]-width/2, y[i]+height+padding), (x[i]+width/2, y[i]+padding)]) # create \ part of the X
             else: # O
-                circle_patches.append(Ellipse((x[i], y[i]), width, height))
+                circle_patches.append(Ellipse((x[i], y[i]-(height/2) - padding), width, height))
+    
     useAA = 0,    # use tuple here
     lw = 0.5        
 
@@ -558,7 +581,7 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
                                  antialiaseds=useAA
                                  )
     
-    return (cirCollection, xCollection), new_dates, new_volumes, box_values
+    return (cirCollection, xCollection), new_dates, new_volumes, box_values, box_size
 
 
 
