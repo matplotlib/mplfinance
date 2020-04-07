@@ -2,7 +2,7 @@ import matplotlib.dates  as mdates
 import pandas as pd
 import numpy  as np
 
-def _check_and_prepare_data(data):
+def _check_and_prepare_data(data, config):
     '''
     Check and Prepare the data input:
     For now, data must be a Pandas DataFrame with a DatetimeIndex
@@ -25,16 +25,17 @@ def _check_and_prepare_data(data):
     if not isinstance(data.index,pd.core.indexes.datetimes.DatetimeIndex):
         raise TypeError('Expect data.index as DatetimeIndex')
 
-    cols = ['Open','High','Low','Close']
+    o, h, l, c, v = config["columns"]
+    cols = [o, h, l, c]
 
     dates   = mdates.date2num(data.index.to_pydatetime())
-    opens   = data['Open'].values
-    highs   = data['High'].values
-    lows    = data['Low'].values
-    closes  = data['Close'].values
-    if 'Volume' in data.columns:
-        volumes = data['Volume'].values
-        cols.append('Volume')
+    opens   = data[o].values
+    highs   = data[h].values
+    lows    = data[l].values
+    closes  = data[c].values
+    if v in data.columns:
+        volumes = data[v].values
+        cols.append(v)
     else:
         volumes = None
 

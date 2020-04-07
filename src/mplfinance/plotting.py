@@ -64,6 +64,10 @@ def _valid_plot_kwargs():
     '''
 
     vkwargs = {
+        'columns'     : { 'Default'     : ('Open', 'High', 'Low', 'Close', 'Volume'),
+                          'Validator'   : lambda value: isinstance(value, (tuple, list))
+                                                        and len(value) == 5
+                                                        and all(isinstance(c, str) for c in value) },
         'type'        : { 'Default'     : 'ohlc',
                           'Validator'   : lambda value: value in ['candle','candlestick','ohlc','bars','ohlc_bars','line', 'renko'] },
  
@@ -164,10 +168,10 @@ def plot( data, **kwargs ):
     Also provide ability to plot trading signals, and/or addtional user-defined data.
     """
 
-    dates,opens,highs,lows,closes,volumes = _check_and_prepare_data(data)
-
     config = _process_kwargs(kwargs, _valid_plot_kwargs())
     
+    dates,opens,highs,lows,closes,volumes = _check_and_prepare_data(data, config)
+
     if config['type'] == 'renko' and config['addplot'] is not None:
         err = "`addplot` is not supported for `type='renko'`"
         raise ValueError(err)
