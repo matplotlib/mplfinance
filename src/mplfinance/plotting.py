@@ -138,7 +138,7 @@ def _valid_plot_kwargs():
                                         'Validator'   : lambda value: isinstance(value,bool) },
 
         'return_calculated_values'  : {'Default': None,
-                                     'Validator': lambda value: isinstance(value, dict) and len(value) == 0},
+                                       'Validator': lambda value: isinstance(value, dict) and len(value) == 0},
  
     }
 
@@ -175,7 +175,7 @@ def plot( data, **kwargs ):
 
     config = _process_kwargs(kwargs, _valid_plot_kwargs())
     
-	dates,opens,highs,lows,closes,volumes = _check_and_prepare_data(data, config)
+    dates,opens,highs,lows,closes,volumes = _check_and_prepare_data(data, config)
 
     if config['type'] in VALID_PMOVE_TYPES and config['addplot'] is not None:
         err = "`addplot` is not supported for `type='" + config['type'] +"'`"
