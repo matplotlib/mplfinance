@@ -103,6 +103,51 @@ def _calculate_atr(atr_length, highs, lows, closes):
         atr += tr
     return atr/atr_length
 
+def combine_adjacent(arr):
+    """Sum like signed adjacent elements
+    arr : starting array
+
+    Returns
+    -------
+    output: new summed array
+    indexes: indexes indicating the first 
+             element summed for each group in arr
+    """
+    output, indexes = [], []
+    curr_i = 0
+    while len(arr) > 0:
+        curr_sign = arr[0]/abs(arr[0])
+        index = 0
+        while index < len(arr) and arr[index]/abs(arr[index]) == curr_sign:
+            index += 1
+        output.append(sum(arr[:index]))
+        indexes.append(curr_i)
+        curr_i += index
+        
+        for _ in range(index):
+            arr.pop(0)
+    return output, indexes
+
+def coalesce_volume_dates(in_volumes, in_dates, indexes):
+    """Sums volumes between the indexes and ouputs
+    dates at the indexes
+    in_volumes : original volume list
+    in_dates : original dates list
+    indexes : list of indexes
+
+    Returns
+    -------
+    volumes: new volume array
+    dates: new dates array
+    """
+    volumes, dates = [], []
+    for i in range(len(indexes)):
+        dates.append(in_dates[indexes[i]])
+        to_sum_to = indexes[i+1] if i+1 < len(indexes) else len(in_volumes)
+        volumes.append(sum(in_volumes[indexes[i]:to_sum_to]))
+    return volumes, dates
+
+
 def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False):
     if upcolor == downcolor:
         return upcolor
@@ -130,7 +175,7 @@ def _valid_renko_kwargs():
         'brick_size'  : { 'Default'     : 'atr',
                           'Validator'   : lambda value: isinstance(value,(float,int)) or value == 'atr' },
         'atr_length'  : { 'Default'     : 14,
-                          'Validator'   : lambda value: isinstance(value,int) },               
+                          'Validator'   : lambda value: isinstance(value,int) or value == 'total' },               
     }
 
     _validate_vkwargs_dict(vkwargs)
@@ -153,7 +198,7 @@ def _valid_pointnfig_kwargs():
         'box_size'    : { 'Default'     : 'atr',
                           'Validator'   : lambda value: isinstance(value,(float,int)) or value == 'atr' },
         'atr_length'  : { 'Default'     : 14,
-                          'Validator'   : lambda value: isinstance(value,int) },               
+                          'Validator'   : lambda value: isinstance(value,int) or value == 'total' },               
     }
 
     _validate_vkwargs_dict(vkwargs)
@@ -363,67 +408,76 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
     
 
     if brick_size == 'atr':
-        brick_size = _calculate_atr(atr_length, highs, lows, closes)
+        if atr_length == 'total':
+            brick_size = _calculate_atr(len(closes)-1, highs, lows, closes)
+        else:
+            brick_size = _calculate_atr(atr_length, highs, lows, closes)
     else: # is an integer or float
-        total_atr = _calculate_atr(len(closes)-1, highs, lows, closes)
-        upper_limit = 1.5*total_atr
-        lower_limit = 0.01*total_atr
+        upper_limit = (max(closes) - min(closes)) / 5
+        lower_limit = (max(closes) - min(closes)) / 32
         if brick_size > upper_limit:
-            raise ValueError("Specified brick_size may not be larger than (1.5* the Average True Value of the dataset) which has value: "+ str(upper_limit))
+            raise ValueError("Specified brick_size may not be larger than (20% of the close price range of the dataset) which has value: "+ str(upper_limit))
         elif brick_size < lower_limit:
-            raise ValueError("Specified brick_size may not be smaller than (0.01* the Average True Value of the dataset) which has value: "+ str(lower_limit))
+            raise ValueError("Specified brick_size may not be smaller than (3.125% of the close price range of the dataset) which has value: "+ str(lower_limit))
 
     alpha  = marketcolors['alpha']
 
     uc     = mcolors.to_rgba(marketcolors['candle'][ 'up' ], alpha)
     dc     = mcolors.to_rgba(marketcolors['candle']['down'], alpha)
-    euc     = mcolors.to_rgba(marketcolors['edge'][ 'up' ], 1.0)
-    edc     = mcolors.to_rgba(marketcolors['edge']['down'], 1.0)
+    euc    = mcolors.to_rgba(marketcolors['edge'][ 'up' ], 1.0)
+    edc    = mcolors.to_rgba(marketcolors['edge']['down'], 1.0)
     
     cdiff = []
     prev_close_brick = closes[0]
-    for i in range(len(closes)-1):
-        brick_diff = int((closes[i+1] - prev_close_brick) / brick_size)
-        cdiff.append(brick_diff)
-        prev_close_brick += brick_diff * brick_size
-
-    bricks = [] # holds bricks, 1 for down bricks, -1 for up bricks
+    volume_cache = 0 # holds the volumes for the dates that were skipped
     new_dates = [] # holds the dates corresponding with the index
     new_volumes = [] # holds the volumes corresponding with the index.  If more than one index for the same day then they all have the same volume.
 
-    
-    start_price = closes[0]
-
-    volume_cache = 0 # holds the volumes for the dates that were skipped
-    
-    last_diff_sign = 0 # direction the bricks were last going in -1 -> down, 1 -> up
-    for i in range(len(cdiff)):
-        num_bricks = abs(cdiff[i])
-        curr_diff_sign = cdiff[i]/abs(cdiff[i]) if cdiff[i] != 0 else 0
-        if last_diff_sign != 0 and num_bricks > 0 and curr_diff_sign != last_diff_sign:
-            num_bricks -= 1
-        last_diff_sign = curr_diff_sign
-
-        if num_bricks != 0:
-            new_dates.extend([dates[i]]*num_bricks)
-            
-        if volumes is not None: # only adds volumes if there are volume values when volume=True
-            if num_bricks != 0:
-                new_volumes.extend([volumes[i] + volume_cache]*num_bricks)
-                volume_cache = 0
-            else:
+    for i in range(len(closes)-1):
+        brick_diff = int((closes[i+1] - prev_close_brick) / brick_size)
+        if brick_diff == 0:
+            if volumes is not None:
                 volume_cache += volumes[i]
+            continue
 
-        if cdiff[i] > 0:
-            bricks.extend([1]*num_bricks)
+        cdiff.extend([int(brick_diff/abs(brick_diff))] * abs(brick_diff))
+        if volumes is not None:
+            new_volumes.extend([volumes[i] + volume_cache] * abs(brick_diff))
+            volume_cache = 0
+        new_dates.extend([dates[i]] * abs(brick_diff))
+        prev_close_brick += brick_diff *brick_size
+
+    bricks = [] # holds bricks, 1 for down bricks, -1 for up bricks
+    curr_price = closes[0]
+
+    last_diff_sign = 0 # direction the bricks were last going in -1 -> down, 1 -> up
+    dates_volumes_index = 0 # keeps track of the index of the current date/volume
+    for diff in cdiff:
+        
+        curr_diff_sign = diff/abs(diff)
+        if last_diff_sign != 0 and curr_diff_sign != last_diff_sign:
+            last_diff_sign = curr_diff_sign
+            new_dates.pop(dates_volumes_index)
+            if volumes is not None:
+                if dates_volumes_index == len(new_volumes)-1:
+                    new_volumes[dates_volumes_index-1] += new_volumes[dates_volumes_index]
+                else:
+                    new_volumes[dates_volumes_index+1] += new_volumes[dates_volumes_index]
+                new_volumes.pop(dates_volumes_index)
+            continue
+        last_diff_sign = curr_diff_sign
+    
+        if diff > 0:
+            bricks.extend([1]*abs(diff))
         else:
-            bricks.extend([-1]*num_bricks)
+            bricks.extend([-1]*abs(diff))
+        dates_volumes_index += 1
 
-    verts = []
-    colors = []
-    edge_colors = []
-    brick_values = []
-    prev_num = -1 if bricks[0] > 0 else 0
+
+    verts = [] # holds the brick vertices
+    colors = [] # holds the facecolors for each brick
+    edge_colors = [] # holds the edgecolors for each brick
+    brick_values = [] # holds the brick values for each brick
     for index, number in enumerate(bricks):
         if number == 1: # up brick
             colors.append(uc)
@@ -432,11 +486,10 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
             colors.append(dc)
             edge_colors.append(edc)
 
-        prev_num += number
-        brick_y = start_price + (prev_num * brick_size)
-        brick_values.append(brick_y)
+        curr_price += (brick_size * number)
+        brick_values.append(curr_price)
         
-        x, y = index, brick_y
+        x, y = index, curr_price
 
         verts.append((
             (x, y),
@@ -488,15 +541,17 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
     
 
     if box_size == 'atr':
-        box_size = _calculate_atr(atr_length, highs, lows, closes)
+        if atr_length == 'total':
+            box_size = _calculate_atr(len(closes)-1, highs, lows, closes)
+        else:
+            box_size = _calculate_atr(atr_length, highs, lows, closes)
     else: # is an integer or float
-        total_atr = _calculate_atr(len(closes)-1, highs, lows, closes)
-        upper_limit = 5*total_atr
-        lower_limit = 0.01*total_atr
+        upper_limit = (max(closes) - min(closes)) / 5
+        lower_limit = (max(closes) - min(closes)) / 32
         if box_size > upper_limit:
-            raise ValueError("Specified box_size may not be larger than (1.5* the Average True Value of the dataset) which has value: "+ str(upper_limit))
+            raise ValueError("Specified box_size may not be larger than (20% of the close price range of the dataset) which has value: "+ str(upper_limit))
         elif box_size < lower_limit:
-            raise ValueError("Specified box_size may not be smaller than (0.01* the Average True Value of the dataset) which has value: "+ str(lower_limit))
+            raise ValueError("Specified box_size may not be smaller than (3.125% of the close price range of the dataset) which has value: "+ str(lower_limit))
 
     alpha  = marketcolors['alpha']
 
@@ -504,45 +559,57 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
     dc     = mcolors.to_rgba(marketcolors['candle']['down'], alpha)
     tfc    = mcolors.to_rgba(marketcolors['edge']['down'], 0) # transparent face color
 
-    cdiff = []
-    prev_close_box = closes[0]
-    new_volumes = [] # holds the volumes corresponding with the index.  If more than one index for the same day then they all have the same volume.
-    new_dates = [] # holds the dates corresponding with the index
+    boxes = [] # each element in an integer representing the number of boxes to be drawn on that indexes column (negative numbers -> Os, positive numbers -> Xs)
+    prev_close_box = closes[0] # represents the value of the last box in the previous column
     volume_cache = 0 # holds the volumes for the dates that were skipped
-    prev_sign = 0
-    current_cdiff_index = -1
-
+    temp_volumes, temp_dates = [], [] # holds the temp adjusted volumes and dates respectively
+    
     for i in range(len(closes)-1):
         box_diff = int((closes[i+1] - prev_close_box) / box_size)
         if box_diff == 0:
             if volumes is not None:
                 volume_cache += volumes[i]
             continue
-        sign = box_diff / abs(box_diff)
-        if sign == prev_sign:
-            cdiff[current_cdiff_index] += box_diff
-            if volumes is not None:
-                new_volumes[current_cdiff_index] += volumes[i] + volume_cache
-                volume_cache = 0
-        else:
-            cdiff.append(box_diff)
-            if volumes is not None:
-                new_volumes.append(volumes[i] + volume_cache)
-                volume_cache = 0
-            new_dates.append(dates[i])
-            prev_sign = sign
-            current_cdiff_index += 1
-        
+
+        boxes.append(box_diff)
+        if volumes is not None:
+            temp_volumes.append(volumes[i] + volume_cache)
+            volume_cache = 0
+        temp_dates.append(dates[i])
         prev_close_box += box_diff *box_size
 
+    # combine adjacent similarly signed differences
+    boxes, indexes = combine_adjacent(boxes)
+    new_volumes, new_dates = coalesce_volume_dates(temp_volumes, temp_dates, indexes)
+    
+    #subtract 1 from the abs of each diff except the first to account for the first box using the last box in the opposite direction
+    first_elem = boxes[0]
+    boxes = [boxes[i]- int((boxes[i]/abs(boxes[i]))) for i in range(1, len(boxes))]
+    boxes.insert(0, first_elem)
+
+    # adjust volume and dates to make sure volume is combined into non 0 box indexes and only use dates from non 0 box indexes
+    temp_volumes, temp_dates = [], []
+    for i in range(len(boxes)):
+        if boxes[i] == 0:
+            volume_cache += new_volumes[i]
+        else:
+            temp_volumes.append(new_volumes[i] + volume_cache)
+            volume_cache = 0
+            temp_dates.append(new_dates[i])
+    
+    #remove 0s from boxes
+    boxes = list(filter(lambda diff: diff != 0, boxes))
+
+    # combine adjacent similarly signed differences again after 0s removed
+    boxes, indexes = combine_adjacent(boxes)
+    new_volumes, new_dates = coalesce_volume_dates(temp_volumes, temp_dates, indexes)
 
     curr_price = closes[0]
-    
     box_values = [] # y values for the boxes
     circle_patches = [] # list of circle patches to be used to create the cirCollection
     line_seg = [] # line segments that make up the Xs
     
-    for index, difference in enumerate(cdiff):
+    for index, difference in enumerate(boxes):
         diff = abs(difference)
 
         sign = (difference / abs(difference)) # -1 or 1
@@ -551,13 +618,12 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
         x = [index] * (diff)
         y = [curr_price + (i * box_size * sign) for i in range(start_iteration, diff+start_iteration)]
         
-        
         curr_price += (box_size * sign * (diff))
         box_values.append(sum(y) / len(y))
         
         for i in range(len(x)): # x and y have the same length
             height = box_size * 0.85
-            width = (50/box_size)/len(new_dates)
+            width = 0.6
             if height < 0.5:
                 width = height
             
