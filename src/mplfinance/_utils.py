@@ -137,23 +137,23 @@ def _date_to_mdate(date):
         return None
     return mdates.date2num(pydt)
 
-def _convert_segment_dates(segments,dtindex,xvals_are_esi=True):
+def _convert_segment_dates(segments,dtindex):
     '''
-    Convert line segment dates to matplotlib dates (or to float for xvals_are_esi==True)
+    Convert line segment dates to matplotlib dates 
     Inputted segment dates may be: pandas-parseable date-time string, pandas timestamp,
-                                   or a python datetime or date
+                                   or a python datetime or date, or (if dtindex is not None) integer index
     A "segment" is a "sequence of lines",
         see: https://matplotlib.org/api/collections_api.html#matplotlib.collections.LineCollection
     '''
     #import pdb
     #pdb.set_trace()
-    if xvals_are_esi:
+    if dtindex is not None:
         dtseries = dtindex.to_series()
     converted = []
     for line in segments:
         new_line = []
         for dt,value in line:
-            if xvals_are_esi:
+            if dtindex is not None:
                 date = _date_to_iloc(dtseries,dt)  
             else:
                 date = _date_to_mdate(dt)
@@ -501,59 +501,8 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
                                     edgecolors=edge_colors,
                                     linewidths=lw
                                     )
-    
     return [rectCollection,], new_dates, new_volumes, brick_values, brick_size
 
-def _construct_line_collections(hlines,vlines,lines,minx,maxx,miny,maxy,dtix,xvals_are_esi):
-    """Represent the price change with bricks
-
-    Parameters
-    ----------
-    hlines : sequence
-        sequence of [price] values at which to draw horizontal lines
-    vlines : sequence
-        sequence of dates or datetimes at which to draw vertical lines
-        dates/datetimes may be (a) pandas.to_datetime parseable string,
-                               (b) pandas Timestamp
-                               (c) python datetime.datetime or datetime.date
-    lines : sequence
-        sequences of segments, which are sequences of lines,
-        which are sequences of two or more points (date[time],price) or (x,y)
-
-    Each of the above (hlines,vlines,lines) may also be a dict, containing
-    the following keys:
-        'data'   : the same as defined above: sequence of price, or dates, or segments
-        'colors' : colors for the above data
-        'ltypes' : line types for the above data
-
-    Returns
-    -------
-    ret : list
-        lines collections
-    """
-    print('_construct_line_collections() called:',
-          '\nhlines=',hlines,'\nvlines=',vlines,
-          '\nlines=',lines,'\ndtix=',dtix,'\nxvals_are_esi=',xvals_are_esi)
-
-    if lines is None:
-        lines = []
-
-    if hlines is not None: # minx,maxx,miny,maxy
-        minxdt = mdates.num2date(minx)
-        maxxdt = mdates.num2date(maxx)
-        for val in hlines:
-            lines.append( [(minxdt,val),(maxxdt,val)] )
-
-    print('... now lines=',lines)
-
-    newlines = _convert_segment_dates(lines,dtix,xvals_are_esi)
-
-    useAA  = 0,    # use tuple here
-    lw     = None
-    colors = None
-    segs   = newlines
-    lcollection = LineCollection(segs,colors=colors,linewidths=lw,antialiaseds=useAA)
-    return [ lcollection, ]
 
 def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnfig_params, closes, marketcolors=None):
     """Represent the price change with Xs and Os
@@ -680,8 +629,152 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
                                  linewidths=lw,
                                  antialiaseds=useAA
                                  )
-    
     return [cirCollection, xCollection], new_dates, new_volumes, box_values, box_size
+
+
+def _construct_aline_collections(lines, dtix=None):
+    """construct arbitrary line collections
+
+    Parameters
+    ----------
+    lines : sequence
+        sequences of segments, which are sequences of lines,
+        which are sequences of two or more points ( date[time], price ) or (x,y) 
+
+        date[time] may be (a) pandas.to_datetime parseable string,
+                          (b) pandas Timestamp, or
+                          (c) python datetime.datetime or datetime.date
+
+    NOT YET IMPLEMENTED: alines may also be a dict, containing
+    the following keys:
+        'data'   : the same as defined above: sequence of price, or dates, or segments
+        'colors' : colors for the above data
+        'ltypes' : line types for the above data
+
+    dtix:  date index for the x-axis, used for converting the dates when
+           x-values are 'evenly spaced integers' (as when skipping non-trading days)
+
+    Returns
+    -------
+    ret : list
+        lines collections
+    """
+    print('_construct_aline_collections() called:',
+          '\nlines=',lines,'\ndtix=',dtix)
+
+    if lines is None:
+        lines = []
+
+    newlines = _convert_segment_dates(lines,dtix)
+
+    print('... now lines=',newlines)
+
+    useAA  = 0,    # use tuple here
+    lw     = None  
+    colors = None  # to be implemented
+    segs   = newlines
+    lcollection = LineCollection(segs,colors=colors,linewidths=lw,antialiaseds=useAA)
+    return lcollection
+
+
+def _construct_hline_collections(hlines,minx,maxx):
+    """Construct horizontal lines collection
+
+    Parameters
+    ----------
+    hlines : sequence
+        sequence of [price] values at which to draw horizontal lines
+
+    NOT YET IMPLEMENTED: hlines may also be a dict, containing
+    the following keys:
+        'data'   : the same as defined above: sequence of price, or dates, or segments
+        'colors' : colors for the above data
+        'ltypes' : line types for the above data
+
+    minx : the minimum value for x for the horizontal line, already converted to `xdates` format
+    maxx : the maximum value for x for the horizontal line, already converted to `xdates` format
+
+    Returns
+    -------
+    ret : list
+        lines collections
+    """
+    print('_construct_hline_collections() called:',
+          '\nhlines=',hlines,'\nminx,maxx=',minx,maxx)
+
+    # hlines do NOT require converting segment dates, because the dates
+    # are not user-specified, but are from already converted minxdt,maxxdt
+    
+    lines = []
+    if not isinstance(hlines,(list,tuple)):
+        hlines = [hlines,]
+    for val in hlines:
+        lines.append( [(minx,val),(maxx,val)] )
+
+    print('... now lines=',lines)
+
+
+    useAA  = 0,    # use tuple here
+    lw     = None
+    colors = None
+    lcollection = LineCollection(lines,colors=colors,linewidths=lw,antialiaseds=useAA)
+    return lcollection
+
+
+def _construct_vline_collections(vlines,dtix,miny,maxy):
+    """Construct vertical lines collection
+    Parameters
+    ----------
+    vlines : sequence
+        sequence of dates or datetimes at which to draw vertical lines
+        dates/datetimes may be (a) pandas.to_datetime parseable string,
+                               (b) pandas Timestamp
+                               (c) python datetime.datetime or datetime.date
+
+    NOT YET IMPLEMENTED: vlines may also be a dict, containing
+    the following keys:
+        'data'   : the same as defined above: sequence of price, or dates, or segments
+        'colors' : colors for the above data
+        'ltypes' : line types for the above data
+
+    dtix:  date index for the x-axis, used for converting the dates when
+           x-values are 'evenly spaced integers' (as when skipping non-trading days)
+
+    miny : minimum y-value for the vertical line
+
+    maxy : maximum y-value for the vertical line
+
+    Returns
+    -------
+    ret : list
+        lines collections
+    """
+    print('_construct_vline_collections() called:',
+          '\nvlines=',vlines,
+          '\ndtix=',dtix)
+    print('miny,maxy=',miny,maxy)
+
+    if vlines is None:
+        return None
+
+    if not isinstance(vlines,(list,tuple)):
+        vlines = [vlines,]
+
+    lines = []
+    for val in vlines:
+        lines.append( [(val,miny),(val,maxy)] )
+
+    print('... now lines=',lines)
+
+    lines = _convert_segment_dates(lines,dtix)
+
+    print('... now lines=',lines)
+
+    useAA  = 0,    # use tuple here
+    lw     = None
+    colors = None  # TODO: implement when vlines dict implemented.
+    lcollection = LineCollection(lines,colors=colors,linewidths=lw,antialiaseds=useAA)
+    return lcollection
 
 
 from matplotlib.ticker import Formatter

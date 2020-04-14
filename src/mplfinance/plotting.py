@@ -15,8 +15,10 @@ from itertools import cycle
 from mplfinance._utils import _construct_ohlc_collections
 from mplfinance._utils import _construct_candlestick_collections
 from mplfinance._utils import _construct_renko_collections
-from mplfinance._utils import _construct_line_collections
 from mplfinance._utils import _construct_pointnfig_collections
+from mplfinance._utils import _construct_aline_collections
+from mplfinance._utils import _construct_hline_collections
+from mplfinance._utils import _construct_vline_collections
 
 from mplfinance._utils import _updown_colors
 from mplfinance._utils import IntegerIndexDateTimeFormatter
@@ -275,7 +277,6 @@ def plot( data, **kwargs ):
         else:
             formatter = IntegerIndexDateTimeFormatter(dates, fmtstring)
             xdates = np.arange(len(dates))
-        
         ax1.xaxis.set_major_formatter(formatter)
 
     collections = None
@@ -299,33 +300,9 @@ def plot( data, **kwargs ):
     else:
         raise ValueError('Unrecognized plot type = "'+ ptype + '"')
 
-    avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
-    minx = xdates[0]  - avg_dist_between_points
-    maxx = xdates[-1] + avg_dist_between_points
-    miny = min([low for low in lows if low != -1])
-    maxy = max([high for high in highs if high != -1])
-
-    if (config['hlines'] is not None or
-        config['vlines'] is not None or
-        config['lines' ] is not None   ):
-       if ptype == 'renko':
-           dtix = pd.DatetimeIndex([dt.date() for dt in mdates.num2date(new_dates)])
-           xvals_are_esi = True  # esi = evenly spaced integers
-       else:
-           dtix = data.index
-           xtyp = 'mpd' 
-           xvals_are_esi = not config['show_nontrading']
-       lcollections = _construct_line_collections( config['hlines'], config['vlines'],
-                              config['lines' ], minx, maxx, miny, maxy, dtix, xvals_are_esi )
-       if collections is not None:
-           collections.extend(lcollections)
-       else:
-           collections = lcollections
-
     if ptype in VALID_PMOVE_TYPES:
         formatter = IntegerIndexDateTimeFormatter(new_dates, fmtstring)
         xdates = np.arange(len(new_dates))
-
         ax1.xaxis.set_major_formatter(formatter)
 
     if collections is not None:
@@ -356,11 +333,13 @@ def plot( data, **kwargs ):
 
     if config['return_calculated_values'] is not None:
         retdict = config['return_calculated_values']
-        if ptype == 'renko':
-            retdict['renko_bricks'] = brick_values
-            retdict['renko_dates'] = mdates.num2date(new_dates)
+        if ptype in VALID_PMOVE_TYPES:
+            prekey = ptype
+            retdict[prekey+'_bricks'] = brick_values
+            retdict[prekey+'_dates'] = mdates.num2date(new_dates)
+            retdict[prekey+'_size'] = size
             if config['volume']:
-                retdict['renko_volumes'] = volumes
+                retdict[prekey+'_volumes'] = volumes
         if mavgs is not None:
             for i in range(0, len(mavgs)):
                 retdict['mav' + str(mavgs[i])] = mavprices
@@ -368,6 +347,9 @@ def plot( data, **kwargs ):
     avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
     minx = xdates[0]  - avg_dist_between_points
     maxx = xdates[-1] + avg_dist_between_points
+    if len(xdates) == 1:  # kludge special case
+        minx = minx - 0.75
+        maxx = maxx + 0.75
     if ptype not in VALID_PMOVE_TYPES:
         miny = min([low for low in lows if low != -1])
         maxy = max([high for high in highs if high != -1])
@@ -377,6 +359,24 @@ def plot( data, **kwargs ):
 
     corners = (minx, miny), (maxx, maxy)
     ax1.update_datalim(corners)
+
+    # Note: these are NOT mutually exclusive, so the order of this
+    #       if/elif is important: VALID_PMOVE_TYPES must be first.
+    if ptype in VALID_PMOVE_TYPES:
+        dtix = pd.DatetimeIndex([dt.date() for dt in mdates.num2date(new_dates)])
+    elif not config['show_nontrading']:
+        dtix = data.index
+    else:
+        dtix = None
+
+    line_collections = []
+    line_collections.append(_construct_aline_collections(config['lines'], dtix))
+    line_collections.append(_construct_hline_collections(config['hlines'], minx, maxx))
+    line_collections.append(_construct_vline_collections(config['vlines'], dtix, miny, maxy))
+     
+    for collection in line_collections:
+        if collection is not None:
+            ax1.add_collection(collection)
 
     if config['volume']:
         vup,vdown = style['marketcolors']['volume'].values()
