@@ -46,10 +46,12 @@ def _list_of_dict(x):
     return isinstance(x,list) and all([isinstance(item,dict) for item in x])
 
 def _warn_no_xgaps_deprecated(value):
-    warnings.warn('\n `no_xgaps` is deprecated:'+
+    warnings.warn('\n\n ================================================================= '+
+                  '\n\n   WARNING: `no_xgaps` is deprecated:'+
                   '\n     Default value is now `no_xgaps=True`'+
                   '\n     However, to set `no_xgaps=False` and silence this warning,'+
-                  '\n     use instead: `show_nontrading=True`.',
+                  '\n     use instead: `show_nontrading=True`.'+
+                  '\n\n ================================================================ ',
                   category=DeprecationWarning)
     return isinstance(value,bool)
 
