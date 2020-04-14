@@ -378,6 +378,37 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
 def _construct_renko_collections(dates, highs, lows, volumes, config_renko_params, closes, marketcolors=None):
     """Represent the price change with bricks
 
+    NOTE: this code assumes if any value open, low, high, close is
+    missing they all are missing
+
+    Algorithm Explanation
+    ---------------------
+    In the first part of the algorithm, we populate the cdiff array
+    along with adjusting the dates and volumes arrays into the new_dates and
+    new_volumes arrays. A single date includes a range from no bricks to many 
+    bricks, if a date has no bricks it shall not be included in new_dates, 
+    and if it has n bricks then it will be included n times. Volumes use a 
+    volume cache to save volume amounts for dates that do not have any bricks
+    before adding the cache to the next date that has at least one brick.
+    We populate the cdiff array with each close values difference from the 
+    previously created brick divided by the brick size.
+
+    In the second part of the algorithm, we iterate through the values in cdiff
+    and add 1s or -1s to the bricks array depending on whether the value is 
+    positive or negative. Every time there is a trend change (ex. previous brick is
+    an upbrick, current brick is a down brick) we draw one less brick to account
+    for the price having to move the previous bricks amount before creating a 
+    brick in the opposite direction.
+
+    In the final part of the algorithm, we enumerate through the bricks array and
+    assign up-colors or down-colors to the associated index in the color array and
+    populate the verts list with each bricks vertice to be used to create the matplotlib
+    PolyCollection.
+
+    Useful sources:
+    https://avilpage.com/2018/01/how-to-plot-renko-charts-with-python.html
+    https://school.stockcharts.com/doku.php?id=chart_analysis:renko
+    
     Parameters
     ----------
     dates : sequence
@@ -413,12 +444,12 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
         else:
             brick_size = _calculate_atr(atr_length, highs, lows, closes)
     else: # is an integer or float
-        upper_limit = (max(closes) - min(closes)) / 5
-        lower_limit = (max(closes) - min(closes)) / 32
+        upper_limit = (max(closes) - min(closes)) / 2
+        lower_limit = 0.01 * _calculate_atr(len(closes)-1, highs, lows, closes)
         if brick_size > upper_limit:
-            raise ValueError("Specified brick_size may not be larger than (20% of the close price range of the dataset) which has value: "+ str(upper_limit))
+            raise ValueError("Specified brick_size may not be larger than (50% of the close price range of the dataset) which has value: "+ str(upper_limit))
         elif brick_size < lower_limit:
-            raise ValueError("Specified brick_size may not be smaller than (3.125% of the close price range of the dataset) which has value: "+ str(lower_limit))
+            raise ValueError("Specified brick_size may not be smaller than (0.01* the Average True Value of the dataset) which has value: "+ str(lower_limit))
 
     alpha  = marketcolors['alpha']
 
@@ -427,7 +458,7 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
     euc    = mcolors.to_rgba(marketcolors['edge'][ 'up' ], 1.0)
     edc    = mcolors.to_rgba(marketcolors['edge']['down'], 1.0)
     
-    cdiff = []
+    cdiff = [] # holds the differences between each close and the previously created brick / the brick size
     prev_close_brick = closes[0]
     volume_cache = 0 # holds the volumes for the dates that were skipped
     new_dates = [] # holds the dates corresponding with the index
@@ -447,7 +478,7 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
         new_dates.extend([dates[i]] * abs(brick_diff))
         prev_close_brick += brick_diff *brick_size
 
-    bricks = [] # holds bricks, 1 for down bricks, -1 for up bricks
+    bricks = [] # holds bricks, -1 for down bricks, 1 for up bricks
     curr_price = closes[0]
 
     last_diff_sign = 0 # direction the bricks were last going in -1 -> down, 1 -> up
@@ -511,6 +542,47 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
 def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnfig_params, closes, marketcolors=None):
     """Represent the price change with Xs and Os
 
+    NOTE: this code assumes if any value open, low, high, close is
+    missing they all are missing
+
+    Algorithm Explanation
+    ---------------------
+    In the first part of the algorithm, we populate the boxes array
+    along with adjusting the dates and volumes arrays into the new_dates and
+    new_volumes arrays. A single date includes a range from no boxes to many 
+    boxes, if a date has no boxes it shall not be included in new_dates, 
+    and if it has n boxes then it will be included n times. Volumes use a 
+    volume cache to save volume amounts for dates that do not have any boxes
+    before adding the cache to the next date that has at least one box.
+    We populate the boxes array with each close values difference from the 
+    previously created brick divided by the box size.
+
+    The second part of the algorithm has a series of step. First we combine the
+    adjacent like signed values in the boxes array (ex. [-1, -2, 3, -4] -> [-3, 3, -4]).
+    Next we subtract 1 from the absolute value of each element in boxes except the 
+    first to ensure every time there is a trend change (ex. previous box is
+    an X, current brick is a O) we draw one less box to account for the price 
+    having to move the previous box's amount before creating a box in the 
+    opposite direction. Next we adjust volume and dates to combine volume into 
+    non 0 box indexes and to only use dates from non 0 box indexes. We then
+    remove all 0s from the boxes array and once again combine adjacent similarly
+    signed differences in boxes.
+
+    Lastly, we enumerate through the boxes to populate the line_seg and circle_patches
+    arrays. line_seg holds the / and \ line segments that make up an X and 
+    circle_patches holds matplotlib.patches Ellipse objects for each O. We start
+    by filling an x and y array each iteration which contain the x and y 
+    coordinates for each box in the column. Then for each coordinate pair in
+    x, y we add to either the line_seg array or the circle_patches array 
+    depending on the value of sign for the current column (1 indicates 
+    line_seg, -1 indicates circle_patches). The height of the boxes take 
+    into account padding which separates each box by a small margin in 
+    order to increase readability.
+
+    Useful sources:
+    https://stackoverflow.com/questions/8750648/point-and-figure-chart-with-matplotlib
+    https://www.investopedia.com/articles/technical/03/081303.asp
+    
     Parameters
     ----------
     dates : sequence
@@ -546,12 +618,12 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
         else:
             box_size = _calculate_atr(atr_length, highs, lows, closes)
     else: # is an integer or float
-        upper_limit = (max(closes) - min(closes)) / 5
-        lower_limit = (max(closes) - min(closes)) / 32
+        upper_limit = (max(closes) - min(closes)) / 2
+        lower_limit = 0.01 * _calculate_atr(len(closes)-1, highs, lows, closes)
         if box_size > upper_limit:
-            raise ValueError("Specified box_size may not be larger than (20% of the close price range of the dataset) which has value: "+ str(upper_limit))
+            raise ValueError("Specified box_size may not be larger than (50% of the close price range of the dataset) which has value: "+ str(upper_limit))
         elif box_size < lower_limit:
-            raise ValueError("Specified box_size may not be smaller than (3.125% of the close price range of the dataset) which has value: "+ str(lower_limit))
+            raise ValueError("Specified box_size may not be smaller than (0.01* the Average True Value of the dataset) which has value: "+ str(lower_limit))
 
     alpha  = marketcolors['alpha']
 
