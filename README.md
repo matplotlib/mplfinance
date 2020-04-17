@@ -203,7 +203,9 @@ mpf.plot(daily,type='line')
 
 
 ```python
-mpf.plot(daily,type='renko')
+year = pd.read_csv('examples/data/SPY_20110701_20120630_Bollinger.csv',index_col=0,parse_dates=True)
+year.index.name = 'Date'
+mpf.plot(year,type='renko')
 ```
 
 
@@ -211,7 +213,7 @@ mpf.plot(daily,type='renko')
 
 
 ```python
-mpf.plot(daily,type='pnf')
+mpf.plot(year,type='pnf')
 ```
 
 
