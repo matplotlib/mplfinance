@@ -32,7 +32,8 @@ def test_renko01(bolldata):
     tname = os.path.join(tdir,fname)
     rname = os.path.join(refd,fname)
 
-    mpf.plot(df,type='renko', volume=True,savefig=tname)
+    fig_axis = mpf.plot(df,type='renko',volume=True,savefig=tname,returnfig=True)
+    plt.close(fig_axis[0])
    
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')
@@ -54,8 +55,9 @@ def test_renko02(bolldata):
     tname = os.path.join(tdir,fname)
     rname = os.path.join(refd,fname)
 
-    mpf.plot(df,type='renko', renko_params=dict(brick_size=4), volume=True, savefig=tname)
-   
+    fig_axis = mpf.plot(df,type='renko',renko_params=dict(brick_size=4),volume=True,savefig=tname,returnfig=True)
+    plt.close(fig_axis[0])
+
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')
 
@@ -76,8 +78,9 @@ def test_renko03(bolldata):
     tname = os.path.join(tdir,fname)
     rname = os.path.join(refd,fname)
 
-    mpf.plot(df,type='renko', renko_params=dict(brick_size='atr', atr_length=2), volume=True, savefig=tname)
-   
+    fig_axis = mpf.plot(df,type='renko',renko_params=dict(brick_size='atr',atr_length=2),volume=True,savefig=tname,returnfig=True)
+    plt.close(fig_axis[0])
+
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')
 
@@ -97,8 +100,9 @@ def test_renko04(bolldata):
     tname = os.path.join(tdir,fname)
     rname = os.path.join(refd,fname)
 
-    mpf.plot(df,type='renko', renko_params=dict(brick_size='atr', atr_length='total'), mav=(8,20,30), volume=True, savefig=tname)
-   
+    fig_axis = mpf.plot(df,type='renko',renko_params=dict(brick_size='atr',atr_length='total'),mav=(8,20,30),volume=True,savefig=tname,returnfig=True)
+    plt.close(fig_axis[0])
+
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')
 
@@ -109,3 +113,13 @@ def test_renko04(bolldata):
     if result is not None:
        print('result=',result)
     assert result is None
+
+def test_renkovalues(bolldata):
+
+    df = bolldata
+
+    rcv = {}
+    fig_axis = mpf.plot(df,type='renko',return_calculated_values=rcv,returnfig=True)
+    plt.close(fig_axis[0])
+
+    assert rcv['renko_bricks'][-1] == 133.919998
