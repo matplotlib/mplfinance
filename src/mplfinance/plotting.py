@@ -363,6 +363,7 @@ def plot( data, **kwargs ):
     # Note: these are NOT mutually exclusive, so the order of this
     #       if/elif is important: VALID_PMOVE_TYPES must be first.
     if ptype in VALID_PMOVE_TYPES:
+        #TODO: dt (not dt.date()) IF this is INTRADAY ??  dtix = pd.DatetimeIndex([dt.date() for dt in mdates.num2date(new_dates)])
         dtix = pd.DatetimeIndex([dt.date() for dt in mdates.num2date(new_dates)])
     elif not config['show_nontrading']:
         dtix = data.index
