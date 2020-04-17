@@ -529,6 +529,8 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
     """
     pointnfig_params = _process_kwargs(config_pointnfig_params, _valid_pointnfig_kwargs())
     if marketcolors is None:
+        # TODO: Try it this way (using 'ohlc' colors):
+        #       marketcolors = _get_mpfstyle('classic')['marketcolors']['ohlc']
         marketcolors = _get_mpfstyle('classic')['marketcolors']
         print('default market colors:',marketcolors)
     
@@ -659,11 +661,14 @@ def _construct_aline_collections(lines, dtix=None):
     ret : list
         lines collections
     """
+    if lines is None:
+        return None
+
+    if not isinstance(lines,(list,tuple)):
+        lines = [lines,]
+
     print('_construct_aline_collections() called:',
           '\nlines=',lines,'\ndtix=',dtix)
-
-    if lines is None:
-        lines = []
 
     newlines = _convert_segment_dates(lines,dtix)
 
@@ -699,6 +704,10 @@ def _construct_hline_collections(hlines,minx,maxx):
     ret : list
         lines collections
     """
+
+    if hlines is None:
+        return None
+
     print('_construct_hline_collections() called:',
           '\nhlines=',hlines,'\nminx,maxx=',minx,maxx)
 
@@ -710,9 +719,6 @@ def _construct_hline_collections(hlines,minx,maxx):
         hlines = [hlines,]
     for val in hlines:
         lines.append( [(minx,val),(maxx,val)] )
-
-    print('... now lines=',lines)
-
 
     useAA  = 0,    # use tuple here
     lw     = None
@@ -749,13 +755,14 @@ def _construct_vline_collections(vlines,dtix,miny,maxy):
     ret : list
         lines collections
     """
+
+    if vlines is None:
+        return None
+
     print('_construct_vline_collections() called:',
           '\nvlines=',vlines,
           '\ndtix=',dtix)
     print('miny,maxy=',miny,maxy)
-
-    if vlines is None:
-        return None
 
     if not isinstance(vlines,(list,tuple)):
         vlines = [vlines,]
