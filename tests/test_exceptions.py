@@ -59,12 +59,16 @@ def test_kwarg_validation_error(bolldata):
         mpf.make_marketcolors(base_mpf_style='classic',ohlc='chartreussse')
     assert 'NOT is_color_like' in str(ex.value)
 
-def test_renko_addplot(bolldata):
+def test_pmove_addplot(bolldata):
     df = bolldata
     apdict = mpf.make_addplot(df['LowerB'])
     with pytest.raises(ValueError) as ex:
         mpf.plot(df,type='renko',volume=True,addplot=apdict)
     assert '`addplot` is not supported for `type=\'renko\'`' in str(ex.value)
+
+    with pytest.raises(ValueError) as ex:
+        mpf.plot(df,type='pointnfigure',volume=True,addplot=apdict)
+    assert '`addplot` is not supported for `type=\'pointnfigure\'`' in str(ex.value)
     #mpf.plot(df,type='renko',volume=True)
 
 def test_figratio_bounds(bolldata):
