@@ -161,14 +161,22 @@ def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False):
         return [first] + _list
 
 def _date_to_iloc(dtseries,date):
-    d1 = dtseries.loc[:date].index[-1]
-    d2 = dtseries.loc[date:].index[0]
+    d1s = dtseries.loc[date:]
+    if len(d1s) < 1:
+        sdtrange = str(dtseries[0])+' to '+str(dtseries[-1])
+        raise ValueError('User specified line date "'+date+'" is beyond (greater than) range of plotted data ('+sdtrange+').')
+    d1 = d1s.index[0]
+    d2s = dtseries.loc[:date]
+    if len(d2s) < 1:
+        sdtrange = str(dtseries[0])+' to '+str(dtseries[-1])
+        raise ValueError('User specified line date "'+date+'" is before (less than) range of plotted data ('+sdtrange+').')
+    d2 = dtseries.loc[:date].index[-1]
     # If there are duplicate dates in the series, for example in a renko plot
     # then .get_loc(date) will return a slice containing all the dups, so:
     loc1 = dtseries.index.get_loc(d1)
-    if isinstance(loc1,slice): loc1 = loc1.stop - 1
+    if isinstance(loc1,slice): loc1 = loc1.start
     loc2 = dtseries.index.get_loc(d2)
-    if isinstance(loc2,slice): loc2 = loc2.start
+    if isinstance(loc2,slice): loc2 = loc2.stop - 1
     return (loc1+loc2)/2.0
 
 def _date_to_mdate(date):
@@ -897,10 +905,10 @@ def _construct_vline_collections(vlines,dtix,miny,maxy):
     if vlines is None:
         return None
 
-    print('_construct_vline_collections() called:',
-          '\nvlines=',vlines,
-          '\ndtix=',dtix)
-    print('miny,maxy=',miny,maxy)
+    #print('_construct_vline_collections() called:',
+    #      '\nvlines=',vlines,
+    #      '\ndtix=',dtix)
+    #print('miny,maxy=',miny,maxy)
 
     if not isinstance(vlines,(list,tuple)):
         vlines = [vlines,]
@@ -909,11 +917,11 @@ def _construct_vline_collections(vlines,dtix,miny,maxy):
     for val in vlines:
         lines.append( [(val,miny),(val,maxy)] )
 
-    print('... now lines=',lines)
+    #print('... now lines=',lines)
 
     lines = _convert_segment_dates(lines,dtix)
 
-    print('... now lines=',lines)
+    #print('... now lines=',lines)
 
     useAA  = 0,    # use tuple here
     lw     = None
