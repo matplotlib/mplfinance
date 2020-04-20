@@ -28,8 +28,8 @@ from mplfinance import _styles
 from mplfinance._arg_validators import _check_and_prepare_data, _mav_validator
 from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 from mplfinance._arg_validators import _kwarg_not_implemented, _bypass_kwarg_validation
-from mplfinance._arg_validators import _hlines_validator, _vlines_validator, _lines_validator
-
+from mplfinance._arg_validators import _hlines_validator, _vlines_validator
+from mplfinance._arg_validators import _alines_validator, _tlines_validator
 
 VALID_PMOVE_TYPES = ['renko', 'pnf', 'p&f','pointnfigure']
 
@@ -146,14 +146,18 @@ def _valid_plot_kwargs():
         'return_calculated_values'  : {'Default': None,
                                        'Validator': lambda value: isinstance(value, dict) and len(value) == 0},
  
-        'lines'       : { 'Default'     : None, 
-                          'Validator'   : lambda value: _lines_validator(value) },
- 
         'hlines'      : { 'Default'     : None, 
                           'Validator'   : lambda value: _hlines_validator(value) },
  
         'vlines'      : { 'Default'     : None, 
                           'Validator'   : lambda value: _vlines_validator(value) },
+
+        'alines'      : { 'Default'     : None, 
+                          'Validator'   : lambda value: _alines_validator(value) },
+ 
+        'tlines'      : { 'Default'     : None, 
+                          'Validator'   : lambda value: _tlines_validator(value) },
+ 
  
     }
 
@@ -374,7 +378,7 @@ def plot( data, **kwargs ):
         dtix = None
 
     line_collections = []
-    line_collections.append(_construct_aline_collections(config['lines'], dtix))
+    line_collections.append(_construct_aline_collections(config['alines'], dtix))
     line_collections.append(_construct_hline_collections(config['hlines'], minx, maxx))
     line_collections.append(_construct_vline_collections(config['vlines'], dtix, miny, maxy))
      

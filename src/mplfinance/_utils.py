@@ -12,6 +12,7 @@ from matplotlib import colors as mcolors
 from matplotlib.patches import Ellipse
 from matplotlib.collections import LineCollection, PolyCollection, PatchCollection
 from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
+from mplfinance._arg_validators import _alines_validator
 
 from six.moves import zip
 
@@ -780,7 +781,7 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
     return [cirCollection, xCollection], new_dates, new_volumes, box_values, box_size
 
 
-def _construct_aline_collections(lines, dtix=None):
+def _construct_aline_collections(alines, dtix=None):
     """construct arbitrary line collections
 
     Parameters
@@ -807,16 +808,17 @@ def _construct_aline_collections(lines, dtix=None):
     ret : list
         lines collections
     """
-    if lines is None:
+    if alines is None:
         return None
 
-    if not isinstance(lines,(list,tuple)):
-        lines = [lines,]
+    alines = _alines_validator(alines, returnStandardizedValue=True)
+    if alines is None:
+        raise ValueError('Unable to standardize alines value: '+str(alines))
 
     print('_construct_aline_collections() called:',
-          '\nlines=',lines,'\ndtix=',dtix)
+          '\nalines=',alines,'\ndtix=',dtix)
 
-    newlines = _convert_segment_dates(lines,dtix)
+    newlines = _convert_segment_dates(alines,dtix)
 
     print('... now lines=',newlines)
 

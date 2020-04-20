@@ -88,7 +88,7 @@ def _vlines_validator(value):
     if not all([_is_datelike(v) for v in value]): return False
     return True
 
-def _lines_validator(value):
+def _alines_validator(value, returnStandardizedValue=False):
     '''
     Value for segments to be passed into LineCollection constructor must be:
     - a sequence of `lines`, where
@@ -102,14 +102,43 @@ def _lines_validator(value):
         linen = (x0, y0), (x1, y1), ... (xm, ym)
        
         or the equivalent numpy array with two columns. Each line can be a different length.
+
+    The above is from the matplotlib LineCollection documentation.
+    It basically says that the "segments" passed into the LineCollection constructor 
+    must be a Sequence of Sequences of 2 or more xy Pairs.  However here in `mplfinance`
+    we want to allow that (seq of seq of xy pairs) _as well as_ just a sequence of pairs.
+    Therefore here in the validator we will allow both:
+       (a) seq of at least 2 date,float pairs         (this is a 'line'    as defined above)
+       (b) seq of seqs of at least 2 date,float pairs (this is a 'seqment' as defined above)
+    '''
+    if not isinstance(value,(list,tuple)):
+        return False if not returnStandardizedValue else None
+
+    if not all([isinstance(line,(list,tuple)) and len(line) > 1 for line in value]):
+        return False if not returnStandardizedValue else None
+
+    # now, were the above really `lines`, or were they simply `vertices`
+    if all( [ isinstance(point,(list,tuple)) and len(point)==2 and
+              _is_datelike(point[0]) and isinstance(point[1],(float,int))
+              for line in value for point in line ] ):
+        # they were lines:
+        return True if not returnStandardizedValue else value
+
+    # here, if valid, we have a sequence of vertices (points)
+    if all( [ isinstance(point,(list,tuple)) and len(point)==2 and
+              _is_datelike(point[0]) and isinstance(point[1],(float,int))
+              for point in value ] ):
+        return True if not returnStandardizedValue else [value,]
+
+    return False if not returnStandardizedValue else None
+
+def _tlines_validator(value):
+    '''
+    Validate `tlines` kwarg value: must be sequence of "datelike" pairs.
     '''
     if not isinstance(value,(list,tuple)):
         return False
-    if not all([isinstance(line,(list,tuple)) and len(line) > 1 for line in value]):
-        return False
-    #point_list = [point for line in value for point in line]
-    #print('point_list=',point_list)
-    if not all([isinstance(point,(list,tuple)) and len(point)==2 for line in value for point in line]):
+    if not all([isinstance(pair,(list,tuple)) and len(pair) == 2 for pair in value]):
         return False
     return True
 
