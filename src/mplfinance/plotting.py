@@ -331,19 +331,6 @@ def plot( data, **kwargs ):
             else:
                 ax1.plot(xdates, mavprices)
 
-    if config['return_calculated_values'] is not None:
-        retdict = config['return_calculated_values']
-        if ptype in VALID_PMOVE_TYPES:
-            prekey = ptype
-            retdict[prekey+'_bricks'] = brick_values
-            retdict[prekey+'_dates'] = mdates.num2date(new_dates)
-            retdict[prekey+'_size'] = size
-            if config['volume']:
-                retdict[prekey+'_volumes'] = volumes
-        if mavgs is not None:
-            for i in range(0, len(mavgs)):
-                retdict['mav' + str(mavgs[i])] = mavprices
-
     avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
     minx = xdates[0]  - avg_dist_between_points
     maxx = xdates[-1] + avg_dist_between_points
@@ -359,6 +346,23 @@ def plot( data, **kwargs ):
 
     corners = (minx, miny), (maxx, maxy)
     ax1.update_datalim(corners)
+
+    if config['return_calculated_values'] is not None:
+        retdict = config['return_calculated_values']
+        if ptype in VALID_PMOVE_TYPES:
+            prekey = ptype
+            retdict[prekey+'_bricks'] = brick_values
+            retdict[prekey+'_dates'] = mdates.num2date(new_dates)
+            retdict[prekey+'_size'] = size
+            if config['volume']:
+                retdict[prekey+'_volumes'] = volumes
+        if mavgs is not None:
+            for i in range(0, len(mavgs)):
+                retdict['mav' + str(mavgs[i])] = mavprices
+        retdict['minx'] = minx
+        retdict['maxx'] = maxx
+        retdict['miny'] = miny
+        retdict['maxy'] = maxy
 
     # Note: these are NOT mutually exclusive, so the order of this
     #       if/elif is important: VALID_PMOVE_TYPES must be first.
