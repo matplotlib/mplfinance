@@ -66,6 +66,11 @@ def _mav_validator(mav_value):
     return True
 
 def _hlines_validator(value):
+    if isinstance(value,dict):
+        if 'hlines' in value:
+            value = value['hlines']
+        else:
+            return False
     return ( isinstance(value,(float,int)) or (isinstance(value,(list,tuple)) and
              all([isinstance(v,(float,int)) for v in value])) )
 
@@ -83,6 +88,11 @@ def _is_datelike(value):
 def _vlines_validator(value):
     '''Validate `vlines` kwarg value:  must be "datelike" or sequence of "datelike"
     '''
+    if isinstance(value,dict):
+        if 'vlines' in value:
+            value = value['vlines']
+        else:
+            return False
     if _is_datelike(value): return True
     if not isinstance(value,(list,tuple)): return False
     if not all([_is_datelike(v) for v in value]): return False
@@ -111,6 +121,12 @@ def _alines_validator(value, returnStandardizedValue=False):
        (a) seq of at least 2 date,float pairs         (this is a 'line'    as defined above)
        (b) seq of seqs of at least 2 date,float pairs (this is a 'seqment' as defined above)
     '''
+    if isinstance(value,dict):
+        if 'alines' in value:
+            value = value['alines']
+        else:
+            return False
+
     if not isinstance(value,(list,tuple)):
         return False if not returnStandardizedValue else None
 
@@ -136,6 +152,12 @@ def _tlines_validator(value):
     '''
     Validate `tlines` kwarg value: must be sequence of "datelike" pairs.
     '''
+    if isinstance(value,dict):
+        if 'tlines' in value:
+            value = value['tlines']
+        else:
+            return False
+
     if not isinstance(value,(list,tuple)):
         return False
     if not all([isinstance(pair,(list,tuple)) and len(pair) == 2 for pair in value]):

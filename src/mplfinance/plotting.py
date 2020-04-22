@@ -351,7 +351,11 @@ def plot( data, **kwargs ):
 
     miny = min(_lows)
     maxy = max(_highs)
-    stdy = (stat.stdev(_lows) + stat.stdev(_highs)) / 2.0
+    if len(xdates) > 1:
+       stdy = (stat.stdev(_lows) + stat.stdev(_highs)) / 2.0
+    else:  # kludge special case
+       stdy = 0.02 * math.fabs(maxy - miny)
+
     # print('minx,miny,maxx,maxy,stdy=',minx,miny,maxx,maxy,stdy)
 
     corners = (minx, miny), (maxx, maxy)

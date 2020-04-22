@@ -12,7 +12,7 @@ from matplotlib import colors as mcolors
 from matplotlib.patches import Ellipse
 from matplotlib.collections import LineCollection, PolyCollection, PatchCollection
 from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
-from mplfinance._arg_validators import _alines_validator
+from mplfinance._arg_validators import _alines_validator, _bypass_kwarg_validation
 
 from six.moves import zip
 
@@ -263,6 +263,47 @@ def _valid_pointnfig_kwargs():
 
     return vkwargs
 
+def _valid_lines_kwargs():
+    '''
+    Construct and return the "valid lines (hlines,vlines,alines,tlines) kwargs table" 
+    for the mplfinance.plot() `[h|v|a|t]lines=` kwarg functions.
+    A valid kwargs table is a `dict` of `dict`s. The keys of the outer dict are 
+    the valid key-words for the function.  The value for each key is a dict containing 2 
+    specific keys: "Default", and "Validator" with the following values:
+        "Default"      - The default value for the kwarg if none is specified.
+        "Validator"    - A function that takes the caller specified value for the kwarg,
+                         and validates that it is the correct type, and (for kwargs with 
+                         a limited set of allowed values) may also validate that the
+                         kwarg value is one of the allowed values.
+    '''
+    valid_linestyles = ['-','solid','--','dashed','-.','dashdot','.','dotted',None,' ','']
+    vkwargs = {
+        'hlines'    : { 'Default'     : None,
+                        'Validator'   : _bypass_kwarg_validation },
+        'vlines'    : { 'Default'     : None,
+                        'Validator'   : _bypass_kwarg_validation },
+        'alines'    : { 'Default'     : None,
+                        'Validator'   : _bypass_kwarg_validation },
+        'tlines'    : { 'Default'     : None,
+                        'Validator'   : _bypass_kwarg_validation },
+        'colors'    : { 'Default'     : None,
+                        'Validator'   : lambda value: mcolors.is_color_like(value) or
+                                            ( isinstance(value,(list,tuple)) and
+                                              all([mcolors.is_color_like(v) for v in value])
+                                            ) },
+        'linestyle' : { 'Default'     : '-',
+                        'Validator'   : lambda value: value in valid_linestyles },
+        'linewidths': { 'Default'     : None,
+                        'Validator'   : lambda value: isinstance(value,(float,int)) or
+                                              all([isinstance(v,(float,int)) for v in value])}
+    }
+
+    _validate_vkwargs_dict(vkwargs)
+
+    return vkwargs
+
+
+
 def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=None):
     """Represent the time, open, high, low, close as a vertical line
     ranging from low to high.  The left tick is the open and the right
@@ -293,7 +334,7 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=
 
     if marketcolors is None:
         mktcolors = _get_mpfstyle('classic')['marketcolors']['ohlc']
-        print('default mktcolors=',mktcolors)
+        #print('default mktcolors=',mktcolors)
     else:
         mktcolors = marketcolors['ohlc']
 
@@ -378,7 +419,7 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
 
     if marketcolors is None:
         marketcolors = _get_mpfstyle('classic')['marketcolors']
-        print('default market colors:',marketcolors)
+        #print('default market colors:',marketcolors)
 
     avg_dist_between_points = (dates[-1] - dates[0]) / float(len(dates))
 
@@ -490,7 +531,7 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
     renko_params = _process_kwargs(config_renko_params, _valid_renko_kwargs())
     if marketcolors is None:
         marketcolors = _get_mpfstyle('classic')['marketcolors']
-        print('default market colors:',marketcolors)
+        #print('default market colors:',marketcolors)
     
     brick_size = renko_params['brick_size']
     atr_length = renko_params['atr_length']
@@ -663,14 +704,11 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
     """
     pointnfig_params = _process_kwargs(config_pointnfig_params, _valid_pointnfig_kwargs())
     if marketcolors is None:
-        # TODO: Try it this way (using 'ohlc' colors):
-        #       marketcolors = _get_mpfstyle('classic')['marketcolors']['ohlc']
         marketcolors = _get_mpfstyle('classic')['marketcolors']
-        print('default market colors:',marketcolors)
+        #print('default market colors:',marketcolors)
     
     box_size = pointnfig_params['box_size']
     atr_length = pointnfig_params['atr_length']
-    
 
     if box_size == 'atr':
         if atr_length == 'total':
@@ -687,8 +725,8 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
 
     alpha  = marketcolors['alpha']
 
-    uc     = mcolors.to_rgba(marketcolors['candle'][ 'up' ], alpha)
-    dc     = mcolors.to_rgba(marketcolors['candle']['down'], alpha)
+    uc     = mcolors.to_rgba(marketcolors['ohlc'][ 'up' ], alpha)
+    dc     = mcolors.to_rgba(marketcolors['ohlc']['down'], alpha)
     tfc    = mcolors.to_rgba(marketcolors['edge']['down'], 0) # transparent face color
 
     boxes = [] # each element in an integer representing the number of boxes to be drawn on that indexes column (negative numbers -> Os, positive numbers -> Xs)
@@ -815,12 +853,12 @@ def _construct_aline_collections(alines, dtix=None):
     if alines is None:
         raise ValueError('Unable to standardize alines value: '+str(alines))
 
-    print('_construct_aline_collections() called:',
-          '\nalines=',alines,'\ndtix=',dtix)
+    #print('_construct_aline_collections() called:',
+    #      '\nalines=',alines,'\ndtix=',dtix)
 
     newlines = _convert_segment_dates(alines,dtix)
 
-    print('... now lines=',newlines)
+    #print('... now lines=',newlines)
 
     useAA  = 0,    # use tuple here
     lw     = None  
@@ -856,22 +894,34 @@ def _construct_hline_collections(hlines,minx,maxx):
     if hlines is None:
         return None
 
-    print('_construct_hline_collections() called:',
-          '\nhlines=',hlines,'\nminx,maxx=',minx,maxx)
+    #print('_construct_hline_collections() called:',
+    #      '\nhlines=',hlines,'\nminx,maxx=',minx,maxx)
 
     # hlines do NOT require converting segment dates, because the dates
     # are not user-specified, but are from already converted minxdt,maxxdt
+
+    if isinstance(hlines,dict):
+        hconfig = _process_kwargs(hlines, _valid_lines_kwargs())
+        hlines = hconfig['hlines']
+    else:
+        hconfig = _process_kwargs({}, _valid_lines_kwargs())
+
+    print('hconfig=',hconfig)
+    print('hlines=',hlines)
     
     lines = []
     if not isinstance(hlines,(list,tuple)):
-        hlines = [hlines,]
+        hlines = [hlines,] # may be a single price value
+
     for val in hlines:
         lines.append( [(minx,val),(maxx,val)] )
 
     useAA  = 0,    # use tuple here
-    lw     = None
-    colors = None
-    lcollection = LineCollection(lines,colors=colors,linewidths=lw,antialiaseds=useAA)
+    
+    lw = hconfig['linewidths']
+    co = hconfig['colors']
+    ls = hconfig['linestyle']
+    lcollection = LineCollection(lines,colors=co,linewidths=lw,linestyles=ls,antialiaseds=useAA)
     return lcollection
 
 
