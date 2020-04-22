@@ -7,6 +7,7 @@ import copy
 import io
 import math
 import warnings
+import statistics as stat
 
 from itertools import cycle
 #from pandas.plotting import register_matplotlib_converters
@@ -342,11 +343,16 @@ def plot( data, **kwargs ):
         minx = minx - 0.75
         maxx = maxx + 0.75
     if ptype not in VALID_PMOVE_TYPES:
-        miny = min([low for low in lows if low != -1])
-        maxy = max([high for high in highs if high != -1])
+        _lows  = [low for low in lows if low != -1]
+        _highs = [high for high in highs if high != -1]
     else:
-        miny = min([brick for brick in brick_values])
-        maxy = max([brick+size for brick in brick_values])
+        _lows  = [brick for brick in brick_values]
+        _highs = [brick+size for brick in brick_values]
+
+    miny = min(_lows)
+    maxy = max(_highs)
+    stdy = (stat.stdev(_lows) + stat.stdev(_highs)) / 2.0
+    # print('minx,miny,maxx,maxy,stdy=',minx,miny,maxx,maxy,stdy)
 
     corners = (minx, miny), (maxx, maxy)
     ax1.update_datalim(corners)
@@ -475,6 +481,10 @@ def plot( data, **kwargs ):
                     size  = apdict['markersize']
                     mark  = apdict['marker']
                     color = apdict['color']
+                    # -------------------------------------------------------- #
+                    # This fixes Issue#77, but breaks other stuff:
+                    # ax.set_ylim(ymin=(miny - 0.4*stdy),ymax=(maxy + 0.4*stdy))
+                    # -------------------------------------------------------- #
                     ax.scatter(xdates, ydata, s=size, marker=mark, color=color)
                 else:
                     ls    = apdict['linestyle']
