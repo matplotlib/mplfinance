@@ -824,7 +824,7 @@ def _construct_aline_collections(alines, dtix=None):
 
     Parameters
     ----------
-    lines : sequence
+    alines : sequence
         sequences of segments, which are sequences of lines,
         which are sequences of two or more points ( date[time], price ) or (x,y) 
 
@@ -832,9 +832,10 @@ def _construct_aline_collections(alines, dtix=None):
                           (b) pandas Timestamp, or
                           (c) python datetime.datetime or datetime.date
 
-    NOT YET IMPLEMENTED: alines may also be a dict, containing
+    alines may also be a dict, containing
     the following keys:
-        'data'   : the same as defined above: sequence of price, or dates, or segments
+
+        'alines' : the same as defined above: sequence of price, or dates, or segments
         'colors' : colors for the above data
         'ltypes' : line types for the above data
 
@@ -849,22 +850,25 @@ def _construct_aline_collections(alines, dtix=None):
     if alines is None:
         return None
 
+    if isinstance(alines,dict):
+        aconfig = _process_kwargs(alines, _valid_lines_kwargs())
+        alines = aconfig['alines']
+    else:
+        aconfig = _process_kwargs({}, _valid_lines_kwargs())
+
+    print('aconfig=',aconfig)
+    print('alines=',alines)
+
     alines = _alines_validator(alines, returnStandardizedValue=True)
     if alines is None:
         raise ValueError('Unable to standardize alines value: '+str(alines))
 
-    #print('_construct_aline_collections() called:',
-    #      '\nalines=',alines,'\ndtix=',dtix)
+    alines = _convert_segment_dates(alines,dtix)
 
-    newlines = _convert_segment_dates(alines,dtix)
-
-    #print('... now lines=',newlines)
-
-    useAA  = 0,    # use tuple here
-    lw     = None  
-    colors = None  # to be implemented
-    segs   = newlines
-    lcollection = LineCollection(segs,colors=colors,linewidths=lw,antialiaseds=useAA)
+    lw = aconfig['linewidths']
+    co = aconfig['colors']
+    ls = aconfig['linestyle']
+    lcollection = LineCollection(alines,colors=co,linewidths=lw,linestyles=ls,antialiaseds=(0,))
     return lcollection
 
 
@@ -876,9 +880,10 @@ def _construct_hline_collections(hlines,minx,maxx):
     hlines : sequence
         sequence of [price] values at which to draw horizontal lines
 
-    NOT YET IMPLEMENTED: hlines may also be a dict, containing
+    hlines may also be a dict, containing
     the following keys:
-        'data'   : the same as defined above: sequence of price, or dates, or segments
+
+        'hlines' : the same as defined above: sequence of price, or dates, or segments
         'colors' : colors for the above data
         'ltypes' : line types for the above data
 
@@ -935,9 +940,10 @@ def _construct_vline_collections(vlines,dtix,miny,maxy):
                                (b) pandas Timestamp
                                (c) python datetime.datetime or datetime.date
 
-    NOT YET IMPLEMENTED: vlines may also be a dict, containing
+    vlines may also be a dict, containing
     the following keys:
-        'data'   : the same as defined above: sequence of price, or dates, or segments
+
+        'vlines' : the same as defined above: sequence of price, or dates, or segments
         'colors' : colors for the above data
         'ltypes' : line types for the above data
 
@@ -962,6 +968,15 @@ def _construct_vline_collections(vlines,dtix,miny,maxy):
     #      '\ndtix=',dtix)
     #print('miny,maxy=',miny,maxy)
 
+    if isinstance(vlines,dict):
+        vconfig = _process_kwargs(vlines, _valid_lines_kwargs())
+        vlines = vconfig['vlines']
+    else:
+        vconfig = _process_kwargs({}, _valid_lines_kwargs())
+
+    print('vconfig=',vconfig)
+    print('vlines=',vlines)
+    
     if not isinstance(vlines,(list,tuple)):
         vlines = [vlines,]
 
@@ -969,16 +984,14 @@ def _construct_vline_collections(vlines,dtix,miny,maxy):
     for val in vlines:
         lines.append( [(val,miny),(val,maxy)] )
 
-    #print('... now lines=',lines)
-
     lines = _convert_segment_dates(lines,dtix)
 
-    #print('... now lines=',lines)
+    useAA = 0,  # use tuple here
 
-    useAA  = 0,    # use tuple here
-    lw     = None
-    colors = None  # TODO: implement when vlines dict implemented.
-    lcollection = LineCollection(lines,colors=colors,linewidths=lw,antialiaseds=useAA)
+    lw = vconfig['linewidths']
+    co = vconfig['colors']
+    ls = vconfig['linestyle']
+    lcollection = LineCollection(lines,colors=co,linewidths=lw,linestyles=ls,antialiaseds=useAA)
     return lcollection
 
 
