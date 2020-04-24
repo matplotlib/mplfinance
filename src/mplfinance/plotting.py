@@ -140,6 +140,13 @@ def _valid_plot_kwargs():
         'return_calculated_values'  : {'Default': None,
                                        'Validator': lambda value: isinstance(value, dict) and len(value) == 0},
  
+        'set_ylim'                  : {'Default': None,
+                                       'Validator': lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
+                                                                  and all([isinstance(v,(int,float)) for v in value])},
+ 
+        'set_ylim_panelB'           : {'Default': None,
+                                       'Validator': lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
+                                                                  and all([isinstance(v,(int,float)) for v in value])},
     }
 
     _validate_vkwargs_dict(vkwargs)
@@ -335,8 +342,12 @@ def plot( data, **kwargs ):
     else:
         miny = min([brick for brick in brick_values])
         maxy = max([brick+size for brick in brick_values])
-    corners = (minx, miny), (maxx, maxy)
-    ax1.update_datalim(corners)
+
+    if config['set_ylim'] is not None:
+        ax1.set_ylim(config['set_ylim'][0], config['set_ylim'][1])
+    else:
+       corners = (minx, miny), (maxx, maxy)
+       ax1.update_datalim(corners)
 
     if config['volume']:
         vup,vdown = style['marketcolors']['volume'].values()
@@ -346,9 +357,14 @@ def plot( data, **kwargs ):
         #-- print('vcolors=',vcolors)
         width = 0.5*avg_dist_between_points
         ax2.bar(xdates,volumes,width=width,color=vcolors)
-        miny = 0.3 * min(volumes)
-        maxy = 1.1 * max(volumes)
-        ax2.set_ylim( miny, maxy )
+        if config['set_ylim_panelB'] is None:
+            miny = 0.3 * min(volumes)
+            maxy = 1.1 * max(volumes)
+            ax2.set_ylim( miny, maxy )
+        else:
+            miny = config['set_ylim_panelB'][0]
+            maxy = config['set_ylim_panelB'][1]
+            ax2.set_ylim( miny, maxy )
         ax2.xaxis.set_major_formatter(formatter)
     
     used_ax3 = False
