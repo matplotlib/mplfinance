@@ -336,7 +336,7 @@ def plot( data, **kwargs ):
             if ptype in VALID_PMOVE_TYPES:
                 mavprices = pd.Series(brick_values).rolling(mav).mean().values
             else:
-                mavprices = data['Close'].rolling(mav).mean().values
+                mavprices = pd.Series(closes).rolling(mav).mean().values
             if mavc:
                 ax1.plot(xdates, mavprices, color=next(mavc))
             else:
