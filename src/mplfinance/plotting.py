@@ -20,6 +20,7 @@ from mplfinance._utils import _construct_pointnfig_collections
 from mplfinance._utils import _construct_aline_collections
 from mplfinance._utils import _construct_hline_collections
 from mplfinance._utils import _construct_vline_collections
+from mplfinance._utils import _construct_tline_collections
 
 from mplfinance._utils import _updown_colors
 from mplfinance._utils import IntegerIndexDateTimeFormatter
@@ -155,17 +156,24 @@ def _valid_plot_kwargs():
                                        'Validator': lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
                                                                   and all([isinstance(v,(int,float)) for v in value])},
  
-        'hlines'      : { 'Default'     : None, 
-                          'Validator'   : lambda value: _hlines_validator(value) },
+        'hlines'                    : { 'Default'     : None, 
+                                        'Validator'   : lambda value: _hlines_validator(value) },
  
-        'vlines'      : { 'Default'     : None, 
-                          'Validator'   : lambda value: _vlines_validator(value) },
+        'vlines'                    : { 'Default'     : None, 
+                                        'Validator'   : lambda value: _vlines_validator(value) },
 
-        'alines'      : { 'Default'     : None, 
-                          'Validator'   : lambda value: _alines_validator(value) },
+        'alines'                    : { 'Default'     : None, 
+                                        'Validator'   : lambda value: _alines_validator(value) },
  
-        'tlines'      : { 'Default'     : None, 
-                          'Validator'   : lambda value: _tlines_validator(value) },
+        'tlines'                    : { 'Default'     : None, 
+                                        'Validator'   : lambda value: _tlines_validator(value) },
+
+        'tline_use'                 : { 'Default'     : 'close', 
+                                        'Validator'   : lambda value: isinstance(value,str) or (isinstance(value,(list,tuple)) and
+                                                                      all([isinstance(v,str) for v in value]) ) },
+
+        'tline_method'              : { 'Default'     : 'straight',
+                                        'Validator'   : lambda value: value in ['straight','least squares','least_squares'] }
     }
 
     _validate_vkwargs_dict(vkwargs)
@@ -399,6 +407,8 @@ def plot( data, **kwargs ):
     line_collections.append(_construct_aline_collections(config['alines'], dtix))
     line_collections.append(_construct_hline_collections(config['hlines'], minx, maxx))
     line_collections.append(_construct_vline_collections(config['vlines'], dtix, miny, maxy))
+    line_collections.append(_construct_tline_collections(config['tlines'], dtix, dates, opens, highs, lows,
+                                                         closes, config['tline_use'], config['tline_method']))
      
     for collection in line_collections:
         if collection is not None:

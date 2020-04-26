@@ -165,12 +165,12 @@ def _date_to_iloc(dtseries,date):
     d1s = dtseries.loc[date:]
     if len(d1s) < 1:
         sdtrange = str(dtseries[0])+' to '+str(dtseries[-1])
-        raise ValueError('User specified line date "'+date+'" is beyond (greater than) range of plotted data ('+sdtrange+').')
+        raise ValueError('User specified line date "'+str(date)+'" is beyond (greater than) range of plotted data ('+sdtrange+').')
     d1 = d1s.index[0]
     d2s = dtseries.loc[:date]
     if len(d2s) < 1:
         sdtrange = str(dtseries[0])+' to '+str(dtseries[-1])
-        raise ValueError('User specified line date "'+date+'" is before (less than) range of plotted data ('+sdtrange+').')
+        raise ValueError('User specified line date "'+str(date)+'" is before (less than) range of plotted data ('+sdtrange+').')
     d2 = dtseries.loc[:date].index[-1]
     # If there are duplicate dates in the series, for example in a renko plot
     # then .get_loc(date) will return a slice containing all the dups, so:
@@ -184,7 +184,7 @@ def _date_to_mdate(date):
     if isinstance(date,str):
         pydt = pd.to_datetime(date).to_pydatetime()
     elif isinstance(date,pd.Timestamp):
-        pydt = dt.to_pydatetime()
+        pydt = date.to_pydatetime()
     elif isinstance(date,(datetime.datetime,datetime.date)):
         pydt = date
     else:
@@ -287,15 +287,16 @@ def _valid_lines_kwargs():
         'tlines'    : { 'Default'     : None,
                         'Validator'   : _bypass_kwarg_validation },
         'colors'    : { 'Default'     : None,
-                        'Validator'   : lambda value: mcolors.is_color_like(value) or
+                        'Validator'   : lambda value: value is None or
+                                            mcolors.is_color_like(value) or
                                             ( isinstance(value,(list,tuple)) and
-                                              all([mcolors.is_color_like(v) for v in value])
-                                            ) },
+                                              all([mcolors.is_color_like(v) for v in value]) ) },
         'linestyle' : { 'Default'     : '-',
-                        'Validator'   : lambda value: value in valid_linestyles },
+                        'Validator'   : lambda value: value is None or value in valid_linestyles },
         'linewidths': { 'Default'     : None,
-                        'Validator'   : lambda value: isinstance(value,(float,int)) or
-                                              all([isinstance(v,(float,int)) for v in value])}
+                        'Validator'   : lambda value: value is None or
+                                            isinstance(value,(float,int)) or 
+                                            all([isinstance(v,(float,int)) for v in value]) }
     }
 
     _validate_vkwargs_dict(vkwargs)
@@ -835,9 +836,10 @@ def _construct_aline_collections(alines, dtix=None):
     alines may also be a dict, containing
     the following keys:
 
-        'alines' : the same as defined above: sequence of price, or dates, or segments
-        'colors' : colors for the above data
-        'ltypes' : line types for the above data
+        'alines'     : the same as defined above: sequence of price, or dates, or segments
+        'colors'     : colors for the above alines
+        'linestyle'  : line types for the above alines
+        'linewidths' : line types for the above alines
 
     dtix:  date index for the x-axis, used for converting the dates when
            x-values are 'evenly spaced integers' (as when skipping non-trading days)
@@ -856,8 +858,8 @@ def _construct_aline_collections(alines, dtix=None):
     else:
         aconfig = _process_kwargs({}, _valid_lines_kwargs())
 
-    print('aconfig=',aconfig)
-    print('alines=',alines)
+    #print('aconfig=',aconfig)
+    #print('alines=',alines)
 
     alines = _alines_validator(alines, returnStandardizedValue=True)
     if alines is None:
@@ -883,9 +885,10 @@ def _construct_hline_collections(hlines,minx,maxx):
     hlines may also be a dict, containing
     the following keys:
 
-        'hlines' : the same as defined above: sequence of price, or dates, or segments
-        'colors' : colors for the above data
-        'ltypes' : line types for the above data
+        'hlines'     : the same as defined above: sequence of price, or dates, or segments
+        'colors'     : colors for the above hlines
+        'linestyle'  : line types for the above hlines
+        'linewidths' : line types for the above hlines
 
     minx : the minimum value for x for the horizontal line, already converted to `xdates` format
     maxx : the maximum value for x for the horizontal line, already converted to `xdates` format
@@ -911,8 +914,8 @@ def _construct_hline_collections(hlines,minx,maxx):
     else:
         hconfig = _process_kwargs({}, _valid_lines_kwargs())
 
-    print('hconfig=',hconfig)
-    print('hlines=',hlines)
+    #print('hconfig=',hconfig)
+    #print('hlines=',hlines)
     
     lines = []
     if not isinstance(hlines,(list,tuple)):
@@ -943,9 +946,10 @@ def _construct_vline_collections(vlines,dtix,miny,maxy):
     vlines may also be a dict, containing
     the following keys:
 
-        'vlines' : the same as defined above: sequence of price, or dates, or segments
-        'colors' : colors for the above data
-        'ltypes' : line types for the above data
+        'vlines'     : the same as defined above: sequence of dates/datetimes
+        'colors'     : colors for the above vlines
+        'linestyle'  : line types for the above vlines
+        'linewidths' : line types for the above vlines
 
     dtix:  date index for the x-axis, used for converting the dates when
            x-values are 'evenly spaced integers' (as when skipping non-trading days)
@@ -974,8 +978,8 @@ def _construct_vline_collections(vlines,dtix,miny,maxy):
     else:
         vconfig = _process_kwargs({}, _valid_lines_kwargs())
 
-    print('vconfig=',vconfig)
-    print('vlines=',vlines)
+    #print('vconfig=',vconfig)
+    #print('vlines=',vlines)
     
     if not isinstance(vlines,(list,tuple)):
         vlines = [vlines,]
@@ -993,6 +997,105 @@ def _construct_vline_collections(vlines,dtix,miny,maxy):
     ls = vconfig['linestyle']
     lcollection = LineCollection(lines,colors=co,linewidths=lw,linestyles=ls,antialiaseds=useAA)
     return lcollection
+
+def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes, tline_use, tline_method):
+    """construct trend line collections
+
+    Parameters
+    ----------
+    tlines : sequence
+        sequences of pairs of date[time]s
+
+        date[time] may be (a) pandas.to_datetime parseable string,
+                          (b) pandas Timestamp, or
+                          (c) python datetime.datetime or datetime.date
+
+    tlines may also be a dict, containing
+    the following keys:
+
+        'tlines'     : the same as defined above: sequence of pairs of date[time]s
+        'colors'     : colors for the above tlines
+        'linestyle'  : line types for the above tlines
+        'linewidths' : line types for the above tlines
+
+    dtix:  date index for the x-axis, used for converting the dates when
+           x-values are 'evenly spaced integers' (as when skipping non-trading days)
+
+    Returns
+    -------
+    ret : list
+        lines collections
+    """
+    if tlines is None:
+        return None
+
+    if isinstance(tlines,dict):
+        tconfig = _process_kwargs(tlines, _valid_lines_kwargs())
+        tlines = tconfig['tlines']
+    else:
+        tconfig = _process_kwargs({}, _valid_lines_kwargs())
+
+    #print('tconfig=',tconfig)
+    #print('tlines=',tlines)
+
+    # reconstruct the data frame:
+    df = pd.DataFrame({'open':opens,'high':highs,'low':lows,'close':closes},
+                      index=pd.DatetimeIndex(mdates.num2date(dates))   )
+
+    # possible `tvalue`s : close,open,high,low,oc_avg,hl_avg,ohlc_avg,hilo
+    #          'hilo' means high on the up trend, low on the down trend.
+    # possible `tmethod`s: straight, leastsquares
+
+    def _tline_straight(dfslice,tline_use):
+        p1 = dfslice.iloc[ 0]
+        p2 = dfslice.iloc[-1]
+        x1 = p1.name
+        y1 = p1[tline_use].mean()
+        x2 = p2.name
+        y2 = p2[tline_use].mean()
+        return ((x1,y1),(x2,y2))
+
+    def _tline_lsq(dfslice,tline_use):
+        '''
+        This closed-form linear least squares algorithm was taken from:
+        https://mmas.github.io/least-squares-fitting-numpy-scipy
+        '''
+        s  = dfslice[tline_use].mean(axis=1)
+        xs = mdates.date2num(s.index.to_pydatetime())
+        ys = s.values
+        a  = np.vstack([xs, np.ones(len(xs))]).T
+        m, b  = np.dot(np.linalg.inv(np.dot(a.T,a)), np.dot(a.T,ys))
+        x1, x2 = xs[0], xs[-1]
+        y1 = m*x1 + b
+        y2 = m*x2 + b
+        x1, x2 = mdates.num2date(x1), mdates.num2date(x2)
+        return ((x1,y1),(x2,y2))
+
+    if isinstance(tline_use,str):
+        tline_use = [tline_use,]
+    tline_use = [ u.lower() for u in tline_use ]
+
+    alines = []
+    for d1,d2 in tlines:
+        dfslice = df.loc[d1:d2]
+        if len(dfslice) < 2:
+            dfdr = '\ndf date range: ['+str(df.index[0])+' , '+str(df.index[-1])+']'
+            raise ValueError('\ntlines date pair ('+str(d1)+','+str(d2)+
+                             ') too close, or wrong order, or out of range!'+dfdr)
+        if tline_method == 'least squares':
+            p1,p2 = _tline_lsq(dfslice,tline_use)
+        elif tline_method == 'straight':
+            p1,p2 = _tline_straight(dfslice,tline_use)
+        else:
+            raise ValueError('\nUnrecognized value for `tline_use` = "'+str(tline_use)+'"')
+
+        alines.append((p1,p2))
+
+    del tconfig['alines']
+    alines = dict(alines=alines,**tconfig) 
+    alines['tlines'] = None
+
+    return _construct_aline_collections(alines, dtix)
 
 
 from matplotlib.ticker import Formatter

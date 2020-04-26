@@ -160,7 +160,8 @@ def _tlines_validator(value):
 
     if not isinstance(value,(list,tuple)):
         return False
-    if not all([isinstance(pair,(list,tuple)) and len(pair) == 2 for pair in value]):
+    if not all([isinstance(pair,(list,tuple)) and len(pair) == 2 and
+                _is_datelike(pair[0]) and _is_datelike(pair[1]) for pair in value]):
         return False
     return True
 
