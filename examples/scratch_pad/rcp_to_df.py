@@ -1,12 +1,12 @@
-def rcParams_to_df(rcp,name=None):
+import pandas as pd
+
+
+def rcParams_to_df(rcp, name=None):
     keys = []
     vals = []
-    for item in rcp:
-        keys.append(item)
-        vals.append(rcp[item])
-    df = pd.DataFrame(vals,index=pd.Index(keys,name='rcParams Key'))
-    if name is not None:
-        df.columns = [name]
-    else:
-        df.columns = ['Value']
+    for key, value in rcp.items():
+        keys.append(key)
+        vals.append(value)
+    df = pd.DataFrame(vals, index=pd.Index(keys, name='rcParams Key'))
+    df.columns = ['Value' if name is None else name]
     return df
