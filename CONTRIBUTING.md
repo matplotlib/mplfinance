@@ -1,6 +1,6 @@
 - There are many ways to contribute, including contributions as simple as **asking questions**, participating in discussions, suggesting enhancements, etc.  **All** of these are valuable!
 
-- All of the usual/typical open source contribution guidelines apply (see for example, https://matplotlib.org/3.1.1/devel/contributing.html) 
+- All of the usual/typical open source contribution guidelines apply (see for example, https://matplotlib.org/3.1.1/devel/contributing.html and https://opensource.guide/how-to-contribute/) 
 so we will mention here just a few items here for which we may be particular in mplfinance.
 
 - Coding:
