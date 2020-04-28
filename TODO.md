@@ -13,4 +13,6 @@
  9. tagging releases
 10. documentation (replace old `https://matplotlib.org/api/finance_api.html`)
 11. make code more efficient (ex: tlines reconstructing data frame).
+12. add 'description' to valid kwargs table, and kwarg to print
+    all kwargs information (kwarg and short description).
 

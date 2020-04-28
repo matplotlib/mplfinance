@@ -240,9 +240,9 @@ def _valid_renko_kwargs():
 
     return vkwargs
 
-def _valid_pointnfig_kwargs():
+def _valid_pnf_kwargs():
     '''
-    Construct and return the "valid pointnfig kwargs table" for the mplfinance.plot(type='pnf') 
+    Construct and return the "valid pnf kwargs table" for the mplfinance.plot(type='pnf') 
     function. A valid kwargs table is a `dict` of `dict`s. The keys of the outer dict are 
     the valid key-words for the function.  The value for each key is a dict containing 2 
     specific keys: "Default", and "Validator" with the following values:
@@ -703,7 +703,7 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
     ret : tuple
         rectCollection
     """
-    pointnfig_params = _process_kwargs(config_pointnfig_params, _valid_pointnfig_kwargs())
+    pointnfig_params = _process_kwargs(config_pointnfig_params, _valid_pnf_kwargs())
     if marketcolors is None:
         marketcolors = _get_mpfstyle('classic')['marketcolors']
         #print('default market colors:',marketcolors)

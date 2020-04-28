@@ -33,7 +33,7 @@ from mplfinance._arg_validators import _kwarg_not_implemented, _bypass_kwarg_val
 from mplfinance._arg_validators import _hlines_validator, _vlines_validator
 from mplfinance._arg_validators import _alines_validator, _tlines_validator
 
-VALID_PMOVE_TYPES = ['renko', 'pnf', 'p&f','pointnfigure']
+VALID_PMOVE_TYPES = ['renko', 'pnf']
 
 def with_rc_context(func):
     '''
@@ -74,12 +74,13 @@ def _valid_plot_kwargs():
     '''
 
     vkwargs = {
-        'columns'     				: { 'Default'     : ('Open', 'High', 'Low', 'Close', 'Volume'),
-                          				'Validator'   : lambda value: isinstance(value, (tuple, list))
-			                                                          and len(value) == 5
-			                                                          and all(isinstance(c, str) for c in value) },
-        'type'        				: { 'Default'     : 'ohlc',
-                          				'Validator'   : lambda value: value in ['candle','candlestick','ohlc','bars','ohlc_bars','line', 'renko', 'pnf', 'p&f', 'pointnfigure'] },
+        'columns'                   : { 'Default'     : ('Open', 'High', 'Low', 'Close', 'Volume'),
+                                        'Validator'   : lambda value: isinstance(value, (tuple, list))
+                                                                   and len(value) == 5
+                                                                   and all(isinstance(c, str) for c in value) },
+        'type'                      : { 'Default'     : 'ohlc',
+                                        'Validator'   : lambda value: value in ['candle','candlestick','ohlc','bars','ohlc_bars',
+                                                                                'line','renko','pnf'] },
  
         'style'                     : { 'Default'     : 'default',
                                         'Validator'   : lambda value: value in _styles.available_styles() or isinstance(value,dict) },
@@ -93,11 +94,10 @@ def _valid_plot_kwargs():
         'renko_params'              : { 'Default'     : dict(),
                                         'Validator'   : lambda value: isinstance(value,dict) },
 
-        'pointnfig_params'          : { 'Default'     : dict(),
+        'pnf_params'                : { 'Default'     : dict(),
                                         'Validator'   : lambda value: isinstance(value,dict) },
  
         'study'                     : { 'Default'     : None,
-                                        #'Validator'   : lambda value: isinstance(value,dict) }, #{'studyname': {study parms}} example: {'TE':{'mav':20,'upper':2,'lower':2}}
                                         'Validator'   : lambda value: _kwarg_not_implemented(value) }, 
  
         'marketcolors'              : { 'Default'     : None, # use 'style' for default, instead.
@@ -106,7 +106,7 @@ def _valid_plot_kwargs():
         'no_xgaps'                  : { 'Default'     : True,  # None means follow default logic below:
                                         'Validator'   : lambda value: _warn_no_xgaps_deprecated(value) },
  
-        'show_nontrading'           : { 'Default'  : False, 
+        'show_nontrading'           : { 'Default'     : False, 
                                         'Validator'   : lambda value: isinstance(value,bool) },
  
         'figscale'                  : { 'Default'     : 1.0, # scale base figure size up or down.
@@ -309,9 +309,9 @@ def plot( data, **kwargs ):
         collections, new_dates, volumes, brick_values, size = _construct_renko_collections(
             dates, highs, lows, volumes, config['renko_params'], closes, marketcolors=style['marketcolors'])
 
-    elif ptype == 'pnf' or ptype == 'p&f' or ptype == 'pointnfigure':
+    elif ptype == 'pnf':
         collections, new_dates, volumes, brick_values, size = _construct_pointnfig_collections(
-            dates, highs, lows, volumes, config['pointnfig_params'], closes, marketcolors=style['marketcolors'])
+            dates, highs, lows, volumes, config['pnf_params'], closes, marketcolors=style['marketcolors'])
 
     elif ptype == 'line':
         ax1.plot(xdates, closes, color=config['linecolor'])
