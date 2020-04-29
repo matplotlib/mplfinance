@@ -67,8 +67,8 @@ def test_pmove_addplot(bolldata):
     assert '`addplot` is not supported for `type=\'renko\'`' in str(ex.value)
 
     with pytest.raises(ValueError) as ex:
-        mpf.plot(df,type='pointnfigure',volume=True,addplot=apdict)
-    assert '`addplot` is not supported for `type=\'pointnfigure\'`' in str(ex.value)
+        mpf.plot(df,type='pnf',volume=True,addplot=apdict)
+    assert '`addplot` is not supported for `type=\'pnf\'`' in str(ex.value)
     #mpf.plot(df,type='renko',volume=True)
 
 def test_figratio_bounds(bolldata):

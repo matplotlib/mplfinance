@@ -11,7 +11,7 @@
 
 ---
 
-# Contents
+# Contents and Tutorials
 
   - **[The New API](https://github.com/matplotlib/mplfinance#newapi)**
   - **[Basic Usage](https://github.com/matplotlib/mplfinance#usage)**
@@ -19,8 +19,8 @@
   - **[Saving the Plot to a File](https://github.com/matplotlib/mplfinance/blob/master/examples/savefig.ipynb)**
   - **[Customizing the Appearance of Plots](https://github.com/matplotlib/mplfinance/blob/master/examples/customization_and_styles.ipynb)**
   - **[Price-Movement Plots (Renko, P&F, etc)](https://github.com/matplotlib/mplfinance/blob/master/examples/price-movement_plots.ipynb)**
-  - Technical Studies (presently in development)
-  - **[Latest Release Info](https://github.com/matplotlib/mplfinance#release)**
+  - **[Trends, Support, Resistance, and Trading Lines](https://github.com/matplotlib/mplfinance/blob/master/examples/using_lines.ipynb)**
+  - **[Latest Release Info](https://github.com/matplotlib/mplfinance/blob/master/RELEASE_NOTES.md)**
   - **[Some Background History About This Package](https://github.com/matplotlib/mplfinance#history)**
   - **[Old API Availability](https://github.com/matplotlib/mplfinance#oldapi)**
 
@@ -569,22 +569,6 @@ mpf.plot(df[700:850],type='bars',volume=True,mav=(20,40))
 For more examples of using mplfinance, please see the jupyter notebooks in the **[`examples`](https://github.com/matplotlib/mplfinance/blob/master/examples/)** directory.
 
 ---
- 
-# <a name="release"></a>Release Notes
-
-| Version  |  Description   | Release Date |
-|:---------|:-------------|:---------------|
-| 0.12.3a3   | - `linecolor` kwarg for line plots<br> - implement save figure to in-memory buffer<br> -- Thank you Caleb Coffin @coffincw for contributing the above. | 2020-03-04 |
-| 0.12.3a2   | - implement custom markers (issue#30)<br> - fix minor issue with chart `type` validator<br> -- Thank you Amir Atashin @amiaty for contributing the above.<br> - add internal functions: `_bypass_kwarg_validation()` and `_kwarg_not_implemented()` | 2020-02-21 |
-| 0.12.3a1   | - fix issue#28: math.log crash on zero in data<br> - remove "Implemented" field from kwarg dicts<br> - yahoo style show colors for `ohlc bars` | 2020-02-16 |
-| 0.12.3a0   | - kwarg `block=False` for non-blocking call to `mpf.plot()`<br> - customize aspect ratio, figure title, y-labels<br> - customize colors and other `style` aspects of plot<br> - `no_xgaps` now defaults to True: use `show_nontrading=True` to set no_xgaps to false<br> - secondary y-axis available to `make_addplot()`<br> - bug fix for volume widths | 2020-02-12 |
-| 0.12.0a3   | Increase mav limit from 3 to 7 different mavs  | 2020-01-16 |
-| 0.12.0a2   | Ability to save plot to a file (pdf, svg, png, jpg, ...) | 2020-01-14 |
-| 0.12.0a1   | Ability to plot arbitrary user data (in addition to basic OHLCV data).<br> - both line and scatter plots available.<br> - optionally plot on either the "main" or "lower" (aka "volume") axis. | 2020-01-09 |
-| 0.11.x   | Basic Plotting from Pandas DataFrame of OHLC bars and candlesticks.<br> - optional display of volume<br> - optional display of (up to 3 different) moving averages.<br> - old API still available by importing from "mplfinance/original_flavor" | 2019-12-20  |
-| 0.10.x   | Old mpl-finance API set up as its own package<br> (i.e. removed from the matplotlib package). | 2016-09-08   |
-
----
 
 ## <a name="history"></a>Some History
 My name is Daniel Goldfarb.  In November 2019, I became the maintainer of `matplotlib/mpl-finance`.  That module is being deprecated in favor of the current `matplotlib/mplfinance`.  The old `mpl-finance` consisted of code extracted from the deprecated `matplotlib.finance` module along with a few examples of usage.  It has been mostly un-maintained for the past three years.  
@@ -594,7 +578,12 @@ It is my intention to archive the `matplotlib/mpl-finance` repository soon, and 
 ---
 ### <a name="oldapi"></a>old API availability
 
-With this new ` mplfinance ` package installed, in addition to the new API, users can still access the old API (at least for the next several months) by changing their import statments<br>
+**With this new ` mplfinance ` package installed, in addition to the new API, users can still access the old API**.<br> The old API may be removed some day, but for the foreseeable future we will keep it ... at least until we are very confident that users of the old API can accomplish the same things with the new API.
+
+---
+
+To access the old API with the new ` mplfinance ` package installed, change the old import statments
+
 **from:**
 
 ```python
