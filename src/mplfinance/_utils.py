@@ -990,12 +990,10 @@ def _construct_vline_collections(vlines,dtix,miny,maxy):
 
     lines = _convert_segment_dates(lines,dtix)
 
-    useAA = 0,  # use tuple here
-
     lw = vconfig['linewidths']
     co = vconfig['colors']
     ls = vconfig['linestyle']
-    lcollection = LineCollection(lines,colors=co,linewidths=lw,linestyles=ls,antialiaseds=useAA)
+    lcollection = LineCollection(lines,colors=co,linewidths=lw,linestyles=ls,antialiaseds=(0,))#,alpha=0.2)
     return lcollection
 
 def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes, tline_use, tline_method):

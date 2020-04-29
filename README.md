@@ -11,7 +11,7 @@
 
 ---
 
-# Contents
+# Contents and Tutorials
 
   - **[The New API](https://github.com/matplotlib/mplfinance#newapi)**
   - **[Basic Usage](https://github.com/matplotlib/mplfinance#usage)**
