@@ -152,18 +152,26 @@ def _tlines_validator(value):
     '''
     Validate `tlines` kwarg value: must be sequence of "datelike" pairs.
     '''
-    if isinstance(value,dict):
-        if 'tlines' in value:
-            value = value['tlines']
-        else:
+    def _tlines_subvalidator(value):
+        if isinstance(value,dict):
+            if 'tlines' in value:
+                value = value['tlines']
+            else:
+                return False
+        if not isinstance(value,(list,tuple)):
             return False
+        if not all([isinstance(pair,(list,tuple)) and len(pair) == 2 and
+                    _is_datelike(pair[0]) and _is_datelike(pair[1]) for pair in value]):
+            return False
+        return True
 
-    if not isinstance(value,(list,tuple)):
-        return False
-    if not all([isinstance(pair,(list,tuple)) and len(pair) == 2 and
-                _is_datelike(pair[0]) and _is_datelike(pair[1]) for pair in value]):
-        return False
-    return True
+    if isinstance(value,(list,tuple)) and all([isinstance(v,dict) for v in value]):
+        for v in value:
+            if not _tlines_subvalidator(v):
+                return False
+        return True
+    else:
+        return _tlines_subvalidator(value)
 
 def _bypass_kwarg_validation(value):
     ''' For some kwargs, we either don't know enough, or

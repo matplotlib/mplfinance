@@ -167,13 +167,6 @@ def _valid_plot_kwargs():
  
         'tlines'                    : { 'Default'     : None, 
                                         'Validator'   : lambda value: _tlines_validator(value) },
-
-        'tline_use'                 : { 'Default'     : 'close', 
-                                        'Validator'   : lambda value: isinstance(value,str) or (isinstance(value,(list,tuple)) and
-                                                                      all([isinstance(v,str) for v in value]) ) },
-
-        'tline_method'              : { 'Default'     : 'point-to-point',
-                                        'Validator'   : lambda value: value in ['point-to-point','least squares','least-squares'] }
     }
 
     _validate_vkwargs_dict(vkwargs)
@@ -407,8 +400,13 @@ def plot( data, **kwargs ):
     line_collections.append(_construct_aline_collections(config['alines'], dtix))
     line_collections.append(_construct_hline_collections(config['hlines'], minx, maxx))
     line_collections.append(_construct_vline_collections(config['vlines'], dtix, miny, maxy))
-    line_collections.append(_construct_tline_collections(config['tlines'], dtix, dates, opens, highs, lows,
-                                                         closes, config['tline_use'], config['tline_method']))
+    tlines = config['tlines']
+    if isinstance(tlines,(list,tuple)) and all([isinstance(item,dict) for item in tlines]):
+        pass
+    else:
+        tlines = [tlines,]
+    for tline_item in tlines:
+        line_collections.append(_construct_tline_collections(tline_item, dtix, dates, opens, highs, lows, closes))
      
     for collection in line_collections:
         if collection is not None:

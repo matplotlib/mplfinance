@@ -298,7 +298,13 @@ def _valid_lines_kwargs():
                                             isinstance(value,(float,int)) or 
                                             all([isinstance(v,(float,int)) for v in value]) },
         'alpha'     : { 'Default'     : 1.0,
-                        'Validator'   : lambda value: isinstance(value,(float,int)) }
+                        'Validator'   : lambda value: isinstance(value,(float,int)) },
+
+        'tline_use' : { 'Default'     : 'close', 
+                        'Validator'   : lambda value: isinstance(value,str) or (isinstance(value,(list,tuple)) and
+                                                                      all([isinstance(v,str) for v in value]) ) },
+        'tline_method': { 'Default'   : 'point-to-point',
+                          'Validator' : lambda value: value in ['point-to-point','least-squares'] }
     }
 
     _validate_vkwargs_dict(vkwargs)
@@ -999,7 +1005,7 @@ def _construct_vline_collections(vlines,dtix,miny,maxy):
     lcollection = LineCollection(lines,colors=co,linewidths=lw,linestyles=ls,antialiaseds=(0,),alpha=al)
     return lcollection
 
-def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes, tline_use, tline_method):
+def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes):
     """construct trend line collections
 
     Parameters
@@ -1032,9 +1038,12 @@ def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes
 
     if isinstance(tlines,dict):
         tconfig = _process_kwargs(tlines, _valid_lines_kwargs())
-        tlines = tconfig['tlines']
+        tlines  = tconfig['tlines']
     else:
         tconfig = _process_kwargs({}, _valid_lines_kwargs())
+
+    tline_use    = tconfig['tline_use']
+    tline_method = tconfig['tline_method']
 
     #print('tconfig=',tconfig)
     #print('tlines=',tlines)
