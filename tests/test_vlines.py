@@ -89,7 +89,6 @@ def test_vlines03(bolldata):
         type='pnf',
         vlines=vl,
         savefig=tname,
-        pointnfig_params=dict(box_size=1.),
         returnfig=True
     )
     plt.close(fig_axis[0])
