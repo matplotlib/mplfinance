@@ -172,8 +172,8 @@ def _valid_plot_kwargs():
                                         'Validator'   : lambda value: isinstance(value,str) or (isinstance(value,(list,tuple)) and
                                                                       all([isinstance(v,str) for v in value]) ) },
 
-        'tline_method'              : { 'Default'     : 'straight',
-                                        'Validator'   : lambda value: value in ['straight','least squares','least_squares'] }
+        'tline_method'              : { 'Default'     : 'point-to-point',
+                                        'Validator'   : lambda value: value in ['point-to-point','least squares','least-squares'] }
     }
 
     _validate_vkwargs_dict(vkwargs)

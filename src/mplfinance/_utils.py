@@ -296,7 +296,9 @@ def _valid_lines_kwargs():
         'linewidths': { 'Default'     : None,
                         'Validator'   : lambda value: value is None or
                                             isinstance(value,(float,int)) or 
-                                            all([isinstance(v,(float,int)) for v in value]) }
+                                            all([isinstance(v,(float,int)) for v in value]) },
+        'alpha'     : { 'Default'     : 1.0,
+                        'Validator'   : lambda value: isinstance(value,(float,int)) }
     }
 
     _validate_vkwargs_dict(vkwargs)
@@ -870,7 +872,8 @@ def _construct_aline_collections(alines, dtix=None):
     lw = aconfig['linewidths']
     co = aconfig['colors']
     ls = aconfig['linestyle']
-    lcollection = LineCollection(alines,colors=co,linewidths=lw,linestyles=ls,antialiaseds=(0,))
+    al = aconfig['alpha']
+    lcollection = LineCollection(alines,colors=co,linewidths=lw,linestyles=ls,antialiaseds=(0,),alpha=al)
     return lcollection
 
 
@@ -924,12 +927,11 @@ def _construct_hline_collections(hlines,minx,maxx):
     for val in hlines:
         lines.append( [(minx,val),(maxx,val)] )
 
-    useAA  = 0,    # use tuple here
-    
     lw = hconfig['linewidths']
     co = hconfig['colors']
     ls = hconfig['linestyle']
-    lcollection = LineCollection(lines,colors=co,linewidths=lw,linestyles=ls,antialiaseds=useAA)
+    al = hconfig['alpha']
+    lcollection = LineCollection(lines,colors=co,linewidths=lw,linestyles=ls,antialiaseds=(0,),alpha=al)
     return lcollection
 
 
@@ -993,7 +995,8 @@ def _construct_vline_collections(vlines,dtix,miny,maxy):
     lw = vconfig['linewidths']
     co = vconfig['colors']
     ls = vconfig['linestyle']
-    lcollection = LineCollection(lines,colors=co,linewidths=lw,linestyles=ls,antialiaseds=(0,))#,alpha=0.2)
+    al = vconfig['alpha']
+    lcollection = LineCollection(lines,colors=co,linewidths=lw,linestyles=ls,antialiaseds=(0,),alpha=al)
     return lcollection
 
 def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes, tline_use, tline_method):
@@ -1042,9 +1045,9 @@ def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes
 
     # possible `tvalue`s : close,open,high,low,oc_avg,hl_avg,ohlc_avg,hilo
     #          'hilo' means high on the up trend, low on the down trend.
-    # possible `tmethod`s: straight, leastsquares
+    # possible `tmethod`s: point-to-point, leastsquares
 
-    def _tline_straight(dfslice,tline_use):
+    def _tline_point_to_point(dfslice,tline_use):
         p1 = dfslice.iloc[ 0]
         p2 = dfslice.iloc[-1]
         x1 = p1.name
@@ -1080,12 +1083,12 @@ def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes
             dfdr = '\ndf date range: ['+str(df.index[0])+' , '+str(df.index[-1])+']'
             raise ValueError('\ntlines date pair ('+str(d1)+','+str(d2)+
                              ') too close, or wrong order, or out of range!'+dfdr)
-        if tline_method == 'least squares':
+        if tline_method == 'least squares' or tline_method == 'least-squares':
             p1,p2 = _tline_lsq(dfslice,tline_use)
-        elif tline_method == 'straight':
-            p1,p2 = _tline_straight(dfslice,tline_use)
+        elif tline_method == 'point-to-point':
+            p1,p2 = _tline_point_to_point(dfslice,tline_use)
         else:
-            raise ValueError('\nUnrecognized value for `tline_use` = "'+str(tline_use)+'"')
+            raise ValueError('\nUnrecognized value for `tline_method` = "'+str(tline_method)+'"')
 
         alines.append((p1,p2))
 
