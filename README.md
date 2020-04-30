@@ -11,15 +11,16 @@
 
 ---
 
-# Contents and Tutorials
+# <a name="tutorials"></a>Contents and Tutorials
 
   - **[The New API](https://github.com/matplotlib/mplfinance#newapi)**
-  - **[Basic Usage](https://github.com/matplotlib/mplfinance#usage)**
-  - **[Adding Your Own Technical Studies to Plots](https://github.com/matplotlib/mplfinance/blob/master/examples/addplot.ipynb)**
-  - **[Saving the Plot to a File](https://github.com/matplotlib/mplfinance/blob/master/examples/savefig.ipynb)**
-  - **[Customizing the Appearance of Plots](https://github.com/matplotlib/mplfinance/blob/master/examples/customization_and_styles.ipynb)**
-  - **[Price-Movement Plots (Renko, P&F, etc)](https://github.com/matplotlib/mplfinance/blob/master/examples/price-movement_plots.ipynb)**
-  - **[Trends, Support, Resistance, and Trading Lines](https://github.com/matplotlib/mplfinance/blob/master/examples/using_lines.ipynb)**
+  - **[Tutorials](https://github.com/matplotlib/mplfinance#tutorials)**
+    - **[Basic Usage](https://github.com/matplotlib/mplfinance#usage)**
+    - **[Adding Your Own Technical Studies to Plots](https://github.com/matplotlib/mplfinance/blob/master/examples/addplot.ipynb)**
+    - **[Saving the Plot to a File](https://github.com/matplotlib/mplfinance/blob/master/examples/savefig.ipynb)**
+    - **[Customizing the Appearance of Plots](https://github.com/matplotlib/mplfinance/blob/master/examples/customization_and_styles.ipynb)**
+    - **[Price-Movement Plots (Renko, P&F, etc)](https://github.com/matplotlib/mplfinance/blob/master/examples/price-movement_plots.ipynb)**
+    - **[Trends, Support, Resistance, and Trading Lines](https://github.com/matplotlib/mplfinance/blob/master/examples/using_lines.ipynb)**
   - **[Latest Release Info](https://github.com/matplotlib/mplfinance/blob/master/RELEASE_NOTES.md)**
   - **[Some Background History About This Package](https://github.com/matplotlib/mplfinance#history)**
   - **[Old API Availability](https://github.com/matplotlib/mplfinance#oldapi)**
