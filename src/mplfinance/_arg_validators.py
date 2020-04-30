@@ -1,6 +1,7 @@
 import matplotlib.dates  as mdates
-import pandas as pd
-import numpy  as np
+import pandas   as pd
+import numpy    as np
+import datetime
 
 def _check_and_prepare_data(data, config):
     '''
@@ -63,7 +64,114 @@ def _mav_validator(mav_value):
         if not isinstance(num,int) and num > 1:
             return False
     return True
-             
+
+def _hlines_validator(value):
+    if isinstance(value,dict):
+        if 'hlines' in value:
+            value = value['hlines']
+        else:
+            return False
+    return ( isinstance(value,(float,int)) or (isinstance(value,(list,tuple)) and
+             all([isinstance(v,(float,int)) for v in value])) )
+
+def _is_datelike(value):
+    if isinstance(value, (pd.Timestamp,datetime.datetime,datetime.date)):
+        return True
+    if isinstance(value,str):
+        try:
+            dt = pd.to_datetime(value)
+            return True
+        except:
+            return False
+    return False
+
+def _vlines_validator(value):
+    '''Validate `vlines` kwarg value:  must be "datelike" or sequence of "datelike"
+    '''
+    if isinstance(value,dict):
+        if 'vlines' in value:
+            value = value['vlines']
+        else:
+            return False
+    if _is_datelike(value): return True
+    if not isinstance(value,(list,tuple)): return False
+    if not all([_is_datelike(v) for v in value]): return False
+    return True
+
+def _alines_validator(value, returnStandardizedValue=False):
+    '''
+    Value for segments to be passed into LineCollection constructor must be:
+    - a sequence of `lines`, where
+    - a `lines` is a sequence of 2 or more vertices, where
+    - a vertex is a `pair`, aka a sequence of two values, an x and a y point.
+
+    From matplotlib.collections:
+        `segments` are:
+        A sequence of (line0, line1, line2), where:
+
+        linen = (x0, y0), (x1, y1), ... (xm, ym)
+       
+        or the equivalent numpy array with two columns. Each line can be a different length.
+
+    The above is from the matplotlib LineCollection documentation.
+    It basically says that the "segments" passed into the LineCollection constructor 
+    must be a Sequence of Sequences of 2 or more xy Pairs.  However here in `mplfinance`
+    we want to allow that (seq of seq of xy pairs) _as well as_ just a sequence of pairs.
+    Therefore here in the validator we will allow both:
+       (a) seq of at least 2 date,float pairs         (this is a 'line'    as defined above)
+       (b) seq of seqs of at least 2 date,float pairs (this is a 'seqment' as defined above)
+    '''
+    if isinstance(value,dict):
+        if 'alines' in value:
+            value = value['alines']
+        else:
+            return False
+
+    if not isinstance(value,(list,tuple)):
+        return False if not returnStandardizedValue else None
+
+    if not all([isinstance(line,(list,tuple)) and len(line) > 1 for line in value]):
+        return False if not returnStandardizedValue else None
+
+    # now, were the above really `lines`, or were they simply `vertices`
+    if all( [ isinstance(point,(list,tuple)) and len(point)==2 and
+              _is_datelike(point[0]) and isinstance(point[1],(float,int))
+              for line in value for point in line ] ):
+        # they were lines:
+        return True if not returnStandardizedValue else value
+
+    # here, if valid, we have a sequence of vertices (points)
+    if all( [ isinstance(point,(list,tuple)) and len(point)==2 and
+              _is_datelike(point[0]) and isinstance(point[1],(float,int))
+              for point in value ] ):
+        return True if not returnStandardizedValue else [value,]
+
+    return False if not returnStandardizedValue else None
+
+def _tlines_validator(value):
+    '''
+    Validate `tlines` kwarg value: must be sequence of "datelike" pairs.
+    '''
+    def _tlines_subvalidator(value):
+        if isinstance(value,dict):
+            if 'tlines' in value:
+                value = value['tlines']
+            else:
+                return False
+        if not isinstance(value,(list,tuple)):
+            return False
+        if not all([isinstance(pair,(list,tuple)) and len(pair) == 2 and
+                    _is_datelike(pair[0]) and _is_datelike(pair[1]) for pair in value]):
+            return False
+        return True
+
+    if isinstance(value,(list,tuple)) and all([isinstance(v,dict) for v in value]):
+        for v in value:
+            if not _tlines_subvalidator(v):
+                return False
+        return True
+    else:
+        return _tlines_subvalidator(value)
 
 def _bypass_kwarg_validation(value):
     ''' For some kwargs, we either don't know enough, or
