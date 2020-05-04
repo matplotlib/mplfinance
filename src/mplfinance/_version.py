@@ -23,7 +23,7 @@ def compare_versions(v_str1, v_str2):
     
     return '<'
 
-version_info = (0, 11, 3, 'alpha', 5)
+version_info = (0, 12, 4, 'alpha', 5)
 
 _specifier_ = {'alpha': 'a','beta': 'b','candidate': 'rc','final': ''}
 
