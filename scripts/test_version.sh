@@ -30,3 +30,4 @@ then
     echo "${result}"
     exit 1
 fi
+echo "VersionCheck PASSED with response: ${result}"
