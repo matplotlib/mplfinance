@@ -48,14 +48,32 @@ def compare_versions(v_str1, v_str2):
     p_str2 = parse_version(v_str2)
     p_str1[3] = _specifier_order_[p_str1[3]]
     p_str2[3] = _specifier_order_[p_str2[3]]
+    out = []
     for i, comp_i in enumerate(p_str1):
         comp_j = p_str2[i]
         if comp_i > comp_j:
-            return '>'
+            out.append('>')
         elif comp_i == comp_j:
-            return '=='
+            out.append('==')
         elif comp_i < comp_j:
-            return '<'
+            out.append('<')
+    
+    if out[0] != '==':
+        return out[0]
+    
+    if out[1] != '==':
+        return out[1]
+    
+    if out[2] != '==':
+        return out[2]
+    
+    if out[3] != '==':
+        return out[3]
+    
+    if out[4] != '==':
+        return out[4]
+
+    return '=='
 
 
 version_info = (0, 12, 3, 'alpha', 5)
