@@ -10,4 +10,4 @@ install:
   - pip install tox-travis
 script: 
   - tox
-  - /bin/bash scripts/test.sh $TRAVIS_PULL_REQUEST
+  - /bin/bash scripts/test_version.sh $TRAVIS_PULL_REQUEST

@@ -5,13 +5,15 @@ set -ev
 
 pr_branch=$1
 if [ "${pr_branch}" == "false" ]
+# All integrations pass if they're merged without a PR.
 then
     exit 0
 fi
 
 echo "PR: branch passed in: $pr_branch"
 pip3 install .
-git checkout ${pr_branch}
+git fetch origin +refs/pull/${pr_branch}/merge
+git checkout origin/pr/${pr_branch}
 pr_version=$(python3 -c "import mplfinance; print(mplfinance.__version__)")
 git checkout master
 in_version=$(python3 -c "import mplfinance; print(mplfinance.__version__)")
