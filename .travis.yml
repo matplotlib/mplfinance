@@ -8,4 +8,6 @@ matrix:
     - python: 3.8
 install:
   - pip install tox-travis
-script: tox
+script: 
+  - tox
+  - /bin/bash scripts/test.sh $TRAVIS_PULL_REQUEST
