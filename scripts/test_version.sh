@@ -13,7 +13,7 @@ fi
 echo "PR: branch passed in: $pr_branch"
 pip3 install .
 git fetch origin +refs/pull/${pr_branch}/merge
-git checkout origin/pr/${pr_branch}
+git checkout FETCH_HEAD
 pr_version=$(python3 -c "import mplfinance; print(mplfinance.__version__)")
 git checkout master
 in_version=$(python3 -c "import mplfinance; print(mplfinance.__version__)")
