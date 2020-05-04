@@ -6,3 +6,5 @@ __pycache__
 *.egg-info
 .tox/
 .cache/
+*.ipynb_checkpoints/
+*.DS_Store
