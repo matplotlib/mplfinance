@@ -1,6 +1,8 @@
 from mplfinance import _version
 import argparse
 
+# Adding a comment bc travis is confused
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Check versions.')
     parser.add_argument('--pr_v', type=str, help='mplfinance.__version__ for the PR')
