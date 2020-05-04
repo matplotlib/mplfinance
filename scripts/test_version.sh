@@ -18,7 +18,7 @@ pr_version=$(python3 -c "import mplfinance; print(mplfinance.__version__)")
 git checkout master
 in_version=$(python3 -c "import mplfinance; print(mplfinance.__version__)")
 echo "PR: ${pr_version}; Incumbent: ${in_version}"
-result=$(python3 scripts/check_version.py --pr ${pr_version} --in ${in_version})
+result=$(python3 scripts/check_version.py --pr_v ${pr_version} --in_v ${in_version})
 if [ "${result}" != "VersionCheck:pr>master" ]
 then
     # version in PR doesn't pass the test
