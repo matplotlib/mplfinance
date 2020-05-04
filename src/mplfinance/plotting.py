@@ -7,6 +7,7 @@ import copy
 import io
 import math
 import warnings
+import statistics as stat
 
 from itertools import cycle
 #from pandas.plotting import register_matplotlib_converters
@@ -16,6 +17,10 @@ from mplfinance._utils import _construct_ohlc_collections
 from mplfinance._utils import _construct_candlestick_collections
 from mplfinance._utils import _construct_renko_collections
 from mplfinance._utils import _construct_pointnfig_collections
+from mplfinance._utils import _construct_aline_collections
+from mplfinance._utils import _construct_hline_collections
+from mplfinance._utils import _construct_vline_collections
+from mplfinance._utils import _construct_tline_collections
 
 from mplfinance._utils import _updown_colors
 from mplfinance._utils import IntegerIndexDateTimeFormatter
@@ -25,9 +30,10 @@ from mplfinance import _styles
 from mplfinance._arg_validators import _check_and_prepare_data, _mav_validator
 from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 from mplfinance._arg_validators import _kwarg_not_implemented, _bypass_kwarg_validation
+from mplfinance._arg_validators import _hlines_validator, _vlines_validator
+from mplfinance._arg_validators import _alines_validator, _tlines_validator
 
-
-VALID_PMOVE_TYPES = ['renko', 'pnf', 'p&f','pointnfigure']
+VALID_PMOVE_TYPES = ['renko', 'pnf']
 
 def with_rc_context(func):
     '''
@@ -44,10 +50,12 @@ def _list_of_dict(x):
     return isinstance(x,list) and all([isinstance(item,dict) for item in x])
 
 def _warn_no_xgaps_deprecated(value):
-    warnings.warn('\n `no_xgaps` is deprecated:'+
+    warnings.warn('\n\n ================================================================= '+
+                  '\n\n   WARNING: `no_xgaps` is deprecated:'+
                   '\n     Default value is now `no_xgaps=True`'+
                   '\n     However, to set `no_xgaps=False` and silence this warning,'+
-                  '\n     use instead: `show_nontrading=True`.',
+                  '\n     use instead: `show_nontrading=True`.'+
+                  '\n\n ================================================================ ',
                   category=DeprecationWarning)
     return isinstance(value,bool)
 
@@ -66,12 +74,13 @@ def _valid_plot_kwargs():
     '''
 
     vkwargs = {
-        'columns'     				: { 'Default'     : ('Open', 'High', 'Low', 'Close', 'Volume'),
-                          				'Validator'   : lambda value: isinstance(value, (tuple, list))
-			                                                          and len(value) == 5
-			                                                          and all(isinstance(c, str) for c in value) },
-        'type'        				: { 'Default'     : 'ohlc',
-                          				'Validator'   : lambda value: value in ['candle','candlestick','ohlc','bars','ohlc_bars','line', 'renko', 'pnf', 'p&f', 'pointnfigure'] },
+        'columns'                   : { 'Default'     : ('Open', 'High', 'Low', 'Close', 'Volume'),
+                                        'Validator'   : lambda value: isinstance(value, (tuple, list))
+                                                                   and len(value) == 5
+                                                                   and all(isinstance(c, str) for c in value) },
+        'type'                      : { 'Default'     : 'ohlc',
+                                        'Validator'   : lambda value: value in ['candle','candlestick','ohlc','bars','ohlc_bars',
+                                                                                'line','renko','pnf'] },
  
         'style'                     : { 'Default'     : 'default',
                                         'Validator'   : lambda value: value in _styles.available_styles() or isinstance(value,dict) },
@@ -85,11 +94,10 @@ def _valid_plot_kwargs():
         'renko_params'              : { 'Default'     : dict(),
                                         'Validator'   : lambda value: isinstance(value,dict) },
 
-        'pointnfig_params'          : { 'Default'     : dict(),
+        'pnf_params'                : { 'Default'     : dict(),
                                         'Validator'   : lambda value: isinstance(value,dict) },
  
         'study'                     : { 'Default'     : None,
-                                        #'Validator'   : lambda value: isinstance(value,dict) }, #{'studyname': {study parms}} example: {'TE':{'mav':20,'upper':2,'lower':2}}
                                         'Validator'   : lambda value: _kwarg_not_implemented(value) }, 
  
         'marketcolors'              : { 'Default'     : None, # use 'style' for default, instead.
@@ -98,7 +106,7 @@ def _valid_plot_kwargs():
         'no_xgaps'                  : { 'Default'     : True,  # None means follow default logic below:
                                         'Validator'   : lambda value: _warn_no_xgaps_deprecated(value) },
  
-        'show_nontrading'           : { 'Default'  : False, 
+        'show_nontrading'           : { 'Default'     : False, 
                                         'Validator'   : lambda value: isinstance(value,bool) },
  
         'figscale'                  : { 'Default'     : 1.0, # scale base figure size up or down.
@@ -139,7 +147,7 @@ def _valid_plot_kwargs():
 
         'return_calculated_values'  : {'Default': None,
                                        'Validator': lambda value: isinstance(value, dict) and len(value) == 0},
- 
+
         'set_ylim'                  : {'Default': None,
                                        'Validator': lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
                                                                   and all([isinstance(v,(int,float)) for v in value])},
@@ -147,6 +155,18 @@ def _valid_plot_kwargs():
         'set_ylim_panelB'           : {'Default': None,
                                        'Validator': lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
                                                                   and all([isinstance(v,(int,float)) for v in value])},
+ 
+        'hlines'                    : { 'Default'     : None, 
+                                        'Validator'   : lambda value: _hlines_validator(value) },
+ 
+        'vlines'                    : { 'Default'     : None, 
+                                        'Validator'   : lambda value: _vlines_validator(value) },
+
+        'alines'                    : { 'Default'     : None, 
+                                        'Validator'   : lambda value: _alines_validator(value) },
+ 
+        'tlines'                    : { 'Default'     : None, 
+                                        'Validator'   : lambda value: _tlines_validator(value) },
     }
 
     _validate_vkwargs_dict(vkwargs)
@@ -269,7 +289,6 @@ def plot( data, **kwargs ):
         else:
             formatter = IntegerIndexDateTimeFormatter(dates, fmtstring)
             xdates = np.arange(len(dates))
-        
         ax1.xaxis.set_major_formatter(formatter)
 
     collections = None
@@ -280,20 +299,22 @@ def plot( data, **kwargs ):
         collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes,
                                                          marketcolors=style['marketcolors'] )
     elif ptype == 'renko':
-        collections, new_dates, volumes, brick_values, size = _construct_renko_collections(dates, highs, lows, volumes, config['renko_params'], closes,
-                                                         marketcolors=style['marketcolors'] )
-    elif ptype == 'pnf' or ptype == 'p&f' or ptype == 'pointnfigure':
-        collections, new_dates, volumes, brick_values, size = _construct_pointnfig_collections(dates, highs, lows, volumes, config['pointnfig_params'], closes,
-                                                         marketcolors=style['marketcolors'] )                           
+        collections, new_dates, volumes, brick_values, size = _construct_renko_collections(
+            dates, highs, lows, volumes, config['renko_params'], closes, marketcolors=style['marketcolors'])
+
+    elif ptype == 'pnf':
+        collections, new_dates, volumes, brick_values, size = _construct_pointnfig_collections(
+            dates, highs, lows, volumes, config['pnf_params'], closes, marketcolors=style['marketcolors'])
+
     elif ptype == 'line':
         ax1.plot(xdates, closes, color=config['linecolor'])
+
     else:
         raise ValueError('Unrecognized plot type = "'+ ptype + '"')
 
     if ptype in VALID_PMOVE_TYPES:
         formatter = IntegerIndexDateTimeFormatter(new_dates, fmtstring)
         xdates = np.arange(len(new_dates))
-
         ax1.xaxis.set_major_formatter(formatter)
 
     if collections is not None:
@@ -316,38 +337,80 @@ def plot( data, **kwargs ):
             if ptype in VALID_PMOVE_TYPES:
                 mavprices = pd.Series(brick_values).rolling(mav).mean().values
             else:
-                mavprices = data['Close'].rolling(mav).mean().values
+                mavprices = pd.Series(closes).rolling(mav).mean().values
             if mavc:
                 ax1.plot(xdates, mavprices, color=next(mavc))
             else:
                 ax1.plot(xdates, mavprices)
 
-    if config['return_calculated_values'] is not None:
-        retdict = config['return_calculated_values']
-        if ptype == 'renko':
-            retdict['renko_bricks'] = brick_values
-            retdict['renko_dates'] = mdates.num2date(new_dates)
-            if config['volume']:
-                retdict['renko_volumes'] = volumes
-        if mavgs is not None:
-            for i in range(0, len(mavgs)):
-                retdict['mav' + str(mavgs[i])] = mavprices
-
     avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
     minx = xdates[0]  - avg_dist_between_points
     maxx = xdates[-1] + avg_dist_between_points
+    if len(xdates) == 1:  # kludge special case
+        minx = minx - 0.75
+        maxx = maxx + 0.75
     if ptype not in VALID_PMOVE_TYPES:
-        miny = min([low for low in lows if low != -1])
-        maxy = max([high for high in highs if high != -1])
+        _lows  = [low for low in lows if low != -1]
+        _highs = [high for high in highs if high != -1]
     else:
-        miny = min([brick for brick in brick_values])
-        maxy = max([brick+size for brick in brick_values])
+        _lows  = [brick for brick in brick_values]
+        _highs = [brick+size for brick in brick_values]
+
+    miny = min(_lows)
+    maxy = max(_highs)
+    if len(xdates) > 1:
+       stdy = (stat.stdev(_lows) + stat.stdev(_highs)) / 2.0
+    else:  # kludge special case
+       stdy = 0.02 * math.fabs(maxy - miny)
+    # print('minx,miny,maxx,maxy,stdy=',minx,miny,maxx,maxy,stdy)
 
     if config['set_ylim'] is not None:
         ax1.set_ylim(config['set_ylim'][0], config['set_ylim'][1])
     else:
        corners = (minx, miny), (maxx, maxy)
        ax1.update_datalim(corners)
+
+    if config['return_calculated_values'] is not None:
+        retdict = config['return_calculated_values']
+        if ptype in VALID_PMOVE_TYPES:
+            prekey = ptype
+            retdict[prekey+'_bricks'] = brick_values
+            retdict[prekey+'_dates'] = mdates.num2date(new_dates)
+            retdict[prekey+'_size'] = size
+            if config['volume']:
+                retdict[prekey+'_volumes'] = volumes
+        if mavgs is not None:
+            for i in range(0, len(mavgs)):
+                retdict['mav' + str(mavgs[i])] = mavprices
+        retdict['minx'] = minx
+        retdict['maxx'] = maxx
+        retdict['miny'] = miny
+        retdict['maxy'] = maxy
+
+    # Note: these are NOT mutually exclusive, so the order of this
+    #       if/elif is important: VALID_PMOVE_TYPES must be first.
+    if ptype in VALID_PMOVE_TYPES:
+        dtix = pd.DatetimeIndex([dt for dt in mdates.num2date(new_dates)])
+    elif not config['show_nontrading']:
+        dtix = data.index
+    else:
+        dtix = None
+
+    line_collections = []
+    line_collections.append(_construct_aline_collections(config['alines'], dtix))
+    line_collections.append(_construct_hline_collections(config['hlines'], minx, maxx))
+    line_collections.append(_construct_vline_collections(config['vlines'], dtix, miny, maxy))
+    tlines = config['tlines']
+    if isinstance(tlines,(list,tuple)) and all([isinstance(item,dict) for item in tlines]):
+        pass
+    else:
+        tlines = [tlines,]
+    for tline_item in tlines:
+        line_collections.append(_construct_tline_collections(tline_item, dtix, dates, opens, highs, lows, closes))
+     
+    for collection in line_collections:
+        if collection is not None:
+            ax1.add_collection(collection)
 
     if config['volume']:
         vup,vdown = style['marketcolors']['volume'].values()
@@ -443,6 +506,10 @@ def plot( data, **kwargs ):
                     size  = apdict['markersize']
                     mark  = apdict['marker']
                     color = apdict['color']
+                    # -------------------------------------------------------- #
+                    # This fixes Issue#77, but breaks other stuff:
+                    # ax.set_ylim(ymin=(miny - 0.4*stdy),ymax=(maxy + 0.4*stdy))
+                    # -------------------------------------------------------- #
                     ax.scatter(xdates, ydata, s=size, marker=mark, color=color)
                 else:
                     ls    = apdict['linestyle']

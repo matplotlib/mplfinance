@@ -1,29 +1,5 @@
-from packaging import version
 
-
-def compare_versions(v_str1, v_str2):
-    """
-    Compares two version strings.
-    
-    In:
-        v_str1: str, __version__ string
-        v_str2: str, __version__ string
-    
-    Returns:
-        '>' | '==' | '<', reads v_str1 (x) v_str2
-    """
-    
-    p_str1 = version.parse(v_str1)
-    p_str2 = version.parse(v_str2)
-    if p_str1 > p_str2:
-        return '>'
-    
-    if p_str1 == p_str2:
-        return '=='
-    
-    return '<'
-
-version_info = (0, 12, 3, 'alpha', 5)
+version_info = (0, 12, 4, 'alpha', 0)
 
 _specifier_ = {'alpha': 'a','beta': 'b','candidate': 'rc','final': ''}
 
