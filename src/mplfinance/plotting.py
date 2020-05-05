@@ -366,9 +366,9 @@ def plot( data, **kwargs ):
 
     if config['set_ylim'] is not None:
         ax1.set_ylim(config['set_ylim'][0], config['set_ylim'][1])
-    else:
-       corners = (minx, miny), (maxx, maxy)
-       ax1.update_datalim(corners)
+    #else:
+    #   corners = (minx, miny), (maxx, maxy)
+    #   ax1.update_datalim(corners)
 
     if config['return_calculated_values'] is not None:
         retdict = config['return_calculated_values']
