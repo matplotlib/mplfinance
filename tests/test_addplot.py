@@ -156,3 +156,74 @@ def test_addplot04(bolldata):
     if result is not None:
        print('result=',result)
     assert result is None
+
+def test_addplot05(bolldata):
+    df = bolldata
+
+    fname = base+'05.png'
+    tname = os.path.join(tdir,fname)
+    rname = os.path.join(refd,fname)
+
+    tcdf = df[['LowerB','UpperB']]  # DataFrame with two columns
+
+    low_signal  = percentB_belowzero(df['PercentB'], df['Close']) 
+    high_signal = percentB_aboveone(df['PercentB'], df['Close'])
+
+    import math
+    new_low_signal = [x*20.*math.sin(x) for x in low_signal]
+
+    apds = [ mpf.make_addplot(tcdf,linestyle='dashdot'),
+             mpf.make_addplot(new_low_signal,scatter=True,markersize=200,marker='^'),
+             mpf.make_addplot(high_signal,scatter=True,markersize=200,marker='v'),
+             mpf.make_addplot((df['PercentB']),panel='lower',color='g',linestyle='dotted')
+           ]
+
+    fig_axis = mpf.plot(df,addplot=apds,figscale=1.5,volume=True,
+                        style='sas',savefig=tname,returnfig=True)   
+    plt.close(fig_axis[0])
+
+    tsize = os.path.getsize(tname)
+    print(glob.glob(tname),'[',tsize,'bytes',']')
+
+    rsize = os.path.getsize(rname)
+    print(glob.glob(rname),'[',rsize,'bytes',']')
+
+    result = compare_images(rname,tname,tol=IMGCOMP_TOLERANCE)
+    if result is not None:
+       print('result=',result)
+    assert result is None
+
+def test_addplot06(bolldata):
+    df = bolldata
+
+    fname = base+'06.png'
+    tname = os.path.join(tdir,fname)
+    rname = os.path.join(refd,fname)
+
+    tcdf = df[['LowerB','UpperB']]  # DataFrame with two columns
+
+    low_signal  = percentB_belowzero(df['PercentB'], df['Close']) 
+    high_signal = percentB_aboveone(df['PercentB'], df['Close'])
+
+    import math
+    new_low_signal = [x*20.*math.sin(x) for x in low_signal]
+
+    apds = [ mpf.make_addplot(tcdf,linestyle='dashdot'),
+             mpf.make_addplot(new_low_signal,scatter=True,markersize=200,marker='^'),
+             mpf.make_addplot(high_signal,scatter=True,markersize=200,marker='v'),
+             mpf.make_addplot((df['PercentB']),panel='lower',color='g',linestyle='dotted')
+           ]
+
+    fig_axis = mpf.plot(df,addplot=apds,figscale=1.5,volume=True,
+                        style='default',savefig=tname,returnfig=True)   
+    plt.close(fig_axis[0])
+
+    tsize = os.path.getsize(tname)
+    print(glob.glob(tname),'[',tsize,'bytes',']')
+
+    rsize = os.path.getsize(rname)
+    print(glob.glob(rname),'[',rsize,'bytes',']')
+
+    result = compare_images(rname,tname,tol=IMGCOMP_TOLERANCE)
+    if result is not None:
+       print('result=',result)
