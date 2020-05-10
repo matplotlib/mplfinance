@@ -189,6 +189,12 @@ def _valid_plot_kwargs():
 
         'xrotation'                 : { 'Default'     : 45,
                                         'Validator'   : lambda value: isinstance(value,(int,float)) },
+
+        'axesoff'                   : { 'Default'     : False,
+                                        'Validator'   : lambda value: isinstance(value,bool) },
+
+        'axesoffdark'               : { 'Default'     : False,
+                                        'Validator'   : lambda value: isinstance(value,bool) },
     }
 
     _validate_vkwargs_dict(vkwargs)
@@ -245,7 +251,6 @@ def plot( data, **kwargs ):
 
 
     fmtstring = _determine_format_string( dates, config['datetime_format'] )
-
 
     ptype = config['type'] 
 
@@ -573,12 +578,18 @@ def plot( data, **kwargs ):
     if not used_axC2 and axC2 is not None:
         axC2.get_yaxis().set_visible(False)
 
-    if config['returnfig']:
-        axlist = [axA1, axA2]
-        if axB1: axlist.append(axB1)
-        if axB2: axlist.append(axB2)
-        if axC1: axlist.append(axC1)
-        if axC2: axlist.append(axC2)
+    axlist = [axA1, axA2]
+    if axB1: axlist.append(axB1)
+    if axB2: axlist.append(axB2)
+    if axC1: axlist.append(axC1)
+    if axC2: axlist.append(axC2)
+
+    if config['axesoffdark']: fig.patch.set_facecolor('black')
+    if config['axesoff']: fig.patch.set_visible(False)
+    if config['axesoffdark'] or config['axesoff']:
+        for ax in axlist:
+            ax.set_xlim(xdates[0],xdates[-1])
+            ax.set_axis_off()
 
     if config['savefig'] is not None:
         save = config['savefig']
