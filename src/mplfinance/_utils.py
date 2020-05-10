@@ -85,6 +85,27 @@ def roundTime(dt=None, roundTo=60):
    rounding = (seconds+roundTo/2) // roundTo * roundTo
    return dt + datetime.timedelta(0,rounding-seconds,-dt.microsecond)
 
+def _construct_mpf_collections(ptype,dates,xdates,opens,highs,lows,closes,volumes,config,style):
+    collections = None
+    if ptype == 'candle' or ptype == 'candlestick':
+        collections = _construct_candlestick_collections(xdates, opens, highs, lows, closes,
+                                                         marketcolors=style['marketcolors'] )
+    elif ptype == 'ohlc' or ptype == 'bars' or ptype == 'ohlc_bars':
+        collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes,
+                                                         marketcolors=style['marketcolors'] )
+    elif ptype == 'renko':
+        collections = _construct_renko_collections(
+            dates, highs, lows, volumes, config['renko_params'], closes, marketcolors=style['marketcolors'])
+
+    elif ptype == 'pnf':
+        collections = _construct_pointnfig_collections(
+            dates, highs, lows, volumes, config['pnf_params'], closes, marketcolors=style['marketcolors'])
+    else:
+        raise TypeError('Unknown ptype="',str(ptype),'"')
+     
+    return collections
+
+
 def _calculate_atr(atr_length, highs, lows, closes):
     """Calculate the average true range
     atr_length : time period to calculate over

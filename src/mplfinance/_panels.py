@@ -158,7 +158,7 @@ def _create_panel_axes( figure, ha, hb, hc, panel_order ):
 
     return axA1, axA2, axB1, axB2, axC1, axC2, actual_order
 
-def _adjust_ticklabels_per_bottom_panel(axA1,axB1,axC1,actual_order,hb,hc,formatter):
+def _adjust_ticklabels_per_bottom_panel(axA1,axB1,axC1,actual_order,hb,hc,formatter,rotation=45):
     """
     Determine which panel is on the bottom, then display ticklabels
     for the bottom panel Axes, and NOT for the other Axes.
@@ -169,7 +169,7 @@ def _adjust_ticklabels_per_bottom_panel(axA1,axB1,axC1,actual_order,hb,hc,format
 
     bottom_panel = actual_order[-1]
     if bottom_panel == 'A':
-        axA1.tick_params(axis='x', rotation=45)
+        axA1.tick_params(axis='x', rotation=rotation)
         if hb > 0:
             #plt.setp(axB1.get_xticklabels(), visible=False)
             #axB1.tick_params(axis='x', visible=False)
@@ -179,7 +179,7 @@ def _adjust_ticklabels_per_bottom_panel(axA1,axB1,axC1,actual_order,hb,hc,format
             #axC1.tick_params(axis='x', visible=False)
             axC1.tick_params(axis='x', labelbottom=False)
     elif bottom_panel == 'B':
-        axB1.tick_params(axis='x', rotation=45)
+        axB1.tick_params(axis='x', rotation=rotation)
         axB1.xaxis.set_major_formatter(formatter)
         #plt.setp(axA1.get_xticklabels(), visible=False)
         #axA1.tick_params(axis='x', visible=False)
@@ -189,7 +189,7 @@ def _adjust_ticklabels_per_bottom_panel(axA1,axB1,axC1,actual_order,hb,hc,format
             #axC1.tick_params(axis='x', visible=False)
             axC1.tick_params(axis='x', labelbottom=False)
     elif bottom_panel == 'C':
-        axC1.tick_params(axis='x', rotation=45)
+        axC1.tick_params(axis='x', rotation=rotation)
         axC1.xaxis.set_major_formatter(formatter)
         #plt.setp(axA1.get_xticklabels(), visible=False)
         #plt.setp(axB1.get_xticklabels(), visible=False)

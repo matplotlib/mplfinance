@@ -13,14 +13,15 @@ from itertools import cycle
 #from pandas.plotting import register_matplotlib_converters
 #register_matplotlib_converters()
 
-from mplfinance._utils import _construct_ohlc_collections
-from mplfinance._utils import _construct_candlestick_collections
-from mplfinance._utils import _construct_renko_collections
-from mplfinance._utils import _construct_pointnfig_collections
+#from mplfinance._utils import _construct_ohlc_collections
+#from mplfinance._utils import _construct_candlestick_collections
+#from mplfinance._utils import _construct_renko_collections
+#from mplfinance._utils import _construct_pointnfig_collections
 from mplfinance._utils import _construct_aline_collections
 from mplfinance._utils import _construct_hline_collections
 from mplfinance._utils import _construct_vline_collections
 from mplfinance._utils import _construct_tline_collections
+from mplfinance._utils import _construct_mpf_collections
 
 from mplfinance._utils import _updown_colors
 from mplfinance._utils import IntegerIndexDateTimeFormatter
@@ -186,7 +187,7 @@ def _valid_plot_kwargs():
         'datetime_format'           : { 'Default'     : None,
                                         'Validator'   : lambda value: isinstance(value,str) },
 
-        'x_rotation'                : { 'Default'     : None,
+        'xrotation'                 : { 'Default'     : 45,
                                         'Validator'   : lambda value: isinstance(value,(int,float)) },
     }
 
@@ -248,37 +249,22 @@ def plot( data, **kwargs ):
 
     ptype = config['type'] 
 
-    if ptype not in VALID_PMOVE_TYPES:
-        if config['show_nontrading']:
-            formatter = mdates.DateFormatter(fmtstring)
-            xdates = dates
-        else:
-            formatter = IntegerIndexDateTimeFormatter(dates, fmtstring)
-            xdates = np.arange(len(dates))
-        axA1.xaxis.set_major_formatter(formatter)
+    if config['show_nontrading']:
+        formatter = mdates.DateFormatter(fmtstring)
+        xdates = dates
+    else:
+        formatter = IntegerIndexDateTimeFormatter(dates, fmtstring)
+        xdates = np.arange(len(dates))
+    axA1.xaxis.set_major_formatter(formatter)
 
     collections = None
-    if ptype == 'candle' or ptype == 'candlestick':
-        collections = _construct_candlestick_collections(xdates, opens, highs, lows, closes,
-                                                         marketcolors=style['marketcolors'] )
-    elif ptype == 'ohlc' or ptype == 'bars' or ptype == 'ohlc_bars':
-        collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes,
-                                                         marketcolors=style['marketcolors'] )
-    elif ptype == 'renko':
-        collections, new_dates, volumes, brick_values, size = _construct_renko_collections(
-            dates, highs, lows, volumes, config['renko_params'], closes, marketcolors=style['marketcolors'])
-
-    elif ptype == 'pnf':
-        collections, new_dates, volumes, brick_values, size = _construct_pointnfig_collections(
-            dates, highs, lows, volumes, config['pnf_params'], closes, marketcolors=style['marketcolors'])
-
-    elif ptype == 'line':
+    if ptype == 'line':
         axA1.plot(xdates, closes, color=config['linecolor'])
-
     else:
-        raise ValueError('Unrecognized plot type = "'+ ptype + '"')
+        collections =_construct_mpf_collections(ptype,dates,xdates,opens,highs,lows,closes,volumes,config,style)
 
     if ptype in VALID_PMOVE_TYPES:
+        collections, new_dates, volumes, brick_values, size = collections
         formatter = IntegerIndexDateTimeFormatter(new_dates, fmtstring)
         xdates = np.arange(len(new_dates))
         axA1.xaxis.set_major_formatter(formatter)
@@ -395,7 +381,8 @@ def plot( data, **kwargs ):
             maxy = config['set_ylim_panelB'][1]
             axB1.set_ylim( miny, maxy )
 
-    _adjust_ticklabels_per_bottom_panel(axA1,axB1,axC1,actual_order,hb,hc,formatter)
+    xrotation = config['xrotation']
+    _adjust_ticklabels_per_bottom_panel(axA1,axB1,axC1,actual_order,hb,hc,formatter,xrotation)
 
     used_axA2 = False
     used_axB2 = False
