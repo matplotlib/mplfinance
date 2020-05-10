@@ -158,6 +158,10 @@ def _valid_plot_kwargs():
                                        'Validator': lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
                                                                   and all([isinstance(v,(int,float)) for v in value])},
  
+        'set_ylim_panelC'           : {'Default': None,
+                                       'Validator': lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
+                                                                  and all([isinstance(v,(int,float)) for v in value])},
+ 
         'hlines'                    : { 'Default'     : None, 
                                         'Validator'   : lambda value: _hlines_validator(value) },
  
@@ -172,7 +176,8 @@ def _valid_plot_kwargs():
        
         'panel_order'               : { 'Default'     : 'ABC', 
                                         'Validator'   : lambda value: isinstance(value,str) and len(value) == 3 and
-                                                                      'A' in value and 'B' in value and 'C' in value },
+                                                                     (('A' in value and 'B' in value and 'C' in value) or 
+                                                                      ('a' in value and 'b' in value and 'c' in value))},
 
         'panel_ratio'               : { 'Default'     : (5,2,2),
                                         'Validator'   : lambda value: isinstance(value,(tuple,list)) and len(value) == 3 and
@@ -477,7 +482,8 @@ def plot( data, **kwargs ):
                 if ax == axC2:
                     used_axC2 = True
 
-                if apdict['scatter']:
+                aptype = apdict['type']
+                if aptype == 'scatter':
                     size  = apdict['markersize']
                     mark  = apdict['marker']
                     color = apdict['color']
@@ -486,17 +492,27 @@ def plot( data, **kwargs ):
                     # ax.set_ylim(ymin=(miny - 0.4*stdy),ymax=(maxy + 0.4*stdy))
                     # -------------------------------------------------------- #
                     ax.scatter(xdates, ydata, s=size, marker=mark, color=color)
-                elif apdict['bar']:
-                    ax.bar(xdates, ydata)
-                else:
+                elif aptype == 'bar':
+                    width  = apdict['width']
+                    bottom = apdict['bottom']
+                    color  = apdict['color']
+                    ax.bar(xdates, ydata, width=width, bottom=bottom, color=color)
+                elif aptype == 'line':
                     ls    = apdict['linestyle']
                     color = apdict['color']
                     ax.plot(xdates, ydata, linestyle=ls, color=color)
+                else:
+                    raise ValueError('addplot type "'+str(aptype)+'" NOT yet supported.')
 
     if config['set_ylim_panelB'] is not None:
         miny = config['set_ylim_panelB'][0]
         maxy = config['set_ylim_panelB'][1]
         axB1.set_ylim( miny, maxy )
+
+    if config['set_ylim_panelC'] is not None:
+        miny = config['set_ylim_panelC'][0]
+        maxy = config['set_ylim_panelC'][1]
+        axC1.set_ylim( miny, maxy )
 
     # put the twinx() on the "other" side:
     if style['y_on_right']:
@@ -599,18 +615,18 @@ def plot( data, **kwargs ):
 
 def _valid_addplot_kwargs():
 
-    valid_linestyles = ['-','solid','--','dashed','-.','dashdot','.','dotted',None,' ','']
-
+    valid_linestyles = ('-','solid','--','dashed','-.','dashdot','.','dotted',None,' ','')
+    valid_types = ('line','scatter','bar','ohlc','candle')
 
     vkwargs = {
         'scatter'     : { 'Default'     : False,
                           'Validator'   : lambda value: isinstance(value,bool) },
 
-        'bar'         : { 'Default'     : False,
-                          'Validator'   : lambda value: isinstance(value,bool) },
+        'type'        : { 'Default'     : 'line',
+                          'Validator'   : lambda value: value in valid_types },
 
         'panel'       : { 'Default'     : 'A',   # new: use 'A' for 'main', 'B' for 'lower'
-                          'Validator'   : lambda value: value in ['A','B','C','main','lower'] },
+                          'Validator'   : lambda value: value in ('A','B','C','main','lower') },
 
         'marker'      : { 'Default'     : 'o',
                           'Validator'   : lambda value: _bypass_kwarg_validation(value)  },
@@ -623,6 +639,14 @@ def _valid_addplot_kwargs():
 
         'linestyle'   : { 'Default'     : None,
                           'Validator'   : lambda value: value in valid_linestyles },
+
+        'width'       : { 'Default'     : 0.8,
+                          'Validator'   : lambda value: isinstance(value,(int,float)) or
+                                                        all([isinstance(v,(int,float)) for v in value]) },
+
+        'bottom'      : { 'Default'     : 0,
+                          'Validator'   : lambda value: isinstance(value,(int,float)) or
+                                                        all([isinstance(v,(int,float)) for v in value]) },
 
         'secondary_y' : { 'Default'     : 'auto',
                           'Validator'   : lambda value: isinstance(value,bool) or value == 'auto' }
@@ -644,5 +668,9 @@ def make_addplot(data, **kwargs):
         raise TypeError('Wrong type for data, in make_addplot()')
 
     config = _process_kwargs(kwargs, _valid_addplot_kwargs())
+
+    # kwarg `type` replaces kwarg `scatter`
+    if config['scatter'] == True and config['type'] == 'line':
+        config['type'] = 'scatter'
 
     return dict( data=data, **config)

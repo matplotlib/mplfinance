@@ -97,6 +97,8 @@ def _create_panel_axes( figure, ha, hb, hc, panel_order ):
     mplfinance.plot() kwarg `panel_order`.
     """
 
+    panel_order = panel_order.upper()
+
     axB1 = None
     axB2 = None
     axC1 = None
