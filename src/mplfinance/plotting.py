@@ -85,8 +85,8 @@ def _valid_plot_kwargs():
                                                                    and len(value) == 5
                                                                    and all(isinstance(c, str) for c in value) },
         'type'                      : { 'Default'     : 'ohlc',
-                                        'Validator'   : lambda value: value in ['candle','candlestick','ohlc','bars','ohlc_bars',
-                                                                                'line','renko','pnf'] },
+                                        'Validator'   : lambda value: value in ('candle','candlestick','ohlc','ohlc_bars',
+                                                                                'line','renko','pnf') },
  
         'style'                     : { 'Default'     : 'default',
                                         'Validator'   : lambda value: value in _styles.available_styles() or isinstance(value,dict) },
@@ -493,6 +493,13 @@ def plot( data, **kwargs ):
                     ls    = apdict['linestyle']
                     color = apdict['color']
                     ax.plot(xdates, ydata, linestyle=ls, color=color)
+                #elif aptype == 'ohlc' or aptype == 'candle':
+                # This won't work as is, because here we are looping through one column at a time
+                # and mpf_collections needs ohlc columns:
+                #    collections =_construct_mpf_collections(aptype,dates,xdates,opens,highs,lows,closes,volumes,config,style)
+                #    if len(collections) == 1: collections = [collections]
+                #    for collection in collections:
+                #        ax.add_collection(collection)
                 else:
                     raise ValueError('addplot type "'+str(aptype)+'" NOT yet supported.')
 
@@ -614,7 +621,8 @@ def plot( data, **kwargs ):
 def _valid_addplot_kwargs():
 
     valid_linestyles = ('-','solid','--','dashed','-.','dashdot','.','dotted',None,' ','')
-    valid_types = ('line','scatter','bar','ohlc','candle')
+    #valid_types = ('line','scatter','bar','ohlc','candle')
+    valid_types = ('line','scatter','bar')
 
     vkwargs = {
         'scatter'     : { 'Default'     : False,
