@@ -227,3 +227,5 @@ def test_addplot06(bolldata):
     result = compare_images(rname,tname,tol=IMGCOMP_TOLERANCE)
     if result is not None:
        print('result=',result)
+    assert result is None
+
