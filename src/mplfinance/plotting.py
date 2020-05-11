@@ -318,14 +318,14 @@ def plot( data, **kwargs ):
         minx = minx - 0.75
         maxx = maxx + 0.75
     if ptype not in VALID_PMOVE_TYPES:
-        _lows  = [low for low in lows if low != -1]
-        _highs = [high for high in highs if high != -1]
+        _lows  = lows
+        _highs = highs
     else:
-        _lows  = [brick for brick in brick_values]
+        _lows  = brick_values
         _highs = [brick+size for brick in brick_values]
 
-    miny = min(_lows)
-    maxy = max(_highs)
+    miny = np.nanmin(_lows)
+    maxy = np.nanmax(_highs)
     #if len(xdates) > 1:
     #   stdy = (stat.stdev(_lows) + stat.stdev(_highs)) / 2.0
     #else:  # kludge special case
@@ -388,8 +388,8 @@ def plot( data, **kwargs ):
         #-- print('vcolors=',vcolors)
         width = 0.5*avg_dist_between_points
         volumeAxes.bar(xdates,volumes,width=width,color=vcolors)
-        miny = 0.3 * min(volumes)
-        maxy = 1.1 * max(volumes)
+        miny = 0.3 * np.nanmin(volumes)
+        maxy = 1.1 * np.nanmax(volumes)
         volumeAxes.set_ylim( miny, maxy )
 
     xrotation = config['xrotation']
@@ -404,16 +404,16 @@ def plot( data, **kwargs ):
         # If addplot['secondary_y'] == 'auto', then: If the addplot['data']
         # is out of the Order of Magnitude Range, then use secondary_y.
         # Calculate omrange for Main panel, and for Lower (volume) panel:
-        lo = math.log(max(math.fabs(min(lows)),1e-7),10) - 0.5
-        hi = math.log(max(math.fabs(max(highs)),1e-7),10) + 0.5
+        lo = math.log(max(math.fabs(np.nanmin(lows)),1e-7),10) - 0.5
+        hi = math.log(max(math.fabs(np.nanmax(highs)),1e-7),10) + 0.5
 
         # May 2020: Main panel is now called 'A', and Lower is called 'B'
         omrange = {'A' : {'lo':lo,'hi':hi},
                    'B' : None             ,
                    'C' : None             }
         if config['volume']:
-            lo = math.log(max(math.fabs(min(volumes)),1e-7),10) - 0.5
-            hi = math.log(max(math.fabs(max(volumes)),1e-7),10) + 0.5
+            lo = math.log(max(math.fabs(np.nanmin(volumes)),1e-7),10) - 0.5
+            hi = math.log(max(math.fabs(np.nanmax(volumes)),1e-7),10) + 0.5
             omrange.update(B={'lo':lo,'hi':hi})
 
         if isinstance(addplot,dict):
@@ -438,8 +438,8 @@ def plot( data, **kwargs ):
                 else:
                     ydata = column
                 yd = [y for y in ydata if not math.isnan(y)]
-                ymhi = math.log(max(math.fabs(max(yd)),1e-7),10)
-                ymlo = math.log(max(math.fabs(min(yd)),1e-7),10)
+                ymhi = math.log(max(math.fabs(np.nanmax(yd)),1e-7),10)
+                ymlo = math.log(max(math.fabs(np.nanmin(yd)),1e-7),10)
                 secondary_y = False
                 if apdict['secondary_y'] == 'auto':
                     if apdict['panel'] == 'lower' or apdict['panel'] == 'B':

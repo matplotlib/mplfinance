@@ -1091,7 +1091,13 @@ def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes
         This closed-form linear least squares algorithm was taken from:
         https://mmas.github.io/least-squares-fitting-numpy-scipy
         '''
-        s  = dfslice[tline_use].mean(axis=1)
+        si = dfslice[tline_use].mean(axis=1)
+        s  = si.dropna() 
+        if len(s) < 2:
+            err = 'NOT enough data for Least Squares'
+            if (len(si) > 2):
+                err += ', due to presence of NaNs'
+            raise ValueError(err)
         xs = mdates.date2num(s.index.to_pydatetime())
         ys = s.values
         a  = np.vstack([xs, np.ones(len(xs))]).T
