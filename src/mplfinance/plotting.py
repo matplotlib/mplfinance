@@ -195,6 +195,9 @@ def _valid_plot_kwargs():
 
         'axesoffdark'               : { 'Default'     : False,
                                         'Validator'   : lambda value: isinstance(value,bool) },
+
+        'closefig'                  : { 'Default'     : 'auto',
+                                        'Validator'   : lambda value: isinstance(value,bool) },
     }
 
     _validate_vkwargs_dict(vkwargs)
@@ -608,9 +611,12 @@ def plot( data, **kwargs ):
             plt.savefig(**save)
         else:
             plt.savefig(save)
+        if config['closefig']:
+            plt.close(fig)
     elif not config['returnfig']:
-        # https://stackoverflow.com/a/13361748/1639359 suggests plt.show(block=False)
-        plt.show(block=config['block'])
+        plt.show(block=config['block']) # https://stackoverflow.com/a/13361748/1639359 
+        if config['block']:
+            plt.close(fig)
     
     if config['returnfig']:
         return (fig, axlist)
