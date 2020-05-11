@@ -124,7 +124,7 @@ def _valid_plot_kwargs():
                                                                       and isinstance(value[0],(float,int))
                                                                       and isinstance(value[1],(float,int)) },
  
-        'linecolor'                 : { 'Default'     : 'k', # line color in line plot
+        'linecolor'                 : { 'Default'     : None, # line color in line plot
                                         'Validator'   : lambda value: mcolors.is_color_like(value) },
 
         'title'                     : { 'Default'     : None, # Plot Title
