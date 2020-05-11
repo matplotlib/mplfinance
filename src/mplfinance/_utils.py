@@ -18,15 +18,13 @@ from six.moves import zip
 
 from mplfinance._styles import _get_mpfstyle
 
-def _check_input(opens, closes, highs, lows, miss=-1):
+def _check_input(opens, closes, highs, lows):
     """Checks that *opens*, *highs*, *lows* and *closes* have the same length.
     NOTE: this code assumes if any value open, high, low, close is
     missing (*-1*) they all are missing
 
     Parameters
     ----------
-    ax : `Axes`
-        an Axes instance to plot to
     opens : sequence
         sequence of opening values
     highs : sequence
@@ -35,44 +33,34 @@ def _check_input(opens, closes, highs, lows, miss=-1):
         sequence of low values
     closes : sequence
         sequence of closing values
-    miss : int
-        identifier of the missing data
 
     Raises
     ------
     ValueError
         if the input sequences don't have the same length
+        if the input sequences don't have NaN is same locations
     """
-
-    def _missing(sequence, miss=-1):
-        """Returns the index in *sequence* of the missing data, identified by
-        *miss*
-
-        Parameters
-        ----------
-        sequence :
-            sequence to evaluate
-        miss :
-            identifier of the missing data
-
-        Returns
-        -------
-        where_miss: numpy.ndarray
-            indices of the missing data
-        """
-        return np.where(np.array(sequence) == miss)[0]
-
     same_length = len(opens) == len(highs) == len(lows) == len(closes)
-    _missopens = _missing(opens)
-    same_missing = ((_missopens == _missing(highs)).all() and
-                    (_missopens == _missing(lows)).all() and
-                    (_missopens == _missing(closes)).all())
+    if not same_length:
+        raise ValueError('O,H,L,C must have the same length!')
 
-    if not (same_length and same_missing):
-        msg = ("*opens*, *highs*, *lows* and *closes* must have the same"
-               " length. NOTE: this code assumes if any value open, high,"
-               " low, close is missing (*-1*) they all must be missing.")
-        raise ValueError(msg)
+    o = np.where(np.isnan(opens))[0]
+    h = np.where(np.isnan(highs))[0]
+    l = np.where(np.isnan(lows))[0]
+    c = np.where(np.isnan(closes))[0]
+
+    # First check that they have the same number of NaN:
+    same_numnans = len(o) == len(h) == len(l) == len(c)
+    if not same_numnans:
+        raise ValueError('O,H,L,C must have the same amount of missing data!')
+
+    same_missing = ((o == h).all() and
+                    (o == l).all()  and
+                    (o == c).all()
+                   )
+
+    if not same_missing:
+        raise ValueError('O,H,L,C must have the same missing data!')
 
 def roundTime(dt=None, roundTo=60):
    """Round a datetime object to any time lapse in seconds
@@ -368,8 +356,7 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=
     else:
         mktcolors = marketcolors['ohlc']
 
-    rangeSegments = [((dt, low), (dt, high)) for dt, low, high in
-                     zip(dates, lows, highs) if low != -1]
+    rangeSegments = [((dt, low), (dt, high)) for dt, low, high in zip(dates, lows, highs)]
 
     avg_dist_between_points = (dates[-1] - dates[0]) / float(len(dates))
 
@@ -377,12 +364,12 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=
 
     # the ticks will be from ticksize to 0 in points at the origin and
     # we'll translate these to the date, open location
-    openSegments = [((dt-ticksize, op), (dt, op)) for dt, op in zip(dates, opens) if op != -1]
+    openSegments = [((dt-ticksize, op), (dt, op)) for dt, op in zip(dates, opens)]
     
 
     # the ticks will be from 0 to ticksize in points at the origin and
     # we'll translate these to the date, close location
-    closeSegments = [((dt, close), (dt+ticksize, close)) for dt, close in zip(dates, closes) if close != -1]
+    closeSegments = [((dt, close), (dt+ticksize, close)) for dt, close in zip(dates, closes)]
 
     if mktcolors['up'] == mktcolors['down']:
         colors = mktcolors['up']
@@ -390,8 +377,7 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=
         colorup = mcolors.to_rgba(mktcolors['up'])
         colordown = mcolors.to_rgba(mktcolors['down'])
         colord = {True: colorup, False: colordown}
-        colors = [colord[open < close] for open, close in
-                  zip(opens, closes) if open != -1 and close != -1]
+        colors = [colord[open < close] for open, close in zip(opens, closes)]
 
     useAA = 0,    # use tuple here
     lw    = 0.5,  # use tuple here
@@ -459,16 +445,13 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
                  (date - delta, close),
                  (date + delta, close),
                  (date + delta, open))
-                for date, open, close in zip(dates, opens, closes)
-                if open != -1 and close != -1]
+                for date, open, close in zip(dates, opens, closes)]
 
     rangeSegLow   = [((date, low), (date, min(open,close)))
-                     for date, low, open, close in zip(dates, lows, opens, closes)
-                     if low != -1]
+                     for date, low, open, close in zip(dates, lows, opens, closes)]
     
     rangeSegHigh  = [((date, high), (date, max(open,close)))
-                     for date, high, open, close in zip(dates, highs, opens, closes)
-                     if high != -1]
+                     for date, high, open, close in zip(dates, highs, opens, closes)]
                       
     rangeSegments = rangeSegLow + rangeSegHigh
 
