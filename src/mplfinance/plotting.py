@@ -92,7 +92,7 @@ def _valid_plot_kwargs():
                                         'Validator'   : lambda value: value in _styles.available_styles() or isinstance(value,dict) },
  
         'volume'                    : { 'Default'     : False,
-                                        'Validator'   : lambda value: isinstance(value,bool) },
+                                        'Validator'   : lambda value: isinstance(value,bool) or value in ['B','C'] },
  
         'mav'                       : { 'Default'     : None,
                                         'Validator'   : _mav_validator },
@@ -242,6 +242,8 @@ def plot( data, **kwargs ):
     if config['volume'] and volumes is None:
         raise ValueError('Request for volume, but NO volume data.')
 
+    if config['volume']:
+        if config['volume'] not in ['B','C']: config['volume'] = 'B'
 
     ha,hb,hc = _determine_relative_panel_heights(config['addplot'],
                                                  config['volume'] ,
@@ -249,6 +251,12 @@ def plot( data, **kwargs ):
 
     axA1,axA2,axB1,axB2,axC1,axC2,actual_order = _create_panel_axes( fig, ha, hb, hc, config['panel_order'] )
 
+    if config['volume'] == 'B':
+        volumeAxes = axB1
+    elif config['volume'] == 'C':
+        volumeAxes = axC1
+    else:
+       volumeAxes = None
 
     fmtstring = _determine_format_string( dates, config['datetime_format'] )
 
@@ -376,15 +384,10 @@ def plot( data, **kwargs ):
         #-- print('len(vcolors),len(opens),len(closes)=',len(vcolors),len(opens),len(closes))
         #-- print('vcolors=',vcolors)
         width = 0.5*avg_dist_between_points
-        axB1.bar(xdates,volumes,width=width,color=vcolors)
-        if config['set_ylim_panelB'] is None:
-            miny = 0.3 * min(volumes)
-            maxy = 1.1 * max(volumes)
-            axB1.set_ylim( miny, maxy )
-        else:
-            miny = config['set_ylim_panelB'][0]
-            maxy = config['set_ylim_panelB'][1]
-            axB1.set_ylim( miny, maxy )
+        volumeAxes.bar(xdates,volumes,width=width,color=vcolors)
+        miny = 0.3 * min(volumes)
+        maxy = 1.1 * max(volumes)
+        volumeAxes.set_ylim( miny, maxy )
 
     xrotation = config['xrotation']
     _adjust_ticklabels_per_bottom_panel(axA1,axB1,axC1,actual_order,hb,hc,formatter,xrotation)
@@ -488,7 +491,8 @@ def plot( data, **kwargs ):
                     width  = apdict['width']
                     bottom = apdict['bottom']
                     color  = apdict['color']
-                    ax.bar(xdates, ydata, width=width, bottom=bottom, color=color)
+                    alpha  = apdict['alpha']
+                    ax.bar(xdates, ydata, width=width, bottom=bottom, color=color, alpha=alpha)
                 elif aptype == 'line':
                     ls    = apdict['linestyle']
                     color = apdict['color']
@@ -560,9 +564,9 @@ def plot( data, **kwargs ):
     axA1.set_ylabel(config['ylabel'])
 
     if config['volume']:
-        axB1.figure.canvas.draw()  # This is needed to calculate offset
-        offset = axB1.yaxis.get_major_formatter().get_offset()
-        axB1.yaxis.offsetText.set_visible(False)
+        volumeAxes.figure.canvas.draw()  # This is needed to calculate offset
+        offset = volumeAxes.yaxis.get_major_formatter().get_offset()
+        volumeAxes.yaxis.offsetText.set_visible(False)
         if len(offset) > 0:
             offset = (' x '+offset)
         if config['ylabel_lower'] is None:
@@ -571,7 +575,7 @@ def plot( data, **kwargs ):
             if len(offset) > 0:
                 offset = '\n'+offset
             vol_label = config['ylabel_lower'] + offset
-        axB1.set_ylabel(vol_label)
+        volumeAxes.set_ylabel(vol_label)
 
     if config['title'] is not None:
         fig.suptitle(config['title'],size='x-large',weight='semibold')
@@ -651,6 +655,9 @@ def _valid_addplot_kwargs():
                                                         all([isinstance(v,(int,float)) for v in value]) },
 
         'bottom'      : { 'Default'     : 0,
+                          'Validator'   : lambda value: isinstance(value,(int,float)) or
+                                                        all([isinstance(v,(int,float)) for v in value]) },
+        'alpha'       : { 'Default'     : 1,
                           'Validator'   : lambda value: isinstance(value,(int,float)) or
                                                         all([isinstance(v,(int,float)) for v in value]) },
 

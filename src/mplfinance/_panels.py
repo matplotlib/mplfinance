@@ -53,8 +53,8 @@ def _determine_relative_panel_heights( addplot, want_volume, panel_ratio ):
             elif panel == 'C':
                 panelC = True
 
-    if not panelB and want_volume:
-        panelB = True
+    if want_volume == 'B': panelB = True
+    if want_volume == 'C': panelC = True
 
     if panelC and not panelB:
         raise ValueError('addplot may not specify panel \'C\' without also using panel \'B\'')
