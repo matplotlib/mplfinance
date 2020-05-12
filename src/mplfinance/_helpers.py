@@ -3,6 +3,7 @@ Some helper functions for mplfinance.
 """
 
 import matplotlib.dates as mdates
+import numpy as np
 
 def _determine_format_string( dates, datetime_format=None ):
     """
@@ -35,3 +36,9 @@ def _list_of_dict(x):
     Return True if x is a list of dict's
     '''
     return isinstance(x,list) and all([isinstance(item,dict) for item in x])
+
+def _num_or_seq_of_num(value):
+    return ( isinstance(value,(int,float))  or
+             (isinstance(value,(list,tuple,np.ndarray)) and
+              all([isinstance(v,(int,float)) for v in value]))
+           )

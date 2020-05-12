@@ -41,6 +41,7 @@ from mplfinance._panels import _adjust_ticklabels_per_bottom_panel
 
 from mplfinance._helpers import _determine_format_string
 from mplfinance._helpers import _list_of_dict
+from mplfinance._helpers import _num_or_seq_of_num
 
 VALID_PMOVE_TYPES = ['renko', 'pnf']
 
@@ -198,6 +199,10 @@ def _valid_plot_kwargs():
 
         'closefig'                  : { 'Default'     : 'auto',
                                         'Validator'   : lambda value: isinstance(value,bool) },
+
+        'fill_between'              : { 'Default'     : None,
+                                        'Validator'   : lambda value: _num_or_seq_of_num(value) or 
+                                                                     (isinstance(value,dict) and 'y1' in value and _num_or_seq_of_num(value['y1'])) },
     }
 
     _validate_vkwargs_dict(vkwargs)
@@ -501,6 +506,23 @@ def plot( data, **kwargs ):
                 #        ax.add_collection(collection)
                 else:
                     raise ValueError('addplot type "'+str(aptype)+'" NOT yet supported.')
+
+
+    if config['fill_between'] is not None:
+        panel = 'A'
+        fb    = config['fill_between']
+        if isinstance(fb,dict):
+            if 'x' in fb:
+                raise ValueError('fill_between dict may not contain `x`')
+            if 'panel' in fb:
+                panel = fb['panel']
+                del fb['panel']
+        else:
+            fb = dict(y1=fb)
+        fb['x'] = xdates
+        ax = internalAxes[panel][0]
+        ax.fill_between(**fb)
+            
 
     if config['set_ylim_panelB'] is not None:
         miny = config['set_ylim_panelB'][0]
