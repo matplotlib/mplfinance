@@ -198,6 +198,10 @@ def _valid_plot_kwargs():
 
         'closefig'                  : { 'Default'     : 'auto',
                                         'Validator'   : lambda value: isinstance(value,bool) },
+
+        'yscale'                    : { 'Default'     : None,
+                                        'Validator'   : lambda value: isinstance(value,str) or 
+                                                                      (isinstance(value,dict) and 'yscale' in value) },
     }
 
     _validate_vkwargs_dict(vkwargs)
@@ -463,14 +467,19 @@ def plot( data, **kwargs ):
                     secondary_y = apdict['secondary_y']
                     #   print("apdict['secondary_y'] says secondary_y is",secondary_y)
 
-              
-                if apdict['panel'] == 'lower': apdict['panel'] = 'B'
-                ax = internalAxes[apdict['panel']]
-                ax = ax[1] if secondary_y else ax[0]
+                if apdict['panel'] == 'lower' or apdict['panel'] == 'B' :
+                    ax = axB2 if secondary_y else axB1
+                elif apdict['panel'] == 'C' :
+                    ax = axC2 if secondary_y else axC1
+                else:
+                    ax = axA2 if secondary_y else axA1
 
-                if ax == axA2: used_axA2 = True
-                if ax == axB2: used_axB2 = True
-                if ax == axC2: used_axC2 = True
+                if ax == axA2:
+                    used_axA2 = True
+                if ax == axB2:
+                    used_axB2 = True
+                if ax == axC2:
+                    used_axC2 = True
 
                 aptype = apdict['type']
                 if aptype == 'scatter':
@@ -511,6 +520,21 @@ def plot( data, **kwargs ):
         miny = config['set_ylim_panelC'][0]
         maxy = config['set_ylim_panelC'][1]
         axC1.set_ylim( miny, maxy )
+
+    if config['yscale'] is not None:
+        yscale = config['yscale']
+        panel  = 'A'
+        kwargs = None
+        if isinstance(yscale,dict):
+            if 'panel'  in yscale: panel  = yscale['panel'] 
+            if 'kwargs' in yscale: kwargs = yscale['kwargs'] 
+            yscale = yscale['yscale']
+        ax = internalAxes[panel][0]
+        if kwargs is not None:
+            ax.set_yscale(yscale,**kwargs)
+        else:
+            ax.set_yscale(yscale)
+
 
     # put the twinx() on the "other" side:
     if style['y_on_right']:
