@@ -32,8 +32,7 @@ def test_addplot01(bolldata):
     tname = os.path.join(tdir,fname)
     rname = os.path.join(refd,fname)
 
-    fig_axis = mpf.plot(df,volume=True,savefig=tname,returnfig=True)
-    plt.close(fig_axis[0])
+    mpf.plot(df,volume=True,savefig=tname)
 
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')
@@ -54,8 +53,7 @@ def test_addplot02(bolldata):
     rname = os.path.join(refd,fname)
 
     apdict = mpf.make_addplot(df['LowerB'])
-    fig_axis = mpf.plot(df,volume=True,addplot=apdict,savefig=tname,returnfig=True)
-    plt.close(fig_axis[0])
+    mpf.plot(df,volume=True,addplot=apdict,savefig=tname)
 
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')
@@ -110,8 +108,7 @@ def test_addplot03(bolldata):
              mpf.make_addplot((df['PercentB']),panel='lower',color='g')
            ]
 
-    fig_axis = mpf.plot(df,addplot=apds,figscale=1.3,volume=True,savefig=tname,returnfig=True)
-    plt.close(fig_axis[0])
+    mpf.plot(df,addplot=apds,figscale=1.3,volume=True,savefig=tname)
 
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')
@@ -142,9 +139,8 @@ def test_addplot04(bolldata):
              mpf.make_addplot((df['PercentB']),panel='lower',color='g',linestyle='dotted')
            ]
 
-    fig_axis = mpf.plot(df,addplot=apds,figscale=1.5,volume=True,
-             style='starsandstripes',savefig=tname,returnfig=True)
-    plt.close(fig_axis[0])
+    mpf.plot(df,addplot=apds,figscale=1.5,volume=True,
+             style='starsandstripes',savefig=tname)
 
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')
@@ -178,9 +174,8 @@ def test_addplot05(bolldata):
              mpf.make_addplot((df['PercentB']),panel='lower',color='g',linestyle='dotted')
            ]
 
-    fig_axis = mpf.plot(df,addplot=apds,figscale=1.5,volume=True,
-                        style='sas',savefig=tname,returnfig=True)   
-    plt.close(fig_axis[0])
+    mpf.plot(df,addplot=apds,figscale=1.5,volume=True,
+                        style='sas',savefig=tname)   
 
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')
@@ -214,9 +209,8 @@ def test_addplot06(bolldata):
              mpf.make_addplot((df['PercentB']),panel='lower',color='g',linestyle='dotted')
            ]
 
-    fig_axis = mpf.plot(df,addplot=apds,figscale=1.5,volume=True,
-                        style='default',savefig=tname,returnfig=True)   
-    plt.close(fig_axis[0])
+    mpf.plot(df,addplot=apds,figscale=1.5,volume=True,
+                        style='default',savefig=tname)   
 
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')

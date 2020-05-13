@@ -209,8 +209,7 @@ def _valid_plot_kwargs():
 
     return vkwargs
 
-
-@with_rc_context
+###@with_rc_context
 def plot( data, **kwargs ):
     """
     Given a Pandas DataFrame containing columns Open,High,Low,Close and optionally Volume
@@ -625,14 +624,15 @@ def plot( data, **kwargs ):
             plt.savefig(**save)
         else:
             plt.savefig(save)
-        if config['closefig']:
+        if config['closefig']: # True or 'auto'
             plt.close(fig)
     elif not config['returnfig']:
         plt.show(block=config['block']) # https://stackoverflow.com/a/13361748/1639359 
-        if config['block']:
+        if config['closefig'] == True or (config['block'] and config['closefig']):
             plt.close(fig)
     
     if config['returnfig']:
+        if config['closefig'] == True: plt.close(fig)
         return (fig, axlist)
 
     # rcp   = copy.deepcopy(plt.rcParams)
