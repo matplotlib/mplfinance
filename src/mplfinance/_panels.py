@@ -1,5 +1,120 @@
-def _list_of_dict(x):
-    return isinstance(x,list) and all([isinstance(item,dict) for item in x])
+from mplfinance._helpers import _list_of_dict
+import pandas as pd
+
+def _build_panels( figure, num_panels='infer', addplot=None, volume_panel=None, main_panel=0, panel_ratios=None ):
+    """
+    Create and return a DataFrame containing panel information
+    and Axes objects for each panel, etc.
+
+    We allow up to 10 panels, identified by their panel id (panid)
+    which is an integer 0 through 9.  
+
+    Parameters
+    ----------
+    figure       : pyplot.Figure
+        figure on which to create the Axes for the panels
+
+    num_panels   : integer (0-9) or the string 'infer'
+        number of panels to create
+
+    addplot      : dict
+        value for the `addplot=` kwarg passed into `mplfinance.plot()`
+
+    volume_panel : integer (0-9) 
+        panel id (0-number_of_panels)
+
+    main_panel   : integer (0-9) 
+        panel id (0-number_of_panels)
+
+    panel_ratios : sequence
+        sequence of relative sizes for the panels;
+
+        NOTE: If len(panel_ratios) == number of panels (regardless
+        of whether number of panels was specified or inferred),
+        then panel ratios are the relative sizes of each panel,
+        in panel id order, 0 through N (where N = number of panels).
+
+        If len(panel_ratios) != number of panels, then len(panel_ratios)
+        must equal 2, and panel_ratios[0] is the relative size for the 'main'
+        panel, and panel_ratios[1] is the relative size for all other panels.
+
+        If the number of panels == 1, the panel_ratios is ignored.
+
+    
+Returns
+    ----------
+    panels  : pandas.DataFrame
+        dataframe indexed by panel id (panid) and having the following columns:
+          axes           : tuple of matplotlib.Axes (primary and secondary) for each column.
+          used secondary : bool indicating whether or not the seconday Axes is in use.
+          relative size  : height of panel as proportion of sum of all relative sizes
+
+    """
+
+    def _valid_panel_id(panid):
+        return isinstance(panid,int) and panid >= 0 and panid < 10
+
+    if num_panels is None or num_panels == 'infer':
+        pset = {0} # start with a set including only panel zero
+        if addplot is not None:
+            if isinstance(addplot,dict):
+                addplot = [addplot,]   # make list of dict to be consistent
+            elif not _list_of_dict(addplot):
+                raise TypeError('addplot must be `dict`, or `list of dict`, NOT '+str(type(addplot)))
+
+            for apdict in addplot:
+                panel = apdict['panel']
+                if panel == 'lower': panel = 1
+                if not _valid_panel_id(panel):
+                    raise ValueError('addplot panel must be integer 0 to 9, but is "'+str(panel)+'"')
+                pset.add(panel)
+
+        if volume_panel is not None:
+            if not _valid_panel_id(volume_panel):
+                raise ValueError('volume_panel must be integer 0 to 9, but is "'+str(volume_panel)+'"')
+            pset.add(volume_panel)
+
+        pset = sorted(pset)
+        missing = [m for m in range(len(pset)) if m not in pset]
+        if len(missing) != 0:
+            raise ValueError('inferred panel list is missing panels: '+str(missing))
+
+    else:
+        if not isinstance(num_panels,int) or num_panels < 1 or num_panels > 10:
+            raise ValueError('num_panels must be integer 1 to 10, but is "'+str(volume_panel)+'"')
+        pset = range(0,10)
+
+    _nones = [None]*len(pset)
+    panels = pd.DataFrame(dict(ax=_nones,used_sec=_nones,height=_nones,relsize=_nones),index=pset)
+    panels.index.name = 'panid'
+
+    if not _valid_panel_id(main_panel):
+        raise ValueError('main_panel id must be integer 0 to 9, but is '+str(main_panel))
+
+    # Now determine the height for each panel:
+    # ( figure, num_panels='infer', addplot=None, volume_panel=None, main_panel=0, panel_ratios=None ):
+
+    if panel_ratios is not None:
+        if not isinstance(panel_ratios,(list,tuple)):
+            raise TypeError('panel_ratios must be a list or tuple')
+        if len(panel_ratios) != len(panels) and not (len(panel_ratios)==2 and len(panels) > 2):
+            raise ValueError('panel_ratios must be 2, or must be same length as number of panels')
+        if len(panel_ratios) == 2 and len(panels) > 2:
+            pratios = [panel_ratios[1]]*len(panels)
+            pratios = [main_panel] = panel_ratios[0]
+        else:
+            pratios = panel_ratios
+    else:
+        pratios = [2]*len(panels)
+        pratios[main_panel] = 5
+        
+    psum = sum(pratios)
+    for panid,size in enumerate(pratios):
+        panels.loc[panid,'height'] = 0.7 * size / psum
+
+    return panels
+    
+
 
 def _determine_relative_panel_heights( addplot, want_volume, panel_ratio ):
     """
