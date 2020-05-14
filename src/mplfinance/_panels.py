@@ -62,9 +62,12 @@ Returns
             elif not _list_of_dict(addplot):
                 raise TypeError('addplot must be `dict`, or `list of dict`, NOT '+str(type(addplot)))
 
+            backwards_panel_compatibility = {'main':0,'lower':1,'A':0,'B':1,'C':2}
+
             for apdict in addplot:
                 panel = apdict['panel']
-                if panel == 'lower': panel = 1
+                if panel in backwards_panel_compatibility:
+                    panel = backwards_panel_compatibility[panel]
                 if not _valid_panel_id(panel):
                     raise ValueError('addplot panel must be integer 0 to 9, but is "'+str(panel)+'"')
                 pset.add(panel)
@@ -82,10 +85,17 @@ Returns
     else:
         if not isinstance(num_panels,int) or num_panels < 1 or num_panels > 10:
             raise ValueError('num_panels must be integer 1 to 10, but is "'+str(volume_panel)+'"')
-        pset = range(0,10)
+        pset = range(0,num_panels)
 
     _nones = [None]*len(pset)
-    panels = pd.DataFrame(dict(ax=_nones,used_sec=_nones,height=_nones,relsize=_nones),index=pset)
+    panels = pd.DataFrame(dict(axes=_nones,
+                               relsize=_nones,
+                               lift=_nones,
+                               height=_nones,
+                               secax_inuse=_nones,
+                               title=_nones,
+                               ylabel=_nones),
+                          index=pset)
     panels.index.name = 'panid'
 
     if not _valid_panel_id(main_panel):
@@ -98,19 +108,44 @@ Returns
         if not isinstance(panel_ratios,(list,tuple)):
             raise TypeError('panel_ratios must be a list or tuple')
         if len(panel_ratios) != len(panels) and not (len(panel_ratios)==2 and len(panels) > 2):
-            raise ValueError('panel_ratios must be 2, or must be same length as number of panels')
+            err  = 'len(panel_ratios) must be 2, or must be same as number of panels'
+            err += '\nlen(panel_ratios)='+str(len(panel_ratios))+'  num panels='+str(len(panels))
+            raise ValueError(err)
         if len(panel_ratios) == 2 and len(panels) > 2:
             pratios = [panel_ratios[1]]*len(panels)
-            pratios = [main_panel] = panel_ratios[0]
+            pratios[main_panel] = panel_ratios[0]
         else:
             pratios = panel_ratios
     else:
         pratios = [2]*len(panels)
         pratios[main_panel] = 5
+
+    panels['relsize'] = pratios
+    #print('len(panels)=',len(panels))
+    #print('len(pratios)=',len(pratios))
+
+    #print('pratios=')
+    #print(pratios)
+
+    #print('panels=')
+    #print(panels)
         
     psum = sum(pratios)
     for panid,size in enumerate(pratios):
-        panels.loc[panid,'height'] = 0.7 * size / psum
+        panels.at[panid,'height'] = 0.7 * size / psum
+
+    # Now create the Axes:
+
+    for panid,row in panels.iterrows():
+        height = row.height
+        lift   = panels['height'].loc[panid+1:].sum()
+        panels.at[panid,'lift'] = lift
+        ax0 = figure.add_axes( [0.15, 0.18+lift, 0.70, height] )
+        ax1 = ax0.twinx()
+        ax1.grid(False)
+        if panid == volume_panel:
+            ax0.set_axisbelow(True) # so grid does not show through volume bars.
+        panels.at[panid,'axes'] = (ax0,ax1)
 
     return panels
     
