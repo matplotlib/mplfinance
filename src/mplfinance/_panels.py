@@ -61,6 +61,7 @@ Returns
 
     num_panels   = config['num_panels']
     addplot      = config['addplot']
+    volume       = config['volume']
     volume_panel = config['volume_panel']
     num_panels   = config['num_panels']
     main_panel   = config['main_panel']
@@ -84,7 +85,7 @@ Returns
                     raise ValueError('addplot panel must be integer 0 to 9, but is "'+str(panel)+'"')
                 pset.add(panel)
 
-        if volume_panel is not None:
+        if volume is True:
             if not _valid_panel_id(volume_panel):
                 raise ValueError('volume_panel must be integer 0 to 9, but is "'+str(volume_panel)+'"')
             pset.add(volume_panel)
@@ -152,7 +153,10 @@ Returns
         height = row.height
         lift   = panels['height'].loc[panid+1:].sum()
         panels.at[panid,'lift'] = lift
-        ax0 = figure.add_axes( [0.15, 0.18+lift, 0.70, height] )
+        if panid == 0:
+            ax0 = figure.add_axes( [0.15, 0.18+lift, 0.70, height] )
+        else:
+            ax0 = figure.add_axes( [0.15, 0.18+lift, 0.70, height], sharex=panels.at[0,'axes'][0] )
         ax1 = ax0.twinx()
         ax1.grid(False)
         if panid == volume_panel:

@@ -13,15 +13,13 @@ from itertools import cycle
 #from pandas.plotting import register_matplotlib_converters
 #register_matplotlib_converters()
 
-#from mplfinance._utils import _construct_ohlc_collections
-#from mplfinance._utils import _construct_candlestick_collections
-#from mplfinance._utils import _construct_renko_collections
-#from mplfinance._utils import _construct_pointnfig_collections
 from mplfinance._utils import _construct_aline_collections
 from mplfinance._utils import _construct_hline_collections
 from mplfinance._utils import _construct_vline_collections
 from mplfinance._utils import _construct_tline_collections
 from mplfinance._utils import _construct_mpf_collections
+
+from mplfinance._widths import _determine_widths_config
 
 from mplfinance._utils import _updown_colors
 from mplfinance._utils import IntegerIndexDateTimeFormatter
@@ -34,9 +32,6 @@ from mplfinance._arg_validators import _kwarg_not_implemented, _bypass_kwarg_val
 from mplfinance._arg_validators import _hlines_validator, _vlines_validator
 from mplfinance._arg_validators import _alines_validator, _tlines_validator
 
-from mplfinance._panels import _determine_relative_panel_heights
-from mplfinance._panels import _create_panel_axes
-from mplfinance._panels import _adjust_ticklabels_per_bottom_panel
 from mplfinance._panels import _build_panels
 from mplfinance._panels import _set_ticks_on_bottom_panel_only
 
@@ -44,6 +39,7 @@ from mplfinance._helpers import _determine_format_string
 from mplfinance._helpers import _list_of_dict
 from mplfinance._helpers import _num_or_seq_of_num
 from mplfinance._helpers import _valid_panel_id
+from mplfinance._helpers import _adjust_color_brightness
 
 VALID_PMOVE_TYPES = ['renko', 'pnf']
 
@@ -209,6 +205,24 @@ def _valid_plot_kwargs():
         'fill_between'              : { 'Default'     : None,
                                         'Validator'   : lambda value: _num_or_seq_of_num(value) or 
                                                                      (isinstance(value,dict) and 'y1' in value and _num_or_seq_of_num(value['y1'])) },
+
+        'ohlc_ticksize'             : { 'Default'     : None,
+                                        'Validator'   : lambda value: isinstance(value,(float,int)) },
+
+        'ohlc_linewidth'            : { 'Default'     : None,
+                                        'Validator'   : lambda value: isinstance(value,(float,int)) },
+
+        'vol_width'                 : { 'Default'     : None,
+                                        'Validator'   : lambda value: isinstance(value,(float,int)) },
+
+        'vol_linewidth'             : { 'Default'     : None,
+                                        'Validator'   : lambda value: isinstance(value,(float,int)) },
+
+        'candle_width'              : { 'Default'     : None,
+                                        'Validator'   : lambda value: isinstance(value,(float,int)) },
+
+        'candle_linewidth'          : { 'Default'     : None,
+                                        'Validator'   : lambda value: isinstance(value,(float,int)) },
     }
 
     _validate_vkwargs_dict(vkwargs)
@@ -255,12 +269,9 @@ def plot( data, **kwargs ):
     if config['volume'] and volumes is None:
         raise ValueError('Request for volume, but NO volume data.')
 
-    if config['volume']:
-        if config['volume'] not in ['B','C']: config['volume'] = 'B'
-
     panels = _build_panels(fig, config)
 
-    volumeAxes = panels.at[config['volume_panel'],'axes'][0]
+    volumeAxes = panels.at[config['volume_panel'],'axes'][0] if config['volume'] is True else None
 
     fmtstring = _determine_format_string( dates, config['datetime_format'] )
 
@@ -275,6 +286,9 @@ def plot( data, **kwargs ):
 
     axA1 = panels.at[config['main_panel'],'axes'][0]
 
+    # Will have to handle widths config separately for PMOVE types ??
+    config['_widths_config'] = _determine_widths_config(xdates, config)
+
     collections = None
     if ptype == 'line':
         axA1.plot(xdates, closes, color=config['linecolor'])
@@ -285,6 +299,7 @@ def plot( data, **kwargs ):
         collections, new_dates, volumes, brick_values, size = collections
         formatter = IntegerIndexDateTimeFormatter(new_dates, fmtstring)
         xdates = np.arange(len(new_dates))
+
 
     if collections is not None:
         for collection in collections:
@@ -301,6 +316,9 @@ def plot( data, **kwargs ):
             mavc = cycle(style['mavcolors'])
         else:
             mavc = None
+
+        # Get rcParams['lines.linewidth'] and scale it
+        # according to the deinsity of data??
             
         for mav in mavgs:
             if ptype in VALID_PMOVE_TYPES:
@@ -313,6 +331,10 @@ def plot( data, **kwargs ):
                 axA1.plot(xdates, mavprices)
 
     avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
+    print('plot: xdates[-1]=',xdates[-1])
+    print('plot: xdates[ 0]=',xdates[ 0])
+    print('plot: len(xdates)=',len(xdates))
+    print('plot: avg_dist_between_points =',avg_dist_between_points)
     minx = xdates[0]  - avg_dist_between_points
     maxx = xdates[-1] + avg_dist_between_points
     if len(xdates) == 1:  # kludge special case
@@ -381,14 +403,23 @@ def plot( data, **kwargs ):
         if collection is not None:
             axA1.add_collection(collection)
 
+    datalen = len(xdates)
     if config['volume']:
         vup,vdown = style['marketcolors']['volume'].values()
         #-- print('vup,vdown=',vup,vdown)
         vcolors = _updown_colors(vup, vdown, opens, closes, use_prev_close=style['marketcolors']['vcdopcod'])
         #-- print('len(vcolors),len(opens),len(closes)=',len(vcolors),len(opens),len(closes))
         #-- print('vcolors=',vcolors)
-        width = 0.5*avg_dist_between_points
-        volumeAxes.bar(xdates,volumes,width=width,color=vcolors)
+
+        w  = config['_widths_config']['volume_width']
+        lw = config['_widths_config']['volume_linewidth']
+        print('volume: width=',w)
+        print('volume: linewidth=',lw)
+
+        if not isinstance(vcolors,(list,tuple)):
+            print('vcolors=',vcolors)
+        adjc =  _adjust_color_brightness(vcolors,0.90)
+        volumeAxes.bar(xdates,volumes,width=w,linewidth=lw,color=vcolors,ec=adjc)
         miny = 0.3 * np.nanmin(volumes)
         maxy = 1.1 * np.nanmax(volumes)
         volumeAxes.set_ylim( miny, maxy )
@@ -453,13 +484,13 @@ def plot( data, **kwargs ):
                         panels.at[p] = {'lo':ymlo,'hi':ymhi}
                     elif ymlo < panels.at[p]['lo'] or ymhi > panels.at[p]['hi']:
                         secondary_y = True
-                    if secondary_y:
-                        print('auto says USE secondary_y ... for panel',panid)
-                    else:
-                        print('auto says do NOT use secondary_y ... for panel',panid)
+                    #if secondary_y:
+                    #    print('auto says USE secondary_y ... for panel',panid)
+                    #else:
+                    #    print('auto says do NOT use secondary_y ... for panel',panid)
                 else:
                     secondary_y = apdict['secondary_y']
-                    print("apdict['secondary_y'] says secondary_y is",secondary_y)
+                    #print("apdict['secondary_y'] says secondary_y is",secondary_y)
 
                 if secondary_y:
                     ax = panels.at[panid,'axes'][1] 

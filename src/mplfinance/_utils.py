@@ -1,6 +1,5 @@
 """
 A collection of utilities for analyzing and plotting financial data.
-
 """
 
 import numpy  as np
@@ -8,15 +7,15 @@ import pandas as pd
 import matplotlib.dates as mdates
 import datetime
 
-from matplotlib import colors as mcolors
-from matplotlib.patches import Ellipse
+from matplotlib             import colors as mcolors
+from matplotlib.patches     import Ellipse
 from matplotlib.collections import LineCollection, PolyCollection, PatchCollection
+
 from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 from mplfinance._arg_validators import _alines_validator, _bypass_kwarg_validation
+from mplfinance._styles         import _get_mpfstyle
 
 from six.moves import zip
-
-from mplfinance._styles import _get_mpfstyle
 
 def _check_input(opens, closes, highs, lows):
     """Checks that *opens*, *highs*, *lows* and *closes* have the same length.
@@ -55,7 +54,7 @@ def _check_input(opens, closes, highs, lows):
         raise ValueError('O,H,L,C must have the same amount of missing data!')
 
     same_missing = ((o == h).all() and
-                    (o == l).all()  and
+                    (o == l).all() and
                     (o == c).all()
                    )
 
@@ -77,10 +76,10 @@ def _construct_mpf_collections(ptype,dates,xdates,opens,highs,lows,closes,volume
     collections = None
     if ptype == 'candle' or ptype == 'candlestick':
         collections = _construct_candlestick_collections(xdates, opens, highs, lows, closes,
-                                                         marketcolors=style['marketcolors'] )
+                                                         marketcolors=style['marketcolors'],config=config )
     elif ptype == 'ohlc' or ptype == 'bars' or ptype == 'ohlc_bars':
         collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes,
-                                                         marketcolors=style['marketcolors'] )
+                                                  marketcolors=style['marketcolors'],config=config )
     elif ptype == 'renko':
         collections = _construct_renko_collections(
             dates, highs, lows, volumes, config['renko_params'], closes, marketcolors=style['marketcolors'])
@@ -321,8 +320,7 @@ def _valid_lines_kwargs():
     return vkwargs
 
 
-
-def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=None):
+def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=None, config=None):
     """Represent the time, open, high, low, close as a vertical line
     ranging from low to high.  The left tick is the open and the right
     tick is the close.
@@ -358,14 +356,17 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=
 
     rangeSegments = [((dt, low), (dt, high)) for dt, low, high in zip(dates, lows, highs)]
 
-    avg_dist_between_points = (dates[-1] - dates[0]) / float(len(dates))
+    datalen = len(dates)
 
-    ticksize = avg_dist_between_points / 2.5
+    avg_dist_between_points = (dates[-1] - dates[0]) / float(datalen)
+    print('ohlc: avg_dist_between_points =',avg_dist_between_points)
+
+    ticksize = config['_widths_config']['ohlc_ticksize']
+    print('ohlc: ticksize =',ticksize)
 
     # the ticks will be from ticksize to 0 in points at the origin and
     # we'll translate these to the date, open location
     openSegments = [((dt-ticksize, op), (dt, op)) for dt, op in zip(dates, opens)]
-    
 
     # the ticks will be from 0 to ticksize in points at the origin and
     # we'll translate these to the date, close location
@@ -379,31 +380,28 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=
         colord = {True: colorup, False: colordown}
         colors = [colord[open < close] for open, close in zip(opens, closes)]
 
-    useAA = 0,    # use tuple here
-    lw    = 0.5,  # use tuple here
-    lw = None
+    lw = config['_widths_config']['ohlc_linewidth']
+    print('ohlc: linewidth =',ticksize)
+
     rangeCollection = LineCollection(rangeSegments,
                                      colors=colors,
                                      linewidths=lw,
-                                     antialiaseds=useAA
                                      )
 
     openCollection = LineCollection(openSegments,
                                     colors=colors,
                                     linewidths=lw,
-                                    antialiaseds=useAA
                                     )
 
     closeCollection = LineCollection(closeSegments,
                                      colors=colors,
-                                     antialiaseds=useAA,
                                      linewidths=lw
                                      )
 
     return [rangeCollection, openCollection, closeCollection]
 
 
-def _construct_candlestick_collections(dates, opens, highs, lows, closes, marketcolors=None):
+def _construct_candlestick_collections(dates, opens, highs, lows, closes, marketcolors=None, config=None):
     """Represent the open, close as a bar line and high low range as a
     vertical line.
 
@@ -437,9 +435,13 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
         marketcolors = _get_mpfstyle('classic')['marketcolors']
         #print('default market colors:',marketcolors)
 
-    avg_dist_between_points = (dates[-1] - dates[0]) / float(len(dates))
+    datalen = len(dates)
 
-    delta = avg_dist_between_points / 4.0
+    avg_dist_between_points = (dates[-1] - dates[0]) / float(datalen)
+    print('candle: avg_dist_between_points =',avg_dist_between_points)
+
+    delta = config['_widths_config']['candle_width'] / 2.0
+    print('candle: width =',2*delta)
 
     barVerts = [((date - delta, open),
                  (date - delta, close),
@@ -469,19 +471,17 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
     dc     = mcolors.to_rgba(marketcolors['wick']['down'], 1.0)
     wickcolor = _updown_colors(uc, dc, opens, closes)
 
-    useAA = 0,    # use tuple here
-    lw    = 0.5,  # use tuple here
-    lw = None
+    lw = config['_widths_config']['candle_linewidth']
+    print('candle: linewidth =',lw)
+
     rangeCollection = LineCollection(rangeSegments,
                                      colors=wickcolor,
                                      linewidths=lw,
-                                     antialiaseds=useAA
                                      )
 
     barCollection = PolyCollection(barVerts,
                                    facecolors=colors,
                                    edgecolors=edgecolor,
-                                   antialiaseds=useAA,
                                    linewidths=lw
                                    )
 
