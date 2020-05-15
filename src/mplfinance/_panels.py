@@ -1,7 +1,8 @@
 from mplfinance._helpers import _list_of_dict
+from mplfinance._helpers import _valid_panel_id
 import pandas as pd
 
-def _build_panels( figure, num_panels='infer', addplot=None, volume_panel=None, main_panel=0, panel_ratios=None ):
+def _build_panels( figure, config ):
     """
     Create and return a DataFrame containing panel information
     and Axes objects for each panel, etc.
@@ -14,19 +15,26 @@ def _build_panels( figure, num_panels='infer', addplot=None, volume_panel=None, 
     figure       : pyplot.Figure
         figure on which to create the Axes for the panels
 
-    num_panels   : integer (0-9) or the string 'infer'
+    config       : dict
+        config dict from `mplfinance.plot()`
+        
+    Config
+    ------
+    The following items are used from `config`:
+
+    num_panels   : integer (0-9) or None
         number of panels to create
 
-    addplot      : dict
+    addplot      : dict or None
         value for the `addplot=` kwarg passed into `mplfinance.plot()`
 
-    volume_panel : integer (0-9) 
+    volume_panel : integer (0-9) or None
         panel id (0-number_of_panels)
 
-    main_panel   : integer (0-9) 
+    main_panel   : integer (0-9) or None
         panel id (0-number_of_panels)
 
-    panel_ratios : sequence
+    panel_ratios : sequence or None
         sequence of relative sizes for the panels;
 
         NOTE: If len(panel_ratios) == number of panels (regardless
@@ -51,10 +59,14 @@ Returns
 
     """
 
-    def _valid_panel_id(panid):
-        return isinstance(panid,int) and panid >= 0 and panid < 10
+    num_panels   = config['num_panels']
+    addplot      = config['addplot']
+    volume_panel = config['volume_panel']
+    num_panels   = config['num_panels']
+    main_panel   = config['main_panel']
+    panel_ratios = config['panel_ratios']
 
-    if num_panels is None or num_panels == 'infer':
+    if num_panels is None:  # then infer the number of panels:
         pset = {0} # start with a set including only panel zero
         if addplot is not None:
             if isinstance(addplot,dict):
@@ -92,7 +104,7 @@ Returns
                                relsize=_nones,
                                lift=_nones,
                                height=_nones,
-                               secax_inuse=_nones,
+                               used2nd=[False]*len(pset),
                                title=_nones,
                                ylabel=_nones),
                           index=pset)
@@ -308,6 +320,19 @@ def _create_panel_axes( figure, ha, hb, hc, panel_order ):
 
     return axA1, axA2, axB1, axB2, axC1, axC2, actual_order
 
+def _set_ticks_on_bottom_panel_only(panels,formatter,rotation=45):
+
+    bot = panels.index.values[-1]
+    ax  = panels.at[bot,'axes'][0]
+    ax.tick_params(axis='x',rotation=rotation)
+    ax.xaxis.set_major_formatter(formatter)
+
+    if len(panels) == 1: return
+
+    for panid in panels.index.values[::-1][1:]:
+        panels.at[panid,'axes'][0].tick_params(axis='x',labelbottom=False)
+
+    
 def _adjust_ticklabels_per_bottom_panel(axA1,axB1,axC1,actual_order,hb,hc,formatter,rotation=45):
     """
     Determine which panel is on the bottom, then display ticklabels

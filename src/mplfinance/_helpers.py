@@ -42,3 +42,6 @@ def _num_or_seq_of_num(value):
              (isinstance(value,(list,tuple,np.ndarray)) and
               all([isinstance(v,(int,float)) for v in value]))
            )
+
+def _valid_panel_id(panid):
+    return panid in ['main','lower'] or (isinstance(panid,int) and panid >= 0 and panid < 10)
