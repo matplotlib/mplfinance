@@ -5,7 +5,7 @@ def _get_widths_df():
     Provide a dataframe of width data that appropriate scales widths of
     various aspects of the plot (candles,ohlc bars,volume bars) based on
     the amount or density of data.  These numbers were arrived at by 
-    carefully testing many use cases of plots with various styles.
+    carefully testing many use-cases of plots with various styles.
     '''
     numpoints = [n for n in range(30,241,30)]
     #volume_width     = (0.95, 0.90,  0.85,  0.80,  0.75,  0.70,  0.65, 0.60 )
@@ -42,13 +42,13 @@ def _determine_widths_config( xdates, config ):
 
     widths_config = {}
 
-    if isinstance(config['vol_width'],(float,int)):
-        widths_config['volume_width'] = config['vol_width']
+    if isinstance(config['volume_width'],(float,int)):
+        widths_config['volume_width'] = config['volume_width']
     else:
         widths_config['volume_width'] = _dfinterpolate(_widths,datalen,'vw') * adjust
 
-    if isinstance(config['vol_linewidth'],(float,int)):
-        widths_config['volume_linewidth']  = config['vol_linewidth']
+    if isinstance(config['volume_linewidth'],(float,int)):
+        widths_config['volume_linewidth']  = config['volume_linewidth']
     else:
         widths_config['volume_linewidth'] = _dfinterpolate(_widths,datalen,'vlw')
 
@@ -75,7 +75,6 @@ def _determine_widths_config( xdates, config ):
     return widths_config
 
 
-
 def _dfinterpolate(df,key,column):
     '''
     Given a DataFrame, with all values and the Index as floats,
@@ -89,29 +88,20 @@ def _dfinterpolate(df,key,column):
     '''
     s = df[column]
     s1 = s.loc[:key]
-    #print('s1=',s1)
     if len(s1) < 1:
-        print('_dfinterpolate returning',s.iloc[0])
         return s.iloc[0]
     j1 = s1.index[-1]
     v1 = s1.iloc[-1]
-    #print('j1,v1=',j1,v1)
     
     s2 = s.loc[key:]
-    #print('s2=',s2)
     if len(s2) < 1:
-        print('_dfinterpolate returning',s.iloc[-1])
         return s.iloc[-1]
     j2 = s2.index[0]
     v2 = s2.iloc[0]
-    #print('j2,v2=',j2,v2)
 
     if j1 == j2:
-        print('_dfinterpolate returning',v1)
         return v1
     delta   = j2 - j1
     portion = (key - j1)/delta
-    #print('delta,key,portion=',delta,key,portion)
     ans = v1 + (v2-v1)*portion
-    print('_dfinterpolate returning',ans)
     return ans

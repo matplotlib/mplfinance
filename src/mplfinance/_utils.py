@@ -438,10 +438,8 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
     datalen = len(dates)
 
     avg_dist_between_points = (dates[-1] - dates[0]) / float(datalen)
-    print('candle: avg_dist_between_points =',avg_dist_between_points)
 
     delta = config['_widths_config']['candle_width'] / 2.0
-    print('candle: width =',2*delta)
 
     barVerts = [((date - delta, open),
                  (date - delta, close),
@@ -472,7 +470,6 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
     wickcolor = _updown_colors(uc, dc, opens, closes)
 
     lw = config['_widths_config']['candle_linewidth']
-    print('candle: linewidth =',lw)
 
     rangeCollection = LineCollection(rangeSegments,
                                      colors=wickcolor,

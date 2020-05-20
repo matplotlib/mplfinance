@@ -206,16 +206,19 @@ def _valid_plot_kwargs():
                                         'Validator'   : lambda value: _num_or_seq_of_num(value) or 
                                                                      (isinstance(value,dict) and 'y1' in value and _num_or_seq_of_num(value['y1'])) },
 
+        'tight_layout'              : { 'Default'     : False,
+                                        'Validator'   : lambda value: isinstance(value,bool) },
+
         'ohlc_ticksize'             : { 'Default'     : None,
                                         'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'ohlc_linewidth'            : { 'Default'     : None,
                                         'Validator'   : lambda value: isinstance(value,(float,int)) },
 
-        'vol_width'                 : { 'Default'     : None,
+        'volume_width'              : { 'Default'     : None,
                                         'Validator'   : lambda value: isinstance(value,(float,int)) },
 
-        'vol_linewidth'             : { 'Default'     : None,
+        'volume_linewidth'          : { 'Default'     : None,
                                         'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'candle_width'              : { 'Default'     : None,
@@ -330,13 +333,18 @@ def plot( data, **kwargs ):
             else:
                 axA1.plot(xdates, mavprices)
 
-    avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
-    print('plot: xdates[-1]=',xdates[-1])
-    print('plot: xdates[ 0]=',xdates[ 0])
-    print('plot: len(xdates)=',len(xdates))
-    print('plot: avg_dist_between_points =',avg_dist_between_points)
-    minx = xdates[0]  - avg_dist_between_points
-    maxx = xdates[-1] + avg_dist_between_points
+    if not config['tight_layout']:
+        avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
+        #print('plot: xdates[-1]=',xdates[-1])
+        #print('plot: xdates[ 0]=',xdates[ 0])
+        #print('plot: len(xdates)=',len(xdates))
+        #print('plot: avg_dist_between_points =',avg_dist_between_points)
+        minx = xdates[0]  - avg_dist_between_points
+        maxx = xdates[-1] + avg_dist_between_points
+    else:
+        minx = xdates[0]
+        maxx = xdates[-1]
+
     if len(xdates) == 1:  # kludge special case
         minx = minx - 0.75
         maxx = maxx + 0.75
@@ -357,9 +365,12 @@ def plot( data, **kwargs ):
 
     if config['set_ylim'] is not None:
         axA1.set_ylim(config['set_ylim'][0], config['set_ylim'][1])
+    elif config['tight_layout']:
+        axA1.set_xlim(minx,maxx)
+        axA1.set_ylim(miny,maxy)
     else:
-       corners = (minx, miny), (maxx, maxy)
-       axA1.update_datalim(corners)
+        corners = (minx, miny), (maxx, maxy)
+        axA1.update_datalim(corners)
 
     if config['return_calculated_values'] is not None:
         retdict = config['return_calculated_values']
@@ -413,11 +424,7 @@ def plot( data, **kwargs ):
 
         w  = config['_widths_config']['volume_width']
         lw = config['_widths_config']['volume_linewidth']
-        print('volume: width=',w)
-        print('volume: linewidth=',lw)
 
-        if not isinstance(vcolors,(list,tuple)):
-            print('vcolors=',vcolors)
         adjc =  _adjust_color_brightness(vcolors,0.90)
         volumeAxes.bar(xdates,volumes,width=w,linewidth=lw,color=vcolors,ec=adjc)
         miny = 0.3 * np.nanmin(volumes)
@@ -470,15 +477,13 @@ def plot( data, **kwargs ):
                 ymhi = math.log(max(math.fabs(np.nanmax(yd)),1e-7),10)
                 ymlo = math.log(max(math.fabs(np.nanmin(yd)),1e-7),10)
                 secondary_y = False
+                panid = apdict['panel']
+                if   panid == 'main' : panid = 0  # for backwards compatibility
+                elif panid == 'lower': panid = 1  # for backwards compatibility
                 if apdict['secondary_y'] == 'auto':
-
-                    panid = apdict['panel']
-                    if   panid == 'main' : panid = 0  # for backwards compatibility
-                    elif panid == 'lower': panid = 1  # for backwards compatibility
-
-                    # If mag for this panel is not yet set, the set it here,
-                    # as this is the first ydata to be plotted on this panel,
-                    # so consider it to be the 'primary' axis for this panel.
+                    # If mag(nitude) for this panel is not yet set, then set it
+                    # here, as this is the first ydata to be plotted on this panel:
+                    # i.e. consider this to be the 'primary' axis for this panel.
                     p = panid,'mag'
                     if panels.at[p] is None:
                         panels.at[p] = {'lo':ymlo,'hi':ymhi}

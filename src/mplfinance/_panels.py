@@ -67,6 +67,9 @@ Returns
     main_panel   = config['main_panel']
     panel_ratios = config['panel_ratios']
 
+    if not _valid_panel_id(main_panel):
+        raise ValueError('main_panel id must be integer 0 to 9, but is '+str(main_panel))
+
     if num_panels is None:  # then infer the number of panels:
         pset = {0} # start with a set including only panel zero
         if addplot is not None:
@@ -90,6 +93,8 @@ Returns
                 raise ValueError('volume_panel must be integer 0 to 9, but is "'+str(volume_panel)+'"')
             pset.add(volume_panel)
 
+        pset.add(main_panel)
+
         pset = sorted(pset)
         missing = [m for m in range(len(pset)) if m not in pset]
         if len(missing) != 0:
@@ -110,9 +115,6 @@ Returns
                                ylabel=_nones),
                           index=pset)
     panels.index.name = 'panid'
-
-    if not _valid_panel_id(main_panel):
-        raise ValueError('main_panel id must be integer 0 to 9, but is '+str(main_panel))
 
     # Now determine the height for each panel:
     # ( figure, num_panels='infer', addplot=None, volume_panel=None, main_panel=0, panel_ratios=None ):
