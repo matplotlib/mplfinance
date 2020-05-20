@@ -32,6 +32,7 @@ def _apply_mpfstyle(style):
 
     if 'figcolor' in style and style['figcolor'] is not None:
         plt.rcParams.update({'figure.facecolor' : style['figcolor'] })
+        plt.rcParams.update({'savefig.facecolor': style['figcolor'] })
 
     explicit_grid = False
     if style['gridcolor'] is not None:
