@@ -57,20 +57,8 @@ def _check_input(opens, closes, highs, lows):
                     (o == l).all() and
                     (o == c).all()
                    )
-
     if not same_missing:
         raise ValueError('O,H,L,C must have the same missing data!')
-
-def roundTime(dt=None, roundTo=60):
-   """Round a datetime object to any time lapse in seconds
-   dt : datetime.datetime object, default now.
-   roundTo : Closest number of seconds to round to, default 1 minute.
-   Author: Thierry Husson 2012 - Use it as you want but don't blame me.
-   """
-   if dt is None : dt = datetime.datetime.now()
-   seconds = (dt.replace(tzinfo=None) - dt.min).seconds
-   rounding = (seconds+roundTo/2) // roundTo * roundTo
-   return dt + datetime.timedelta(0,rounding-seconds,-dt.microsecond)
 
 def _construct_mpf_collections(ptype,dates,xdates,opens,highs,lows,closes,volumes,config,style):
     collections = None
@@ -359,10 +347,8 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=
     datalen = len(dates)
 
     avg_dist_between_points = (dates[-1] - dates[0]) / float(datalen)
-    print('ohlc: avg_dist_between_points =',avg_dist_between_points)
 
     ticksize = config['_widths_config']['ohlc_ticksize']
-    print('ohlc: ticksize =',ticksize)
 
     # the ticks will be from ticksize to 0 in points at the origin and
     # we'll translate these to the date, open location
@@ -381,7 +367,6 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=
         colors = [colord[open < close] for open, close in zip(opens, closes)]
 
     lw = config['_widths_config']['ohlc_linewidth']
-    print('ohlc: linewidth =',ticksize)
 
     rangeCollection = LineCollection(rangeSegments,
                                      colors=colors,

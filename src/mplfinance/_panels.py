@@ -1,5 +1,5 @@
 from mplfinance._helpers import _list_of_dict
-from mplfinance._helpers import _valid_panel_id
+from mplfinance._arg_validators import _valid_panel_id
 import pandas as pd
 
 def _build_panels( figure, config ):

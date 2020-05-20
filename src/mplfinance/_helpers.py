@@ -33,7 +33,6 @@ def _adjust_color_brightness(color,amount=0.5):
     return cout
 
 
-
 def _determine_format_string( dates, datetime_format=None ):
     """
     Determine the datetime format string based on the averge number
@@ -72,5 +71,13 @@ def _num_or_seq_of_num(value):
               all([isinstance(v,(int,float)) for v in value]))
            )
 
-def _valid_panel_id(panid):
-    return panid in ['main','lower'] or (isinstance(panid,int) and panid >= 0 and panid < 10)
+def roundTime(dt=None, roundTo=60):
+   """Round a datetime object to any time lapse in seconds
+   dt : datetime.datetime object, default now.
+   roundTo : Closest number of seconds to round to, default 1 minute.
+   Author: Thierry Husson 2012 - Use it as you want but don't blame me.
+   """
+   if dt is None : dt = datetime.datetime.now()
+   seconds = (dt.replace(tzinfo=None) - dt.min).seconds
+   rounding = (seconds+roundTo/2) // roundTo * roundTo
+   return dt + datetime.timedelta(0,rounding-seconds,-dt.microsecond)

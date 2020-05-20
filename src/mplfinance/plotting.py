@@ -31,6 +31,7 @@ from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 from mplfinance._arg_validators import _kwarg_not_implemented, _bypass_kwarg_validation
 from mplfinance._arg_validators import _hlines_validator, _vlines_validator
 from mplfinance._arg_validators import _alines_validator, _tlines_validator
+from mplfinance._arg_validators import _valid_panel_id
 
 from mplfinance._panels import _build_panels
 from mplfinance._panels import _set_ticks_on_bottom_panel_only
@@ -38,7 +39,6 @@ from mplfinance._panels import _set_ticks_on_bottom_panel_only
 from mplfinance._helpers import _determine_format_string
 from mplfinance._helpers import _list_of_dict
 from mplfinance._helpers import _num_or_seq_of_num
-from mplfinance._helpers import _valid_panel_id
 from mplfinance._helpers import _adjust_color_brightness
 
 VALID_PMOVE_TYPES = ['renko', 'pnf']

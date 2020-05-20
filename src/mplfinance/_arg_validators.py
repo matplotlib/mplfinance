@@ -239,3 +239,6 @@ def _process_kwargs(kwargs, vkwargs):
         config[key] = value
 
     return config
+
+def _valid_panel_id(panid):
+    return panid in ['main','lower'] or (isinstance(panid,int) and panid >= 0 and panid < 10)
