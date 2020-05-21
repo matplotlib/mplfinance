@@ -348,7 +348,7 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=
 
     avg_dist_between_points = (dates[-1] - dates[0]) / float(datalen)
 
-    ticksize = config['_widths_config']['ohlc_ticksize']
+    ticksize = config['_width_config']['ohlc_ticksize']
 
     # the ticks will be from ticksize to 0 in points at the origin and
     # we'll translate these to the date, open location
@@ -366,7 +366,7 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=
         colord = {True: colorup, False: colordown}
         colors = [colord[open < close] for open, close in zip(opens, closes)]
 
-    lw = config['_widths_config']['ohlc_linewidth']
+    lw = config['_width_config']['ohlc_linewidth']
 
     rangeCollection = LineCollection(rangeSegments,
                                      colors=colors,
@@ -424,7 +424,7 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
 
     avg_dist_between_points = (dates[-1] - dates[0]) / float(datalen)
 
-    delta = config['_widths_config']['candle_width'] / 2.0
+    delta = config['_width_config']['candle_width'] / 2.0
 
     barVerts = [((date - delta, open),
                  (date - delta, close),
@@ -454,7 +454,7 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
     dc     = mcolors.to_rgba(marketcolors['wick']['down'], 1.0)
     wickcolor = _updown_colors(uc, dc, opens, closes)
 
-    lw = config['_widths_config']['candle_linewidth']
+    lw = config['_width_config']['candle_linewidth']
 
     rangeCollection = LineCollection(rangeSegments,
                                      colors=wickcolor,

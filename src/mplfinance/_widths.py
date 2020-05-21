@@ -1,11 +1,13 @@
 import pandas as pd
+from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 
 def _get_widths_df():
     '''
     Provide a dataframe of width data that appropriate scales widths of
     various aspects of the plot (candles,ohlc bars,volume bars) based on
     the amount or density of data.  These numbers were arrived at by 
-    carefully testing many use-cases of plots with various styles.
+    carefully testing many use-cases of plots with various styles, 
+    and observing which numbers gave the "best" appearance.
     '''
     numpoints = [n for n in range(30,241,30)]
     #volume_width     = (0.95, 0.90,  0.85,  0.80,  0.75,  0.70,  0.65, 0.60 )
@@ -27,7 +29,46 @@ def _get_widths_df():
 
 _widths = _get_widths_df()
 
-def _determine_widths_config( xdates, config ):
+def _valid_scale_width_kwargs():
+    vkwargs = {
+        'ohlc'    : { 'Default'     : None,
+                      'Validator'   : lambda value: isinstance(value,(float,int)) },
+
+        'volume'  : { 'Default'     : None,
+                      'Validator'   : lambda value: isinstance(value,(float,int)) },
+
+        'candle'  : { 'Default'     : None,
+                      'Validator'   : lambda value: isinstance(value,(float,int)) },
+    }
+    _validate_vkwargs_dict(vkwargs)
+    return vkwargs
+
+def _valid_update_width_kwargs():
+    vkwargs = {
+
+        'ohlc_ticksize'    : { 'Default'     : None,
+                               'Validator'   : lambda value: isinstance(value,(float,int)) },
+
+        'ohlc_linewidth'   : { 'Default'     : None,
+                               'Validator'   : lambda value: isinstance(value,(float,int)) },
+
+        'volume_width'     : { 'Default'     : None,
+                               'Validator'   : lambda value: isinstance(value,(float,int)) },
+
+        'volume_linewidth' : { 'Default'     : None,
+                               'Validator'   : lambda value: isinstance(value,(float,int)) },
+
+        'candle_width'     : { 'Default'     : None,
+                               'Validator'   : lambda value: isinstance(value,(float,int)) },
+
+        'candle_linewidth' : { 'Default'     : None,
+                               'Validator'   : lambda value: isinstance(value,(float,int)) },
+    }
+    _validate_vkwargs_dict(vkwargs)
+    return vkwargs
+
+
+def _determine_width_config( xdates, config ):
     '''
     Given x-axis xdates, and `mpf.plot()` kwargs config,
     determine the widths and linewidths for candles,
@@ -40,39 +81,44 @@ def _determine_widths_config( xdates, config ):
 
     adjust = tweak*avg_dist_between_points if config['show_nontrading'] else 1.0
 
-    widths_config = {}
+    width_config = {}
 
-    if isinstance(config['volume_width'],(float,int)):
-        widths_config['volume_width'] = config['volume_width']
-    else:
-        widths_config['volume_width'] = _dfinterpolate(_widths,datalen,'vw') * adjust
+    if config['width_adjuster_version'] == 'v0':  # Behave like original version of code:
 
-    if isinstance(config['volume_linewidth'],(float,int)):
-        widths_config['volume_linewidth']  = config['volume_linewidth']
-    else:
-        widths_config['volume_linewidth'] = _dfinterpolate(_widths,datalen,'vlw')
+        width_config['volume_width'    ] = 0.5*avg_dist_between_points
+        width_config['volume_linewidth'] = None
+        width_config['ohlc_ticksize'   ] = avg_dist_between_points / 2.5
+        width_config['ohlc_linewidth'  ] = None
+        width_config['candle_width'    ] = avg_dist_between_points / 2.0
+        width_config['candle_linewidth'] = None
 
-    if config is not None and config['ohlc_ticksize'] is not None:
-        widths_config['ohlc_ticksize'] = config['ohlc_ticksize']
-    else:
-        widths_config['ohlc_ticksize'] = _dfinterpolate(_widths,datalen,'ow') * adjust
+    else: # config['width_adjuster_version'] == 'v1'
 
-    if config is not None and config['ohlc_linewidth'] is not None:
-        widths_config['ohlc_linewidth'] = config['ohlc_linewidth']
-    else:
-        widths_config['ohlc_linewidth'] = _dfinterpolate(_widths,datalen,'olw')
+        width_config['volume_width'    ] = _dfinterpolate(_widths,datalen,'vw' ) * adjust
+        width_config['volume_linewidth'] = _dfinterpolate(_widths,datalen,'vlw')
+        width_config['ohlc_ticksize'   ] = _dfinterpolate(_widths,datalen,'ow' ) * adjust
+        width_config['ohlc_linewidth'  ] = _dfinterpolate(_widths,datalen,'olw')
+        width_config['candle_width'    ] = _dfinterpolate(_widths,datalen,'cw' ) * adjust
+        width_config['candle_linewidth'] = _dfinterpolate(_widths,datalen,'clw')
 
-    if config is not None and config['candle_width'] is not None:
-        widths_config['candle_width'] = config['candle_width']
-    else:
-        widths_config['candle_width'] = _dfinterpolate(_widths,datalen,'cw') * adjust
-    
-    if config is not None and config['candle_linewidth'] is not None:
-        widths_config['candle_linewidth'] = config['candle_linewidth']
-    else:
-        widths_config['candle_linewidth'] = _dfinterpolate(_widths,datalen,'clw')
+    if config['scale_width_config'] is not None:
 
-    return widths_config
+        scale = _process_kwargs(config['scale_width_config'],_valid_scale_width_kwargs())
+        if scale['volume'] is not None:
+            width_config['volume_width'] *= scale['volume']
+        if scale['ohlc'] is not None:
+            width_config['ohlc_width'] *= scale['ohlc']
+        if scale['candle'] is not None:
+            width_config['candle_width'] *= scale['candle']
+        
+
+    if config['update_width_config'] is not None:
+     
+        update = _process_kwargs(config['update_width_config'],_valid_update_width_kwargs())
+        uplist = [ (k,v) for k,v in update.items() if v is not None ]
+        width_config.update(uplist)
+
+    return width_config
 
 
 def _dfinterpolate(df,key,column):

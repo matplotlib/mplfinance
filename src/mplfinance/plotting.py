@@ -19,7 +19,7 @@ from mplfinance._utils import _construct_vline_collections
 from mplfinance._utils import _construct_tline_collections
 from mplfinance._utils import _construct_mpf_collections
 
-from mplfinance._widths import _determine_widths_config
+from mplfinance._widths import _determine_width_config
 
 from mplfinance._utils import _updown_colors
 from mplfinance._utils import IntegerIndexDateTimeFormatter
@@ -158,10 +158,6 @@ def _valid_plot_kwargs():
                                        'Validator': lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
                                                                   and all([isinstance(v,(int,float)) for v in value])},
  
-        'set_ylim_panelC'           : {'Default': None,
-                                       'Validator': lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
-                                                                  and all([isinstance(v,(int,float)) for v in value])},
- 
         'hlines'                    : { 'Default'     : None, 
                                         'Validator'   : lambda value: _hlines_validator(value) },
  
@@ -204,28 +200,23 @@ def _valid_plot_kwargs():
 
         'fill_between'              : { 'Default'     : None,
                                         'Validator'   : lambda value: _num_or_seq_of_num(value) or 
-                                                                     (isinstance(value,dict) and 'y1' in value and _num_or_seq_of_num(value['y1'])) },
+                                                                     (isinstance(value,dict) and 'y1' in value and
+                                                                       _num_or_seq_of_num(value['y1'])) },
 
         'tight_layout'              : { 'Default'     : False,
                                         'Validator'   : lambda value: isinstance(value,bool) },
 
-        'ohlc_ticksize'             : { 'Default'     : None,
-                                        'Validator'   : lambda value: isinstance(value,(float,int)) },
+        'width_adjuster_version'    : { 'Default'     : 'v1',
+                                        'Validator'   : lambda value: value in ('v0', 'v1') },
 
-        'ohlc_linewidth'            : { 'Default'     : None,
-                                        'Validator'   : lambda value: isinstance(value,(float,int)) },
+        'scale_width_config'        : { 'Default'     : None,
+                                        'Validator'   : lambda value: isinstance(value,dict) and len(value) > 0 },
 
-        'volume_width'              : { 'Default'     : None,
-                                        'Validator'   : lambda value: isinstance(value,(float,int)) },
+        'update_width_config'       : { 'Default'     : None,
+                                        'Validator'   : lambda value: isinstance(value,dict) and len(value) > 0 },
 
-        'volume_linewidth'          : { 'Default'     : None,
-                                        'Validator'   : lambda value: isinstance(value,(float,int)) },
-
-        'candle_width'              : { 'Default'     : None,
-                                        'Validator'   : lambda value: isinstance(value,(float,int)) },
-
-        'candle_linewidth'          : { 'Default'     : None,
-                                        'Validator'   : lambda value: isinstance(value,(float,int)) },
+        'return_width_config'       : { 'Default'     : None,
+                                        'Validator'   : lambda value: isinstance(value,dict) and len(value)==0 },
     }
 
     _validate_vkwargs_dict(vkwargs)
@@ -290,7 +281,13 @@ def plot( data, **kwargs ):
     axA1 = panels.at[config['main_panel'],'axes'][0]
 
     # Will have to handle widths config separately for PMOVE types ??
-    config['_widths_config'] = _determine_widths_config(xdates, config)
+    config['_width_config'] = _determine_width_config(xdates, config)
+
+
+    rwc = config['return_width_config']
+    if isinstance(rwc,dict) and len(rwc)==0:
+        config['return_width_config'].update(config['_width_config'])
+ 
 
     collections = None
     if ptype == 'line':
@@ -422,8 +419,8 @@ def plot( data, **kwargs ):
         #-- print('len(vcolors),len(opens),len(closes)=',len(vcolors),len(opens),len(closes))
         #-- print('vcolors=',vcolors)
 
-        w  = config['_widths_config']['volume_width']
-        lw = config['_widths_config']['volume_linewidth']
+        w  = config['_width_config']['volume_width']
+        lw = config['_width_config']['volume_linewidth']
 
         adjc =  _adjust_color_brightness(vcolors,0.90)
         volumeAxes.bar(xdates,volumes,width=w,linewidth=lw,color=vcolors,ec=adjc)
