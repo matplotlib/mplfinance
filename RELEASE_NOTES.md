@@ -1,4 +1,41 @@
-- **v0.12.4a0  &nbsp;&nbsp;&nbsp;&nbsp; Released 2020-05-01**
+### <a name="v0.12.5a0"></a>v0.12.5a0 &nbsp;&nbsp;&nbsp;&nbsp; Released Date 2020-05-24
+#### Enhancements
+- **[Subplots: Create up to 10 "panels"](https://github.com/matplotlib/mplfinance/blob/master/markdown/subplots.md)**
+  - Can modify relative sizes of panels
+  - Can modify which is "main" panel
+  - Can modify which is "volume" panel
+  - addplot can plot to any panel
+  - MACD example
+- support bar charts in make_addplot (`type=` 'line', 'scatter', or 'bar')
+- make_addplot scatter now supports *sequence of markers* and sequence of colors<br>(Thank you [Elan Ernest](https://github.com/ImportanceOfBeingErnest) for posting the [sequence of markers solution here](https://github.com/matplotlib/matplotlib/issues/11155#issuecomment-385939618))
+- ability to custom format date/time labels ( ` datetime_format= `) (Thank you [Cam McLean](https://github.com/cammclean182))
+- ability to rotate date/time labels (` xrotation= `)
+- ability to turn axis off (make axis invisible)
+- support ` tight_layout=True `
+- support ` fill_between= `
+- new algorithm for adjustment of candle widths, line widths, volume widths, ohlc tick widths **default change** (Thank you [Charles](https://github.com/char101) for your help).
+  - ability to scale the algorithm (up or down)
+  - ability to override the algorithm (i.e. set width and linewidth of volume bars, candles, ohlc bars. (iss num 81))
+- close plot when not needed to stay open **default change**
+  - fixes "20 open plots" warning
+  - removed code to close plots from regression tests: no longer needed
+- support NaNs in data to indicate missing data (also fix bug related to min/max and mav when NaNs in data) **default change** (Thank you [Charles](https://github.com/char101) for your help)
+  - allows display low liquidity
+  - remove support for -1 meaning missing data.  -1 is now considered valid data.
+- Travis check to ensure each Pull Request has a new version (Thank you [Aaron Soellinger](https://github.com/free-soellingeraj))
+- remove rcParams context: modifications made by mplfinance are now availabile after calling mplfinance. **default change**
+
+#### Bug Fixes
+  - fix bug displaying a single candle
+  - fix bug "StatisticsError" when only a single data point
+  - fix poor choice of default color for ` type=line ` chart **default change**
+  - fix `savefig` Figure Facecolor bug
+  - fix ohlc bars color in "blueskies" style **default change**
+
+---
+---
+
+### v0.12.4a0  &nbsp;&nbsp;&nbsp;&nbsp; Release Date 2020-05-01
 
   - regression tests for new API
   - **[Renko plots](https://github.com/matplotlib/mplfinance/blob/master/examples/price-movement_plots.ipynb)** [(issue #11)](https://github.com/matplotlib/mplfinance/issues/11) &nbsp;&nbsp;&nbsp;&nbsp;(Thank you [Caleb Coffin @coffincw](https://github.com/coffincw))
