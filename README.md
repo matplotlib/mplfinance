@@ -11,6 +11,11 @@
 
 ---
 
+# <a name="announcements"></a>Announcing Version 0.12.5 Enhancements
+### [Version 0.12.5 brings a number of enhancements to mplfinance. Click here for full details.](https://github.com/matplotlib/mplfinance/blob/master/RELEASE_NOTES.md)
+
+---
+
 # <a name="tutorials"></a>Contents and Tutorials
 
   - **[The New API](https://github.com/matplotlib/mplfinance#newapi)**
