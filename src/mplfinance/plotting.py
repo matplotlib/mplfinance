@@ -23,6 +23,7 @@ from mplfinance._widths import _determine_width_config
 
 from mplfinance._utils import _updown_colors
 from mplfinance._utils import IntegerIndexDateTimeFormatter
+from mplfinance._utils import _mscatter
 
 from mplfinance import _styles
 
@@ -506,11 +507,10 @@ def plot( data, **kwargs ):
                     size  = apdict['markersize']
                     mark  = apdict['marker']
                     color = apdict['color']
-                    # -------------------------------------------------------- #
-                    # This fixes Issue#77, but breaks other stuff:
-                    # ax.set_ylim(ymin=(miny - 0.4*stdy),ymax=(maxy + 0.4*stdy))
-                    # -------------------------------------------------------- #
-                    ax.scatter(xdates, ydata, s=size, marker=mark, color=color)
+                    if isinstance(mark,(list,tuple,np.ndarray)):
+                        _mscatter(xdates, ydata, ax=ax, m=mark, s=size, color=color)
+                    else:
+                        ax.scatter(xdates, ydata, s=size, marker=mark, color=color)
                 elif aptype == 'bar':
                     width  = apdict['width']
                     bottom = apdict['bottom']
@@ -668,7 +668,8 @@ def _valid_addplot_kwargs():
                           'Validator'   : lambda value: isinstance(value,(int,float)) },
 
         'color'       : { 'Default'     : None,
-                          'Validator'   : lambda value: mcolors.is_color_like(value) },
+                          'Validator'   : lambda value: mcolors.is_color_like(value) or
+                                         (isinstance(value,(list,tuple,np.ndarray)) and all([mcolors.is_color_like(v) for v in value])) },
 
         'linestyle'   : { 'Default'     : None,
                           'Validator'   : lambda value: value in valid_linestyles },
