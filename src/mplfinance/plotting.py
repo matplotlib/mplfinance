@@ -44,6 +44,8 @@ from mplfinance._helpers import _adjust_color_brightness
 
 VALID_PMOVE_TYPES = ['renko', 'pnf']
 
+DEFAULT_FIGRATIO = (8.00,5.75)
+
 def with_rc_context(func):
     '''
     This decoractor creates an rcParams context around a function, so that any changes
@@ -118,7 +120,13 @@ def _valid_plot_kwargs():
         'figscale'                  : { 'Default'     : 1.0, # scale base figure size up or down.
                                         'Validator'   : lambda value: isinstance(value,float) or isinstance(value,int) },
  
-        'figratio'                  : { 'Default'     : (8.00,5.75), # aspect ratio; will equal fig size when figscale=1.0
+        'figratio'                  : { 'Default'     : DEFAULT_FIGRATIO, # aspect ratio; scaled to 8.0 height
+                                        'Validator'   : lambda value: isinstance(value,(tuple,list))
+                                                                      and len(value) == 2
+                                                                      and isinstance(value[0],(float,int))
+                                                                      and isinstance(value[1],(float,int)) },
+ 
+        'figsize'                   : { 'Default'     : None,  # figure size; overrides figratio and figscale
                                         'Validator'   : lambda value: isinstance(value,(tuple,list))
                                                                       and len(value) == 2
                                                                       and isinstance(value[0],(float,int))
@@ -250,13 +258,19 @@ def plot( data, **kwargs ):
     if isinstance(style,dict):
         _styles._apply_mpfstyle(style)
     
-    w,h = config['figratio']
-    r = float(w)/float(h)
-    if r < 0.25 or r > 4.0:
-        raise ValueError('"figratio" (aspect ratio)  must be between 0.25 and 4.0 (but is '+str(r)+')')
-    base      = (w,h)
-    figscale  = config['figscale']
-    fsize     = [d*figscale for d in base]
+    if config['figsize'] is None:
+        w,h = config['figratio']
+        r = float(w)/float(h)
+        if r < 0.20 or r > 5.0:
+            raise ValueError('"figratio" (aspect ratio)  must be between 0.20 and 5.0 (but is '+str(r)+')')
+        default_scale = DEFAULT_FIGRATIO[1]/h
+        h *= default_scale
+        w *= default_scale
+        base      = (w,h)
+        figscale  = config['figscale']
+        fsize     = [d*figscale for d in base]
+    else:
+        fsize = config['figsize']
     
     fig = plt.figure()
     fig.set_size_inches(fsize)
