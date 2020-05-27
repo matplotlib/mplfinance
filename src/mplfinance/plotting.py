@@ -218,7 +218,7 @@ def _valid_plot_kwargs():
         'width_adjuster_version'    : { 'Default'     : 'v1',
                                         'Validator'   : lambda value: value in ('v0', 'v1') },
 
-        'scale_width_config'        : { 'Default'     : None,
+        'scale_width_adjustment'    : { 'Default'     : None,
                                         'Validator'   : lambda value: isinstance(value,dict) and len(value) > 0 },
 
         'update_width_config'       : { 'Default'     : None,

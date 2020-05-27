@@ -101,9 +101,9 @@ def _determine_width_config( xdates, config ):
         width_config['candle_width'    ] = _dfinterpolate(_widths,datalen,'cw' ) * adjust
         width_config['candle_linewidth'] = _dfinterpolate(_widths,datalen,'clw')
 
-    if config['scale_width_config'] is not None:
+    if config['scale_width_adjustment'] is not None:
 
-        scale = _process_kwargs(config['scale_width_config'],_valid_scale_width_kwargs())
+        scale = _process_kwargs(config['scale_width_adjustment'],_valid_scale_width_kwargs())
         if scale['volume'] is not None:
             width_config['volume_width'] *= scale['volume']
         if scale['ohlc'] is not None:
