@@ -107,7 +107,7 @@ def _determine_width_config( xdates, config ):
         if scale['volume'] is not None:
             width_config['volume_width'] *= scale['volume']
         if scale['ohlc'] is not None:
-            width_config['ohlc_width'] *= scale['ohlc']
+            width_config['ohlc_ticksize'] *= scale['ohlc']
         if scale['candle'] is not None:
             width_config['candle_width'] *= scale['candle']
         

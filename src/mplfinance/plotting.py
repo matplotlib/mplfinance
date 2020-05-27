@@ -444,7 +444,7 @@ def plot( data, **kwargs ):
         volumeAxes.set_ylim( miny, maxy )
 
     xrotation = config['xrotation']
-    _set_ticks_on_bottom_panel_only(panels,formatter,rotation=45)
+    _set_ticks_on_bottom_panel_only(panels,formatter,rotation=xrotation)
 
     addplot = config['addplot']
     if addplot is not None and ptype not in VALID_PMOVE_TYPES:
