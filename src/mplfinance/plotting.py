@@ -198,10 +198,7 @@ def _valid_plot_kwargs():
         'xrotation'                 : { 'Default'     : 45,
                                         'Validator'   : lambda value: isinstance(value,(int,float)) },
 
-        'axesoff'                   : { 'Default'     : False,
-                                        'Validator'   : lambda value: isinstance(value,bool) },
-
-        'axesoffdark'               : { 'Default'     : False,
+        'axisoff'                   : { 'Default'     : False,
                                         'Validator'   : lambda value: isinstance(value,bool) },
 
         'closefig'                  : { 'Default'     : 'auto',
@@ -628,9 +625,7 @@ def plot( data, **kwargs ):
     # For now, for backwards compatibility, we flatten axes list:
     axlist = [ax for axes in panels['axes'] for ax in axes]
 
-    if config['axesoffdark']: fig.patch.set_facecolor('black')
-    if config['axesoff']: fig.patch.set_visible(False)
-    if config['axesoffdark'] or config['axesoff']:
+    if config['axisoff']:
         for ax in axlist:
             ax.set_xlim(xdates[0],xdates[-1])
             ax.set_axis_off()
@@ -638,9 +633,16 @@ def plot( data, **kwargs ):
     if config['savefig'] is not None:
         save = config['savefig']
         if isinstance(save,dict):
-            plt.savefig(**save)
+            # Expand to fill chart if axisoff
+            if config['axisoff'] and 'bbox_inches' not in save:
+                plt.savefig(**save,bbox_inches='tight')
+            else:
+                plt.savefig(**save)
         else:
-            plt.savefig(save)
+            if config['axisoff']:
+                plt.savefig(save,bbox_inches='tight')
+            else:
+                plt.savefig(save)
         if config['closefig']: # True or 'auto'
             plt.close(fig)
     elif not config['returnfig']:
