@@ -10,7 +10,7 @@
 - make_addplot scatter now supports *sequence of markers* and sequence of colors<br>(Thank you [Elan Ernest](https://github.com/ImportanceOfBeingErnest) for posting the [sequence of markers solution here](https://github.com/matplotlib/matplotlib/issues/11155#issuecomment-385939618))
 - ability to custom format date/time labels ( ` datetime_format= `) (Thank you [Cam McLean](https://github.com/cammclean182))
 - ability to rotate date/time labels (` xrotation= `)
-- ability to turn axis off (make axis invisible)
+- ability to turn axis off (`axisoff=True`) (Thank you [Will Whitty](https://github.com/tavurth) for testing, code review, and contributing code changes)
 - support ` tight_layout=True `
 - support ` fill_between= `
 - new algorithm for adjustment of candle widths, line widths, volume widths, ohlc tick widths **default change** (Thank you [Charles](https://github.com/char101) for your help).
