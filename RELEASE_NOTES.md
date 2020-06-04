@@ -1,4 +1,4 @@
-### <a name="v0.12.5a0"></a>v0.12.5a0 &nbsp;&nbsp;&nbsp;&nbsp; Released Date 2020-05-24
+### <a name="v0.12.5a0"></a>v0.12.5a0 &nbsp;&nbsp;&nbsp;&nbsp; Released Date 2020-06-10
 #### Enhancements
 - **[Subplots: Create up to 10 "panels"](https://github.com/matplotlib/mplfinance/blob/master/markdown/subplots.md)**
   - Can modify relative sizes of panels
