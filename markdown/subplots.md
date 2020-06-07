@@ -28,7 +28,7 @@
 ---
 
 ### The Matplotlib Method
-* **NOTE: This method is _not yet implemented_.  It is presently expected to be available by the end of June 2020.**
+* **NOTE: This method is _not yet implemented_.  It is presently expected to be available by the end of July 2020.**
 * The `matplotlib` method requires the user to call various matplotlib methods, external to `mplfinance`, in order to create a Figure and Axes (**SubPlots**) that the user then passes into `mpf.plot()`.
   - **The user is responsible** to configure the size and location of the Axes objects within the Figure.
   - **The user is responsible** to display the Figure (as mplfinance will not `show()` the Figure).

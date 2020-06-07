@@ -21,8 +21,9 @@
   - **[The New API](https://github.com/matplotlib/mplfinance#newapi)**
   - **[Tutorials](https://github.com/matplotlib/mplfinance#tutorials)**
     - **[Basic Usage](https://github.com/matplotlib/mplfinance#usage)**
-    - **[Customizing the Appearance of Plots](https://github.com/matplotlib/mplfinance/blob/master/markdown/customization_and_styles.md)**
+    - **[Customizing the Appearance of Plots](https://github.com/matplotlib/mplfinance/blob/master/markdown/customization_and_styles.md)** (**New** features June 2020)
     - **[Adding Your Own Technical Studies to Plots](https://github.com/matplotlib/mplfinance/blob/master/examples/addplot.ipynb)**
+    - **[Subplots: Multiple Plots on a Single Figure](https://github.com/matplotlib/mplfinance/blob/master/markdown/subplots.md)** (**New** June 2020)
     - **[Price-Movement Plots (Renko, P&F, etc)](https://github.com/matplotlib/mplfinance/blob/master/examples/price-movement_plots.ipynb)**
     - **[Trends, Support, Resistance, and Trading Lines](https://github.com/matplotlib/mplfinance/blob/master/examples/using_lines.ipynb)**
     - **[Saving the Plot to a File](https://github.com/matplotlib/mplfinance/blob/master/examples/savefig.ipynb)**
