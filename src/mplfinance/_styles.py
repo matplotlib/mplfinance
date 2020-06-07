@@ -16,6 +16,8 @@ def _get_mpfstyle(style):
 
 def _apply_mpfstyle(style):
 
+    plt.style.use('default')
+
     if style['base_mpl_style'] is not None:
         plt.style.use(style['base_mpl_style']) 
 
@@ -30,6 +32,7 @@ def _apply_mpfstyle(style):
 
     if 'figcolor' in style and style['figcolor'] is not None:
         plt.rcParams.update({'figure.facecolor' : style['figcolor'] })
+        plt.rcParams.update({'savefig.facecolor': style['figcolor'] })
 
     explicit_grid = False
     if style['gridcolor'] is not None:

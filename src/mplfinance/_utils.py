@@ -1,6 +1,5 @@
 """
 A collection of utilities for analyzing and plotting financial data.
-
 """
 
 import numpy  as np
@@ -8,25 +7,25 @@ import pandas as pd
 import matplotlib.dates as mdates
 import datetime
 
-from matplotlib import colors as mcolors
-from matplotlib.patches import Ellipse
+from itertools import cycle
+
+from matplotlib             import colors as mcolors
+from matplotlib.patches     import Ellipse
 from matplotlib.collections import LineCollection, PolyCollection, PatchCollection
+
 from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 from mplfinance._arg_validators import _alines_validator, _bypass_kwarg_validation
+from mplfinance._styles         import _get_mpfstyle
 
 from six.moves import zip
 
-from mplfinance._styles import _get_mpfstyle
-
-def _check_input(opens, closes, highs, lows, miss=-1):
+def _check_input(opens, closes, highs, lows):
     """Checks that *opens*, *highs*, *lows* and *closes* have the same length.
     NOTE: this code assumes if any value open, high, low, close is
     missing (*-1*) they all are missing
 
     Parameters
     ----------
-    ax : `Axes`
-        an Axes instance to plot to
     opens : sequence
         sequence of opening values
     highs : sequence
@@ -35,55 +34,54 @@ def _check_input(opens, closes, highs, lows, miss=-1):
         sequence of low values
     closes : sequence
         sequence of closing values
-    miss : int
-        identifier of the missing data
 
     Raises
     ------
     ValueError
         if the input sequences don't have the same length
+        if the input sequences don't have NaN is same locations
     """
-
-    def _missing(sequence, miss=-1):
-        """Returns the index in *sequence* of the missing data, identified by
-        *miss*
-
-        Parameters
-        ----------
-        sequence :
-            sequence to evaluate
-        miss :
-            identifier of the missing data
-
-        Returns
-        -------
-        where_miss: numpy.ndarray
-            indices of the missing data
-        """
-        return np.where(np.array(sequence) == miss)[0]
-
     same_length = len(opens) == len(highs) == len(lows) == len(closes)
-    _missopens = _missing(opens)
-    same_missing = ((_missopens == _missing(highs)).all() and
-                    (_missopens == _missing(lows)).all() and
-                    (_missopens == _missing(closes)).all())
+    if not same_length:
+        raise ValueError('O,H,L,C must have the same length!')
 
-    if not (same_length and same_missing):
-        msg = ("*opens*, *highs*, *lows* and *closes* must have the same"
-               " length. NOTE: this code assumes if any value open, high,"
-               " low, close is missing (*-1*) they all must be missing.")
-        raise ValueError(msg)
+    o = np.where(np.isnan(opens))[0]
+    h = np.where(np.isnan(highs))[0]
+    l = np.where(np.isnan(lows))[0]
+    c = np.where(np.isnan(closes))[0]
 
-def roundTime(dt=None, roundTo=60):
-   """Round a datetime object to any time lapse in seconds
-   dt : datetime.datetime object, default now.
-   roundTo : Closest number of seconds to round to, default 1 minute.
-   Author: Thierry Husson 2012 - Use it as you want but don't blame me.
-   """
-   if dt is None : dt = datetime.datetime.now()
-   seconds = (dt.replace(tzinfo=None) - dt.min).seconds
-   rounding = (seconds+roundTo/2) // roundTo * roundTo
-   return dt + datetime.timedelta(0,rounding-seconds,-dt.microsecond)
+    # First check that they have the same number of NaN:
+    same_numnans = len(o) == len(h) == len(l) == len(c)
+    if not same_numnans:
+        raise ValueError('O,H,L,C must have the same amount of missing data!')
+
+    same_missing = ((o == h).all() and
+                    (o == l).all() and
+                    (o == c).all()
+                   )
+    if not same_missing:
+        raise ValueError('O,H,L,C must have the same missing data!')
+
+def _construct_mpf_collections(ptype,dates,xdates,opens,highs,lows,closes,volumes,config,style):
+    collections = None
+    if ptype == 'candle' or ptype == 'candlestick':
+        collections = _construct_candlestick_collections(xdates, opens, highs, lows, closes,
+                                                         marketcolors=style['marketcolors'],config=config )
+    elif ptype == 'ohlc' or ptype == 'bars' or ptype == 'ohlc_bars':
+        collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes,
+                                                  marketcolors=style['marketcolors'],config=config )
+    elif ptype == 'renko':
+        collections = _construct_renko_collections(
+            dates, highs, lows, volumes, config['renko_params'], closes, marketcolors=style['marketcolors'])
+
+    elif ptype == 'pnf':
+        collections = _construct_pointnfig_collections(
+            dates, highs, lows, volumes, config['pnf_params'], closes, marketcolors=style['marketcolors'])
+    else:
+        raise TypeError('Unknown ptype="',str(ptype),'"')
+     
+    return collections
+
 
 def _calculate_atr(atr_length, highs, lows, closes):
     """Calculate the average true range
@@ -312,8 +310,7 @@ def _valid_lines_kwargs():
     return vkwargs
 
 
-
-def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=None):
+def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=None, config=None):
     """Represent the time, open, high, low, close as a vertical line
     ranging from low to high.  The left tick is the open and the right
     tick is the close.
@@ -347,21 +344,21 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=
     else:
         mktcolors = marketcolors['ohlc']
 
-    rangeSegments = [((dt, low), (dt, high)) for dt, low, high in
-                     zip(dates, lows, highs) if low != -1]
+    rangeSegments = [((dt, low), (dt, high)) for dt, low, high in zip(dates, lows, highs)]
 
-    avg_dist_between_points = (dates[-1] - dates[0]) / float(len(dates))
+    datalen = len(dates)
 
-    ticksize = avg_dist_between_points / 2.5
+    avg_dist_between_points = (dates[-1] - dates[0]) / float(datalen)
+
+    ticksize = config['_width_config']['ohlc_ticksize']
 
     # the ticks will be from ticksize to 0 in points at the origin and
     # we'll translate these to the date, open location
-    openSegments = [((dt-ticksize, op), (dt, op)) for dt, op in zip(dates, opens) if op != -1]
-    
+    openSegments = [((dt-ticksize, op), (dt, op)) for dt, op in zip(dates, opens)]
 
     # the ticks will be from 0 to ticksize in points at the origin and
     # we'll translate these to the date, close location
-    closeSegments = [((dt, close), (dt+ticksize, close)) for dt, close in zip(dates, closes) if close != -1]
+    closeSegments = [((dt, close), (dt+ticksize, close)) for dt, close in zip(dates, closes)]
 
     if mktcolors['up'] == mktcolors['down']:
         colors = mktcolors['up']
@@ -369,34 +366,29 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=
         colorup = mcolors.to_rgba(mktcolors['up'])
         colordown = mcolors.to_rgba(mktcolors['down'])
         colord = {True: colorup, False: colordown}
-        colors = [colord[open < close] for open, close in
-                  zip(opens, closes) if open != -1 and close != -1]
+        colors = [colord[open < close] for open, close in zip(opens, closes)]
 
-    useAA = 0,    # use tuple here
-    lw    = 0.5,  # use tuple here
-    lw = None
+    lw = config['_width_config']['ohlc_linewidth']
+
     rangeCollection = LineCollection(rangeSegments,
                                      colors=colors,
                                      linewidths=lw,
-                                     antialiaseds=useAA
                                      )
 
     openCollection = LineCollection(openSegments,
                                     colors=colors,
                                     linewidths=lw,
-                                    antialiaseds=useAA
                                     )
 
     closeCollection = LineCollection(closeSegments,
                                      colors=colors,
-                                     antialiaseds=useAA,
                                      linewidths=lw
                                      )
 
     return [rangeCollection, openCollection, closeCollection]
 
 
-def _construct_candlestick_collections(dates, opens, highs, lows, closes, marketcolors=None):
+def _construct_candlestick_collections(dates, opens, highs, lows, closes, marketcolors=None, config=None):
     """Represent the open, close as a bar line and high low range as a
     vertical line.
 
@@ -430,24 +422,23 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
         marketcolors = _get_mpfstyle('classic')['marketcolors']
         #print('default market colors:',marketcolors)
 
-    avg_dist_between_points = (dates[-1] - dates[0]) / float(len(dates))
+    datalen = len(dates)
 
-    delta = avg_dist_between_points / 4.0
+    avg_dist_between_points = (dates[-1] - dates[0]) / float(datalen)
+
+    delta = config['_width_config']['candle_width'] / 2.0
 
     barVerts = [((date - delta, open),
                  (date - delta, close),
                  (date + delta, close),
                  (date + delta, open))
-                for date, open, close in zip(dates, opens, closes)
-                if open != -1 and close != -1]
+                for date, open, close in zip(dates, opens, closes)]
 
     rangeSegLow   = [((date, low), (date, min(open,close)))
-                     for date, low, open, close in zip(dates, lows, opens, closes)
-                     if low != -1]
+                     for date, low, open, close in zip(dates, lows, opens, closes)]
     
     rangeSegHigh  = [((date, high), (date, max(open,close)))
-                     for date, high, open, close in zip(dates, highs, opens, closes)
-                     if high != -1]
+                     for date, high, open, close in zip(dates, highs, opens, closes)]
                       
     rangeSegments = rangeSegLow + rangeSegHigh
 
@@ -465,19 +456,16 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
     dc     = mcolors.to_rgba(marketcolors['wick']['down'], 1.0)
     wickcolor = _updown_colors(uc, dc, opens, closes)
 
-    useAA = 0,    # use tuple here
-    lw    = 0.5,  # use tuple here
-    lw = None
+    lw = config['_width_config']['candle_linewidth']
+
     rangeCollection = LineCollection(rangeSegments,
                                      colors=wickcolor,
                                      linewidths=lw,
-                                     antialiaseds=useAA
                                      )
 
     barCollection = PolyCollection(barVerts,
                                    facecolors=colors,
                                    edgecolors=edgecolor,
-                                   antialiaseds=useAA,
                                    linewidths=lw
                                    )
 
@@ -1070,7 +1058,13 @@ def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes
         This closed-form linear least squares algorithm was taken from:
         https://mmas.github.io/least-squares-fitting-numpy-scipy
         '''
-        s  = dfslice[tline_use].mean(axis=1)
+        si = dfslice[tline_use].mean(axis=1)
+        s  = si.dropna() 
+        if len(s) < 2:
+            err = 'NOT enough data for Least Squares'
+            if (len(si) > 2):
+                err += ', due to presence of NaNs'
+            raise ValueError(err)
         xs = mdates.date2num(s.index.to_pydatetime())
         ys = s.values
         a  = np.vstack([xs, np.ones(len(xs))]).T
@@ -1144,3 +1138,19 @@ class IntegerIndexDateTimeFormatter(Formatter):
         #print('x=',x,'pos=',pos,'dates[',ix,']=',date,'dateformat=',dateformat)
         return dateformat
 
+def _mscatter(x,y,ax=None, m=None, **kw):
+    import matplotlib.markers as mmarkers
+    if not ax: ax=plt.gca()
+    sc = ax.scatter(x,y,**kw)
+    if (m is not None) and (len(m)==len(x)):
+        paths = []
+        for marker in m:
+            if isinstance(marker, mmarkers.MarkerStyle):
+                marker_obj = marker
+            else:
+                marker_obj = mmarkers.MarkerStyle(marker)
+            path = marker_obj.get_path().transformed(
+                        marker_obj.get_transform())
+            paths.append(path)
+        sc.set_paths(paths)
+    return sc

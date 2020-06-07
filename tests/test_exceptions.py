@@ -79,5 +79,5 @@ def test_figratio_bounds(bolldata):
         mpf.plot(df,volume=True,figratio=(11,2),savefig=buf)
     assert '"figratio" (aspect ratio)  must be between' in str(ex.value)
     with pytest.raises(ValueError) as ex:
-        mpf.plot(df,volume=True,figratio=(10,41),savefig=buf)
+        mpf.plot(df,volume=True,figratio=(10,51),savefig=buf)
     assert '"figratio" (aspect ratio)  must be between' in str(ex.value)

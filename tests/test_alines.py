@@ -32,11 +32,7 @@ def test_alines01(bolldata):
     tname = os.path.join(tdir,fname)
     rname = os.path.join(refd,fname)
     segments1 = [('2011-09-13', 115.),('2012-02-06', 135.)]
-    fig_axis = mpf.plot(
-        df,volume=True,savefig=tname,returnfig=True,alines=segments1
-    )
-
-    plt.close(fig_axis[0])
+    mpf.plot(df,volume=True,savefig=tname,alines=segments1)
 
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')

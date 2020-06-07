@@ -32,10 +32,7 @@ def test_hlines01(bolldata):
     tname = os.path.join(tdir,fname)
     rname = os.path.join(refd,fname)
 
-    fig_axis = mpf.plot(
-        df,volume=True,savefig=tname,returnfig=True,hlines=[120]
-    )
-    plt.close(fig_axis[0])
+    mpf.plot(df,volume=True,savefig=tname,hlines=[120])
 
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')
@@ -63,7 +60,6 @@ def test_hlines02(bolldata):
         returnfig=True,
         hlines=dict(hlines=[120.000001, 130.0],linestyle='-.',colors='g')
     )
-    plt.close(fig_axis[0])
 
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')
@@ -85,15 +81,7 @@ def test_hlines02(bolldata):
 #     rname = os.path.join(refd,fname)
 # 
 #     vl = dict(vlines='02-06-2012',linestyle='-.',colors='g')
-#     fig_axis = mpf.plot(
-#         df,
-#         type='pnf',
-#         vlines=vl,
-#         savefig=tname,
-#         pointnfig_params=dict(box_size=1.),
-#         returnfig=True
-#     )
-#     plt.close(fig_axis[0])
+#     mpf.plot(df,type='pnf',vlines=vl,savefig=tname,pointnfig_params=dict(box_size=1.))
 # 
 #     tsize = os.path.getsize(tname)
 #     print(glob.glob(tname),'[',tsize,'bytes',']')
@@ -105,5 +93,3 @@ def test_hlines02(bolldata):
 #     if result is not None:
 #         print('result=',result)
 #     assert result is None
-# 
-# 

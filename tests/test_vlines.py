@@ -32,10 +32,7 @@ def test_vlines01(bolldata):
     tname = os.path.join(tdir,fname)
     rname = os.path.join(refd,fname)
 
-    fig_axis = mpf.plot(
-        df,volume=True,savefig=tname,returnfig=True,vlines=['2011-09-13']
-    )
-    plt.close(fig_axis[0])
+    mpf.plot(df,volume=True,savefig=tname,vlines=['2011-09-13'])
 
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')
@@ -55,14 +52,7 @@ def test_vlines02(bolldata):
     tname = os.path.join(tdir,fname)
     rname = os.path.join(refd,fname)
 
-    fig_axis = mpf.plot(
-        df,
-        volume=True,
-        savefig=tname,
-        returnfig=True,
-        vlines=['2011-09-13', '2012-02-06', '2011-07-01', '2012-06-28']
-    )
-    plt.close(fig_axis[0])
+    mpf.plot(df,volume=True,savefig=tname,vlines=['2011-09-13', '2012-02-06', '2011-07-01', '2012-06-28'])
 
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')
@@ -84,14 +74,7 @@ def test_vlines03(bolldata):
     rname = os.path.join(refd,fname)
 
     vl = dict(vlines='02-06-2012',linestyle='-.',colors='g')
-    fig_axis = mpf.plot(
-        df,
-        type='pnf',
-        vlines=vl,
-        savefig=tname,
-        returnfig=True
-    )
-    plt.close(fig_axis[0])
+    mpf.plot(df,type='pnf',vlines=vl,savefig=tname)
 
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')
