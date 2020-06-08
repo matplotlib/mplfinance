@@ -156,12 +156,15 @@ Returns
         lift   = panels['height'].loc[panid+1:].sum()
         panels.at[panid,'lift'] = lift
         if panid == 0:
+            # rect = [left, bottom, width, height] 
             ax0 = figure.add_axes( [0.15, 0.18+lift, 0.70, height] )
         else:
             ax0 = figure.add_axes( [0.15, 0.18+lift, 0.70, height], sharex=panels.at[0,'axes'][0] )
         ax1 = ax0.twinx()
         ax1.grid(False)
-        if panid == volume_panel:
+        if config['saxbelow']:      # issue#115 issuecomment-639446764
+            ax0.set_axisbelow(True) # so grid does not show through plot data on any panel.
+        elif panid == volume_panel:
             ax0.set_axisbelow(True) # so grid does not show through volume bars.
         panels.at[panid,'axes'] = (ax0,ax1)
 

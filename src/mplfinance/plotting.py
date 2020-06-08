@@ -223,6 +223,9 @@ def _valid_plot_kwargs():
 
         'return_width_config'       : { 'Default'     : None,
                                         'Validator'   : lambda value: isinstance(value,dict) and len(value)==0 },
+
+        'saxbelow'                  : { 'Default'     : True,  # Issue#115 Comment#639446764
+                                        'Validator'   : lambda value: isinstance(value,bool) },
     }
 
     _validate_vkwargs_dict(vkwargs)
@@ -312,7 +315,6 @@ def plot( data, **kwargs ):
         formatter = IntegerIndexDateTimeFormatter(new_dates, fmtstring)
         xdates = np.arange(len(new_dates))
 
-
     if collections is not None:
         for collection in collections:
             axA1.add_collection(collection)
@@ -342,8 +344,8 @@ def plot( data, **kwargs ):
             else:
                 axA1.plot(xdates, mavprices)
 
+    avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
     if not config['tight_layout']:
-        avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
         #print('plot: xdates[-1]=',xdates[-1])
         #print('plot: xdates[ 0]=',xdates[ 0])
         #print('plot: len(xdates)=',len(xdates))
@@ -351,8 +353,8 @@ def plot( data, **kwargs ):
         minx = xdates[0]  - avg_dist_between_points
         maxx = xdates[-1] + avg_dist_between_points
     else:
-        minx = xdates[0]
-        maxx = xdates[-1]
+        minx = xdates[0]  - (0.45 * avg_dist_between_points)
+        maxx = xdates[-1] + (0.45 * avg_dist_between_points)
 
     if len(xdates) == 1:  # kludge special case
         minx = minx - 0.75
@@ -376,7 +378,8 @@ def plot( data, **kwargs ):
         axA1.set_ylim(config['set_ylim'][0], config['set_ylim'][1])
     elif config['tight_layout']:
         axA1.set_xlim(minx,maxx)
-        axA1.set_ylim(miny,maxy)
+        ydelta = 0.01 * (maxy-miny)
+        axA1.set_ylim(miny-ydelta,maxy+ydelta)
     else:
         corners = (minx, miny), (maxx, maxy)
         axA1.update_datalim(corners)
@@ -616,7 +619,13 @@ def plot( data, **kwargs ):
         volumeAxes.set_ylabel(vol_label)
 
     if config['title'] is not None:
-        fig.suptitle(config['title'],size='x-large',weight='semibold')
+        if config['tight_layout']:
+            # IMPORTANT: 0.89 is based on the top of the top panel
+            #            being at 0.18+0.7 = 0.88.  See _panels.py
+            # If the value changes there, then it needs to change here.
+            fig.suptitle(config['title'],size='x-large',weight='semibold', va='bottom', y=0.89)
+        else:
+            fig.suptitle(config['title'],size='x-large',weight='semibold', va='center')
 
     for panid,row in panels.iterrows():
         if not row['used2nd']:
