@@ -515,6 +515,8 @@ def plot( data, **kwargs ):
                 else: 
                     ax = panels.at[panid,'axes'][0]
 
+                if (apdict["ylabel"] is not None):
+                    ax.set_ylabel(apdict["ylabel"])
 
                 aptype = apdict['type']
                 if aptype == 'scatter':
@@ -711,7 +713,10 @@ def _valid_addplot_kwargs():
                                                         all([isinstance(v,(int,float)) for v in value]) },
 
         'secondary_y' : { 'Default'     : 'auto',
-                          'Validator'   : lambda value: isinstance(value,bool) or value == 'auto' }
+                          'Validator'   : lambda value: isinstance(value,bool) or value == 'auto' },
+        
+        'ylabel'      : { 'Default'     : None,
+                          'Validator'   : lambda value: isinstance(value,str) },
     }
 
     _validate_vkwargs_dict(vkwargs)
