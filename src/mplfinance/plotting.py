@@ -223,6 +223,9 @@ def _valid_plot_kwargs():
 
         'return_width_config'       : { 'Default'     : None,
                                         'Validator'   : lambda value: isinstance(value,dict) and len(value)==0 },
+
+        'saxbelow'                  : { 'Default'     : True,  # Issue#115 Comment#639446764
+                                        'Validator'   : lambda value: isinstance(value,bool) },
     }
 
     _validate_vkwargs_dict(vkwargs)
