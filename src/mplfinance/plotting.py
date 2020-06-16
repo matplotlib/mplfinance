@@ -306,7 +306,8 @@ def plot( data, **kwargs ):
 
     collections = None
     if ptype == 'line':
-        axA1.plot(xdates, closes, color=config['linecolor'])
+        lw = config['_width_config']['line_width']
+        axA1.plot(xdates, closes, color=config['linecolor'], linewidth=lw)
     else:
         collections =_construct_mpf_collections(ptype,dates,xdates,opens,highs,lows,closes,volumes,config,style)
 
@@ -333,16 +334,18 @@ def plot( data, **kwargs ):
 
         # Get rcParams['lines.linewidth'] and scale it
         # according to the deinsity of data??
-            
+
         for mav in mavgs:
             if ptype in VALID_PMOVE_TYPES:
                 mavprices = pd.Series(brick_values).rolling(mav).mean().values
             else:
                 mavprices = pd.Series(closes).rolling(mav).mean().values
+
+            lw = config['_width_config']['line_width']
             if mavc:
-                axA1.plot(xdates, mavprices, color=next(mavc))
+                axA1.plot(xdates, mavprices, linewidth=lw, color=next(mavc))
             else:
-                axA1.plot(xdates, mavprices)
+                axA1.plot(xdates, mavprices, linewidth=lw)
 
     avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
     if not config['tight_layout']:
