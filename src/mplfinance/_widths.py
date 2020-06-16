@@ -40,7 +40,7 @@ def _valid_scale_width_kwargs():
         'candle'  : { 'Default'     : None,
                       'Validator'   : lambda value: isinstance(value,(float,int)) },
 
-        'line'    : { 'Default'     : None,
+        'lines'   : { 'Default'     : None,
                       'Validator'   : lambda value: isinstance(value,(float,int)) },
     }
     _validate_vkwargs_dict(vkwargs)
@@ -118,8 +118,8 @@ def _determine_width_config( xdates, config ):
             width_config['ohlc_ticksize'] *= scale['ohlc']
         if scale['candle'] is not None:
             width_config['candle_width']  *= scale['candle']
-        if scale['line'] is not None:
-            width_config['line_width']    *= scale['line']
+        if scale['lines'] is not None:
+            width_config['line_width']    *= scale['lines']
         
 
     if config['update_width_config'] is not None:
