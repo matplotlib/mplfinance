@@ -10,14 +10,13 @@ def _get_widths_df():
     and observing which numbers gave the "best" appearance.
     '''
     numpoints = [n for n in range(30,241,30)]
-    #volume_width     = (0.95, 0.90,  0.85,  0.80,  0.75,  0.70,  0.65, 0.60 )
-    #volume_width     = (0.95, 0.925,  0.90,  0.875,  0.85,  0.825,  0.80, 0.775 )
     volume_width     = (0.98, 0.96,  0.95,  0.925,  0.9,  0.9,  0.875, 0.825 )
     volume_linewidth = tuple([0.65]*8)
-    candle_width     = (0.65, 0.575, 0.50, 0.425, 0.350, 0.312, 0.312, 0.321)
-    candle_linewidth = (1.00, 0.875, 0.75, 0.625, 0.500, 0.438, 0.438, 0.438)
+    candle_width     = (0.65, 0.575, 0.50, 0.445, 0.435, 0.425, 0.420, 0.415)
+    candle_linewidth = (1.00, 0.875, 0.75, 0.625, 0.500, 0.438, 0.435, 0.435)
     ohlc_tickwidth   = tuple([0.35]*8)
     ohlc_linewidth   = (1.50, 1.175, 0.85, 0.525, 0.525, 0.525, 0.525, 0.525)
+    line_width   = (2.00, 1.600, 1.15, 0.720, 0.715, 0.710, 0.705, 0.700)
     widths = {}
     widths['vw']  = volume_width
     widths['vlw'] = volume_linewidth
@@ -25,6 +24,7 @@ def _get_widths_df():
     widths['clw'] = candle_linewidth
     widths['ow']  = ohlc_tickwidth
     widths['olw'] = ohlc_linewidth
+    widths['lw']  = line_width
     return pd.DataFrame(widths,index=numpoints)
 
 _widths = _get_widths_df()
@@ -38,6 +38,9 @@ def _valid_scale_width_kwargs():
                       'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'candle'  : { 'Default'     : None,
+                      'Validator'   : lambda value: isinstance(value,(float,int)) },
+
+        'line'    : { 'Default'     : None,
                       'Validator'   : lambda value: isinstance(value,(float,int)) },
     }
     _validate_vkwargs_dict(vkwargs)
@@ -62,6 +65,9 @@ def _valid_update_width_kwargs():
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'candle_linewidth' : { 'Default'     : None,
+                               'Validator'   : lambda value: isinstance(value,(float,int)) },
+
+        'line_width'       : { 'Default'     : None,
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
     }
     _validate_vkwargs_dict(vkwargs)
@@ -91,6 +97,7 @@ def _determine_width_config( xdates, config ):
         width_config['ohlc_linewidth'  ] = None
         width_config['candle_width'    ] = avg_dist_between_points / 2.0
         width_config['candle_linewidth'] = None
+        width_config['line_width'      ] = None
 
     else: # config['width_adjuster_version'] == 'v1'
 
@@ -100,16 +107,19 @@ def _determine_width_config( xdates, config ):
         width_config['ohlc_linewidth'  ] = _dfinterpolate(_widths,datalen,'olw')
         width_config['candle_width'    ] = _dfinterpolate(_widths,datalen,'cw' ) * adjust
         width_config['candle_linewidth'] = _dfinterpolate(_widths,datalen,'clw')
+        width_config['line_width'      ] = _dfinterpolate(_widths,datalen,'lw')
 
     if config['scale_width_adjustment'] is not None:
 
         scale = _process_kwargs(config['scale_width_adjustment'],_valid_scale_width_kwargs())
         if scale['volume'] is not None:
-            width_config['volume_width'] *= scale['volume']
+            width_config['volume_width']  *= scale['volume']
         if scale['ohlc'] is not None:
             width_config['ohlc_ticksize'] *= scale['ohlc']
         if scale['candle'] is not None:
-            width_config['candle_width'] *= scale['candle']
+            width_config['candle_width']  *= scale['candle']
+        if scale['line'] is not None:
+            width_config['line_width']    *= scale['line']
         
 
     if config['update_width_config'] is not None:

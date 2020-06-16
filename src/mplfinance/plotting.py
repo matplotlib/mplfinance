@@ -306,7 +306,8 @@ def plot( data, **kwargs ):
 
     collections = None
     if ptype == 'line':
-        axA1.plot(xdates, closes, color=config['linecolor'])
+        lw = config['_width_config']['line_width']
+        axA1.plot(xdates, closes, color=config['linecolor'], linewidth=lw)
     else:
         collections =_construct_mpf_collections(ptype,dates,xdates,opens,highs,lows,closes,volumes,config,style)
 
@@ -340,8 +341,7 @@ def plot( data, **kwargs ):
             else:
                 mavprices = pd.Series(closes).rolling(mav).mean().values
 
-            lw = config['_width_config']['ohlc_linewidth']
-            if lw is not None: lw *= 1.25
+            lw = config['_width_config']['line_width']
             if mavc:
                 axA1.plot(xdates, mavprices, linewidth=lw, color=next(mavc))
             else:
