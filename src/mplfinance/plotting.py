@@ -474,7 +474,50 @@ def plot( data, **kwargs ):
             raise TypeError('addplot must be `dict`, or `list of dict`, NOT '+str(type(addplot)))
 
         for apdict in addplot:
+
+            panid = apdict['panel']
+            if   panid == 'main' : panid = 0  # for backwards compatibility
+            elif panid == 'lower': panid = 1  # for backwards compatibility
+
+            #--------------------------------------------------------------#
+            # Note: _auto_secondary_y() sets the 'magnitude' column in the
+            #       `panels` dataframe, which is needed for automatically
+            #       determining if secondary_y is needed.  Therefore we call
+            #       _auto_secondary_y() for *all* addplots, even those that
+            #       are set to True or False (not 'auto') for secondary_y
+            #       because their magnitudes may be needed if *any* apdicts
+            #       contain secondary_y='auto'.
+            #       In theory we could first loop through all apdicts to see
+            #       if any have secondary_y='auto', but since that is the
+            #       default value, we will just assume we have at least one.
+
             apdata = apdict['data']
+            aptype = apdict['type']
+
+            if aptype == 'ohlc' or aptype == 'candle':
+                #import pdb; pdb.set_trace()
+                if not isinstance(apdata,pd.DataFrame):
+                    raise TypeError('addplot type "'+aptype+'" MUST be accompanied by addplot data of type `pd.DataFrame`')
+                d,o,h,l,c,v = _check_and_prepare_data(apdata,config)
+                collections = _construct_mpf_collections(aptype,d,xdates,o,h,l,c,v,config,style)
+                lo = math.log(max(math.fabs(np.nanmin(l)),1e-7),10) - 0.5
+                hi = math.log(max(math.fabs(np.nanmax(h)),1e-7),10) + 0.5
+                secondary_y = _auto_secondary_y( panels, panid, lo, hi )
+                if 'auto' != apdict['secondary_y']:
+                    secondary_y = apdict['secondary_y'] 
+                if secondary_y:
+                    ax = panels.at[panid,'axes'][1] 
+                    panels.at[panid,'used2nd'] = True
+                else: 
+                    ax = panels.at[panid,'axes'][0]
+                for coll in collections:
+                    ax.add_collection(coll)
+                datalim = (minx, min(l)), (maxx, max(h))
+                #ax.update_datalim(datalim)
+                ax.autoscale_view()  # Is this really necessary??
+                #ax.set_ylim(min(l),max(h))
+                continue
+
             if isinstance(apdata,list) and not isinstance(apdata[0],(float,int)):
                 raise TypeError('apdata is list but NOT of float or int')
             if isinstance(apdata,pd.DataFrame): 
@@ -488,26 +531,12 @@ def plot( data, **kwargs ):
                     ydata = apdata.loc[:,column]
                 else:
                     ydata = column
-                yd = [y for y in ydata if not math.isnan(y)]
-                ymhi = math.log(max(math.fabs(np.nanmax(yd)),1e-7),10)
-                ymlo = math.log(max(math.fabs(np.nanmin(yd)),1e-7),10)
                 secondary_y = False
-                panid = apdict['panel']
-                if   panid == 'main' : panid = 0  # for backwards compatibility
-                elif panid == 'lower': panid = 1  # for backwards compatibility
                 if apdict['secondary_y'] == 'auto':
-                    # If mag(nitude) for this panel is not yet set, then set it
-                    # here, as this is the first ydata to be plotted on this panel:
-                    # i.e. consider this to be the 'primary' axis for this panel.
-                    p = panid,'mag'
-                    if panels.at[p] is None:
-                        panels.at[p] = {'lo':ymlo,'hi':ymhi}
-                    elif ymlo < panels.at[p]['lo'] or ymhi > panels.at[p]['hi']:
-                        secondary_y = True
-                    #if secondary_y:
-                    #    print('auto says USE secondary_y ... for panel',panid)
-                    #else:
-                    #    print('auto says do NOT use secondary_y ... for panel',panid)
+                    yd = [y for y in ydata if not math.isnan(y)]
+                    ymhi = math.log(max(math.fabs(np.nanmax(yd)),1e-7),10)
+                    ymlo = math.log(max(math.fabs(np.nanmin(yd)),1e-7),10)
+                    secondary_y = _auto_secondary_y( panels, panid, ymlo, ymhi )
                 else:
                     secondary_y = apdict['secondary_y']
                     #print("apdict['secondary_y'] says secondary_y is",secondary_y)
@@ -540,13 +569,6 @@ def plot( data, **kwargs ):
                     ls    = apdict['linestyle']
                     color = apdict['color']
                     ax.plot(xdates, ydata, linestyle=ls, color=color)
-                #elif aptype == 'ohlc' or aptype == 'candle':
-                # This won't work as is, because here we are looping through one column at a time
-                # and mpf_collections needs ohlc columns:
-                #    collections =_construct_mpf_collections(aptype,dates,xdates,opens,highs,lows,closes,volumes,config,style)
-                #    if len(collections) == 1: collections = [collections]
-                #    for collection in collections:
-                #        ax.add_collection(collection)
                 else:
                     raise ValueError('addplot type "'+str(aptype)+'" NOT yet supported.')
 
@@ -604,6 +626,12 @@ def plot( data, **kwargs ):
         #fig.autofmt_xdate()
 
     axA1.autoscale_view()  # Is this really necessary??
+                           # It appears to me, based on experience coding types 'ohlc' and 'candle'
+                           # for `addplot`, that this IS necessary when the only thing done to the
+                           # the axes is .add_collection().  (However, if ax.plot() .scatter() or
+                           # .bar() was called, then possibly this is not necessary; not entirely
+                           # sure, but it definitely was necessary to get 'ohlc' and 'candle' 
+                           # working in `addplot`).
 
     axA1.set_ylabel(config['ylabel'])
 
@@ -674,12 +702,27 @@ def plot( data, **kwargs ):
     # print('rcpdfhead(3)=',rcpdf.head(3))
     # return # rcpdf
 
+def _auto_secondary_y( panels, panid, ylo, yhi ):
+    # If mag(nitude) for this panel is not yet set, then set it
+    # here, as this is the first ydata to be plotted on this panel:
+    # i.e. consider this to be the 'primary' axis for this panel.
+    secondary_y = False
+    p = panid,'mag'
+    if panels.at[p] is None:
+        panels.at[p] = {'lo':ylo,'hi':yhi}
+    elif ylo < panels.at[p]['lo'] or yhi > panels.at[p]['hi']:
+        secondary_y = True
+    #if secondary_y:
+    #    print('auto says USE secondary_y ... for panel',panid)
+    #else:
+    #    print('auto says do NOT use secondary_y ... for panel',panid)
+    return secondary_y
 
 def _valid_addplot_kwargs():
 
     valid_linestyles = ('-','solid','--','dashed','-.','dashdot','.','dotted',None,' ','')
     #valid_types = ('line','scatter','bar','ohlc','candle')
-    valid_types = ('line','scatter','bar')
+    valid_types = ('line','scatter','bar', 'ohlc', 'candle')
 
     vkwargs = {
         'scatter'     : { 'Default'     : False,
