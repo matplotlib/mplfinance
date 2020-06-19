@@ -349,14 +349,10 @@ def plot( data, **kwargs ):
 
     avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
     if not config['tight_layout']:
-        #print('plot: xdates[-1]=',xdates[-1])
-        #print('plot: xdates[ 0]=',xdates[ 0])
-        #print('plot: len(xdates)=',len(xdates))
-        #print('plot: avg_dist_between_points =',avg_dist_between_points)
         minx = xdates[0]  - avg_dist_between_points
         maxx = xdates[-1] + avg_dist_between_points
     else:
-        minx = xdates[0]  - (0.45 * avg_dist_between_points)
+        minx = xdates[0] - (0.45 * avg_dist_between_points)
         maxx = xdates[-1] + (0.45 * avg_dist_between_points)
 
     if len(xdates) == 1:  # kludge special case
@@ -371,11 +367,6 @@ def plot( data, **kwargs ):
 
     miny = np.nanmin(_lows)
     maxy = np.nanmax(_highs)
-    #if len(xdates) > 1:
-    #   stdy = (stat.stdev(_lows) + stat.stdev(_highs)) / 2.0
-    #else:  # kludge special case
-    #   stdy = 0.02 * math.fabs(maxy - miny)
-    # print('minx,miny,maxx,maxy,stdy=',minx,miny,maxx,maxy,stdy)
 
     if config['set_ylim'] is not None:
         axA1.set_ylim(config['set_ylim'][0], config['set_ylim'][1])
@@ -397,7 +388,8 @@ def plot( data, **kwargs ):
             if config['volume']:
                 retdict[prekey+'_volumes'] = volumes
         if mavgs is not None:
-            for i in range(0, len(mavgs)):
+            # This is WRONG! Returning the same mavprices for all mavgs ??!
+            for i in range(0, len(mavgs)):     
                 retdict['mav' + str(mavgs[i])] = mavprices
         retdict['minx'] = minx
         retdict['maxx'] = maxx
@@ -669,19 +661,17 @@ def plot( data, **kwargs ):
 
     if config['axisoff']:
         for ax in axlist:
-            ax.set_xlim(xdates[0],xdates[-1])
             ax.set_axis_off()
 
     if config['savefig'] is not None:
         save = config['savefig']
         if isinstance(save,dict):
-            # Expand to fill chart if axisoff
-            if config['axisoff'] and 'bbox_inches' not in save:
+            if config['tight_layout'] and 'bbox_inches' not in save:
                 plt.savefig(**save,bbox_inches='tight')
             else:
                 plt.savefig(**save)
         else:
-            if config['axisoff']:
+            if config['tight_layout']:
                 plt.savefig(save,bbox_inches='tight')
             else:
                 plt.savefig(save)
