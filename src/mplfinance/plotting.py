@@ -253,10 +253,12 @@ def plot( data, **kwargs ):
 
     style = config['style']
     if isinstance(style,str):
-        style = _styles._get_mpfstyle(style)
+        style = config['style'] = _styles._get_mpfstyle(style)
 
     if isinstance(style,dict):
         _styles._apply_mpfstyle(style)
+    else:
+       raise TypeError('style should be a `dict`; why is it not?')
     
     if config['figsize'] is None:
         w,h = config['figratio']
@@ -320,39 +322,17 @@ def plot( data, **kwargs ):
         for collection in collections:
             axA1.add_collection(collection)
 
-    mavgs = config['mav']
-    if mavgs is not None:
-        if isinstance(mavgs,int):
-            mavgs = mavgs,      # convert to tuple 
-        if len(mavgs) > 7:
-            mavgs = mavgs[0:7]  # take at most 7
-     
-        if style['mavcolors'] is not None:
-            mavc = cycle(style['mavcolors'])
-        else:
-            mavc = None
-
-        # Get rcParams['lines.linewidth'] and scale it
-        # according to the deinsity of data??
-
-        for mav in mavgs:
-            if ptype in VALID_PMOVE_TYPES:
-                mavprices = pd.Series(brick_values).rolling(mav).mean().values
-            else:
-                mavprices = pd.Series(closes).rolling(mav).mean().values
-
-            lw = config['_width_config']['line_width']
-            if mavc:
-                axA1.plot(xdates, mavprices, linewidth=lw, color=next(mavc))
-            else:
-                axA1.plot(xdates, mavprices, linewidth=lw)
+    if ptype in VALID_PMOVE_TYPES:
+        mavprices = _plot_mav(axA1,config,xdates,brick_values)
+    else:
+        mavprices = _plot_mav(axA1,config,xdates,closes)
 
     avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
     if not config['tight_layout']:
         minx = xdates[0]  - avg_dist_between_points
         maxx = xdates[-1] + avg_dist_between_points
     else:
-        minx = xdates[0] - (0.45 * avg_dist_between_points)
+        minx = xdates[0]  - (0.45 * avg_dist_between_points)
         maxx = xdates[-1] + (0.45 * avg_dist_between_points)
 
     if len(xdates) == 1:  # kludge special case
@@ -387,10 +367,13 @@ def plot( data, **kwargs ):
             retdict[prekey+'_size'] = size
             if config['volume']:
                 retdict[prekey+'_volumes'] = volumes
-        if mavgs is not None:
-            # This is WRONG! Returning the same mavprices for all mavgs ??!
-            for i in range(0, len(mavgs)):     
-                retdict['mav' + str(mavgs[i])] = mavprices
+        if config['mav'] is not None:
+            mav = config['mav']
+            if len(mav) != len(mavprices):
+                warnings.warn('len(mav)='+str(len(mav))+' BUT len(mavprices)='+str(len(mavprices)))
+            else:
+                for jj in range(0,len(mav)):     
+                    retdict['mav' + str(mav[jj])] = mavprices[jj]
         retdict['minx'] = minx
         retdict['maxx'] = maxx
         retdict['miny'] = miny
@@ -504,10 +487,13 @@ def plot( data, **kwargs ):
                     ax = panels.at[panid,'axes'][0]
                 for coll in collections:
                     ax.add_collection(coll)
-                datalim = (minx, min(l)), (maxx, max(h))
+                if apdict['mav'] is not None:
+                    apmavprices = _plot_mav(ax,config,xdates,c,apdict['mav'])
+                #datalim = (minx, min(l)), (maxx, max(h))
                 #ax.update_datalim(datalim)
-                ax.autoscale_view()  # Is this really necessary??
-                #ax.set_ylim(min(l),max(h))
+                ax.autoscale_view() 
+                if (apdict["ylabel"] is not None):
+                    ax.set_ylabel(apdict["ylabel"])
                 continue
 
             if isinstance(apdata,list) and not isinstance(apdata[0],(float,int)):
@@ -563,7 +549,8 @@ def plot( data, **kwargs ):
                     ax.plot(xdates, ydata, linestyle=ls, color=color)
                 else:
                     raise ValueError('addplot type "'+str(aptype)+'" NOT yet supported.')
-
+                if apdict['mav'] is not None:
+                    apmavprices = _plot_mav(ax,config,xdates,ydata,apdict['mav'])
 
     if config['fill_between'] is not None:
         fb    = config['fill_between']
@@ -692,6 +679,34 @@ def plot( data, **kwargs ):
     # print('rcpdfhead(3)=',rcpdf.head(3))
     # return # rcpdf
 
+def _plot_mav(ax,config,xdates,prices,apmav=None):
+    style = config['style']
+    if apmav is not None:
+        mavgs = apmav
+    else:
+        mavgs = config['mav']
+    mavp_list = []
+    if mavgs is not None:
+        if isinstance(mavgs,int):
+            mavgs = mavgs,      # convert to tuple 
+        if len(mavgs) > 7:
+            mavgs = mavgs[0:7]  # take at most 7
+     
+        if style['mavcolors'] is not None:
+            mavc = cycle(style['mavcolors'])
+        else:
+            mavc = None
+
+        for mav in mavgs:
+            mavprices = pd.Series(prices).rolling(mav).mean().values
+            lw = config['_width_config']['line_width']
+            if mavc:
+                ax.plot(xdates, mavprices, linewidth=lw, color=next(mavc))
+            else:
+                ax.plot(xdates, mavprices, linewidth=lw)
+            mavp_list.append(mavprices)
+    return mavp_list
+
 def _auto_secondary_y( panels, panid, ylo, yhi ):
     # If mag(nitude) for this panel is not yet set, then set it
     # here, as this is the first ydata to be plotted on this panel:
@@ -711,7 +726,6 @@ def _auto_secondary_y( panels, panid, ylo, yhi ):
 def _valid_addplot_kwargs():
 
     valid_linestyles = ('-','solid','--','dashed','-.','dashdot','.','dotted',None,' ','')
-    #valid_types = ('line','scatter','bar','ohlc','candle')
     valid_types = ('line','scatter','bar', 'ohlc', 'candle')
 
     vkwargs = {
@@ -721,6 +735,9 @@ def _valid_addplot_kwargs():
         'type'        : { 'Default'     : 'line',
                           'Validator'   : lambda value: value in valid_types },
 
+        'mav'         : { 'Default'     : None,
+                          'Validator'   : _mav_validator },
+        
         'panel'       : { 'Default'     : 0, 
                           'Validator'   : lambda value: _valid_panel_id(value) },
 
