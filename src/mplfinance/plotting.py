@@ -150,7 +150,7 @@ def _valid_plot_kwargs():
         'savefig'                   : { 'Default'     : None, 
                                         'Validator'   : lambda value: isinstance(value,dict) or isinstance(value,str) or isinstance(value, io.BytesIO) },
  
-        'block'                     : { 'Default'     : True, 
+        'block'                     : { 'Default'     : None, 
                                         'Validator'   : lambda value: isinstance(value,bool) },
  
         'returnfig'                 : { 'Default'     : False, 
