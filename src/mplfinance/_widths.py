@@ -16,7 +16,7 @@ def _get_widths_df():
     candle_linewidth = (1.00, 0.875, 0.75, 0.625, 0.500, 0.438, 0.435, 0.435)
     ohlc_tickwidth   = tuple([0.35]*8)
     ohlc_linewidth   = (1.50, 1.175, 0.85, 0.525, 0.525, 0.525, 0.525, 0.525)
-    line_width   = (2.00, 1.600, 1.15, 0.720, 0.715, 0.710, 0.705, 0.700)
+    line_width       = (2.25, 1.8, 1.3, 0.813, 0.807, 0.801, 0.796, 0.791)
     widths = {}
     widths['vw']  = volume_width
     widths['vlw'] = volume_linewidth

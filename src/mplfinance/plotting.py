@@ -564,7 +564,7 @@ def plot( data, **kwargs ):
                 elif aptype == 'line':
                     ls     = apdict['linestyle']
                     color  = apdict['color']
-                    width  = apdict['width']
+                    width  = apdict['width'] if apdict['width'] is not None else 1.6*config['_width_config']['line_width']
                     alpha  = apdict['alpha']
                     ax.plot(xdates,ydata,linestyle=ls,color=color,linewidth=width,alpha=alpha)
                 else:
