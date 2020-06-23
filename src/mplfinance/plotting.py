@@ -468,44 +468,9 @@ def plot( data, **kwargs ):
             if apdict['y_on_right'] is not None:
                 panels.at[panid,'y_on_right'] = apdict['y_on_right']
 
-            #--------------------------------------------------------------#
-            # Note: _auto_secondary_y() sets the 'magnitude' column in the
-            #       `panels` dataframe, which is needed for automatically
-            #       determining if secondary_y is needed.  Therefore we call
-            #       _auto_secondary_y() for *all* addplots, even those that
-            #       are set to True or False (not 'auto') for secondary_y
-            #       because their magnitudes may be needed if *any* apdicts
-            #       contain secondary_y='auto'.
-            #       In theory we could first loop through all apdicts to see
-            #       if any have secondary_y='auto', but since that is the
-            #       default value, we will just assume we have at least one.
-
-            apdata = apdict['data']
             aptype = apdict['type']
-
             if aptype == 'ohlc' or aptype == 'candle':
-                #import pdb; pdb.set_trace()
-                if not isinstance(apdata,pd.DataFrame):
-                    raise TypeError('addplot type "'+aptype+'" MUST be accompanied by addplot data of type `pd.DataFrame`')
-                d,o,h,l,c,v = _check_and_prepare_data(apdata,config)
-                collections = _construct_mpf_collections(aptype,d,xdates,o,h,l,c,v,config,style)
-                lo = math.log(max(math.fabs(np.nanmin(l)),1e-7),10) - 0.5
-                hi = math.log(max(math.fabs(np.nanmax(h)),1e-7),10) + 0.5
-                secondary_y = _auto_secondary_y( panels, panid, lo, hi )
-                if 'auto' != apdict['secondary_y']:
-                    secondary_y = apdict['secondary_y'] 
-                if secondary_y:
-                    ax = panels.at[panid,'axes'][1] 
-                    panels.at[panid,'used2nd'] = True
-                else: 
-                    ax = panels.at[panid,'axes'][0]
-                for coll in collections:
-                    ax.add_collection(coll)
-                if apdict['mav'] is not None:
-                    apmavprices = _plot_mav(ax,config,xdates,c,apdict['mav'])
-                #datalim = (minx, min(l)), (maxx, max(h))
-                #ax.update_datalim(datalim)
-                ax.autoscale_view() 
+                ax = _addplot_collections(panid,panels,apdict,xdates,config)
                 if (apdict['ylabel'] is not None):
                     ax.set_ylabel(apdict['ylabel'])
                 if apdict['ylim'] is not None:
@@ -517,77 +482,30 @@ def plot( data, **kwargs ):
                #else:
                #    corners = (minx, miny), (maxx, maxy)
                #    ax.update_datalim(corners)
-                continue
-
-            if isinstance(apdata,list) and not isinstance(apdata[0],(float,int)):
-                raise TypeError('apdata is list but NOT of float or int')
-            if isinstance(apdata,pd.DataFrame): 
-                havedf = True
-            else:
-                havedf = False      # must be a single series or array
-                apdata = [apdata,]  # make it iterable
-
-            for column in apdata:
-                if havedf:
-                    ydata = apdata.loc[:,column]
+            else:         
+                apdata = apdict['data']
+                if isinstance(apdata,list) and not isinstance(apdata[0],(float,int)):
+                    raise TypeError('apdata is list but NOT of float or int')
+                if isinstance(apdata,pd.DataFrame): 
+                    havedf = True
                 else:
-                    ydata = column
-                secondary_y = False
-                if apdict['secondary_y'] == 'auto':
-                    yd = [y for y in ydata if not math.isnan(y)]
-                    ymhi = math.log(max(math.fabs(np.nanmax(yd)),1e-7),10)
-                    ymlo = math.log(max(math.fabs(np.nanmin(yd)),1e-7),10)
-                    secondary_y = _auto_secondary_y( panels, panid, ymlo, ymhi )
-                else:
-                    secondary_y = apdict['secondary_y']
-                    #print("apdict['secondary_y'] says secondary_y is",secondary_y)
+                    havedf = False      # must be a single series or array
+                    apdata = [apdata,]  # make it iterable
 
-                if secondary_y:
-                    ax = panels.at[panid,'axes'][1] 
-                    panels.at[panid,'used2nd'] = True
-                else: 
-                    ax = panels.at[panid,'axes'][0]
-
-                aptype = apdict['type']
-                if aptype == 'scatter':
-                    size  = apdict['markersize']
-                    mark  = apdict['marker']
-                    color = apdict['color']
-                    alpha = apdict['alpha']
-                    if isinstance(mark,(list,tuple,np.ndarray)):
-                        _mscatter(xdates,ydata,ax=ax,m=mark,s=size,color=color,alpha=alpha)
-                    else:
-                        ax.scatter(xdates,ydata,s=size,marker=mark,color=color,alpha=alpha)
-                elif aptype == 'bar':
-                    width  = 0.8 if apdict['width'] is None else apdict['width']
-                    bottom = apdict['bottom']
-                    color  = apdict['color']
-                    alpha  = apdict['alpha']
-                    ax.bar(xdates,ydata,width=width,bottom=bottom,color=color,alpha=alpha)
-                elif aptype == 'line':
-                    ls     = apdict['linestyle']
-                    color  = apdict['color']
-                    width  = apdict['width'] if apdict['width'] is not None else 1.6*config['_width_config']['line_width']
-                    alpha  = apdict['alpha']
-                    ax.plot(xdates,ydata,linestyle=ls,color=color,linewidth=width,alpha=alpha)
-                else:
-                    raise ValueError('addplot type "'+str(aptype)+'" NOT yet supported.')
-
-                if apdict['mav'] is not None:
-                    apmavprices = _plot_mav(ax,config,xdates,ydata,apdict['mav'])
-
-                if (apdict["ylabel"] is not None):
-                    ax.set_ylabel(apdict["ylabel"])
-
-                if apdict['ylim'] is not None:
-                    ax.set_ylim(apdict['ylim'][0],apdict['ylim'][1])
-               #elif config['tight_layout']:
-               #    ax.set_xlim(minx,maxx)
-               #    ydelta = 0.01 * (maxy-miny)
-               #    ax.set_ylim(miny-ydelta,maxy+ydelta)
-               #else:
-               #    corners = (minx, miny), (maxx, maxy)
-               #    ax.update_datalim(corners)
+                for column in apdata:
+                    ydata = apdata.loc[:,column] if havedf else column
+                    ax = _addplot_columns(panid,panels,ydata,apdict,xdates,config)
+                    if (apdict["ylabel"] is not None):
+                        ax.set_ylabel(apdict["ylabel"])
+                    if apdict['ylim'] is not None:
+                        ax.set_ylim(apdict['ylim'][0],apdict['ylim'][1])
+                   #elif config['tight_layout']:
+                   #    ax.set_xlim(minx,maxx)
+                   #    ydelta = 0.01 * (maxy-miny)
+                   #    ax.set_ylim(miny-ydelta,maxy+ydelta)
+                   #else:
+                   #    corners = (minx, miny), (maxx, maxy)
+                   #    ax.update_datalim(corners)
 
     if config['fill_between'] is not None:
         fb    = config['fill_between']
@@ -703,6 +621,95 @@ def plot( data, **kwargs ):
     # print('type(rcpdf)=',type(rcpdf))
     # print('rcpdfhead(3)=',rcpdf.head(3))
     # return # rcpdf
+
+def _addplot_collections(panid,panels,apdict,xdates,config):
+
+    apdata = apdict['data']
+    aptype = apdict['type']
+   
+    #--------------------------------------------------------------#
+    # Note: _auto_secondary_y() sets the 'magnitude' column in the
+    #       `panels` dataframe, which is needed for automatically
+    #       determining if secondary_y is needed.  Therefore we call
+    #       _auto_secondary_y() for *all* addplots, even those that
+    #       are set to True or False (not 'auto') for secondary_y
+    #       because their magnitudes may be needed if *any* apdicts
+    #       contain secondary_y='auto'.
+    #       In theory we could first loop through all apdicts to see
+    #       if any have secondary_y='auto', but since that is the
+    #       default value, we will just assume we have at least one.
+
+    valid_apc_types = ['ohlc','candle']
+    if aptype not in valid_apc_types:
+        raise TypeError('Invalid aptype='+str(aptype)+'. Must be one of '+str(valid_apc_types))
+    if not isinstance(apdata,pd.DataFrame):
+        raise TypeError('addplot type "'+aptype+'" MUST be accompanied by addplot data of type `pd.DataFrame`')
+    d,o,h,l,c,v = _check_and_prepare_data(apdata,config)
+    collections = _construct_mpf_collections(aptype,d,xdates,o,h,l,c,v,config,config['style'])
+    lo = math.log(max(math.fabs(np.nanmin(l)),1e-7),10) - 0.5
+    hi = math.log(max(math.fabs(np.nanmax(h)),1e-7),10) + 0.5
+    secondary_y = _auto_secondary_y( panels, panid, lo, hi )
+    if 'auto' != apdict['secondary_y']:
+        secondary_y = apdict['secondary_y'] 
+    if secondary_y:
+        ax = panels.at[panid,'axes'][1] 
+        panels.at[panid,'used2nd'] = True
+    else: 
+        ax = panels.at[panid,'axes'][0]
+    for coll in collections:
+        ax.add_collection(coll)
+    if apdict['mav'] is not None:
+        apmavprices = _plot_mav(ax,config,xdates,c,apdict['mav'])
+    ax.autoscale_view()
+    return ax
+
+def _addplot_columns(panid,panels,ydata,apdict,xdates,config):
+    secondary_y = False
+    if apdict['secondary_y'] == 'auto':
+        yd = [y for y in ydata if not math.isnan(y)]
+        ymhi = math.log(max(math.fabs(np.nanmax(yd)),1e-7),10)
+        ymlo = math.log(max(math.fabs(np.nanmin(yd)),1e-7),10)
+        secondary_y = _auto_secondary_y( panels, panid, ymlo, ymhi )
+    else:
+        secondary_y = apdict['secondary_y']
+        #print("apdict['secondary_y'] says secondary_y is",secondary_y)
+
+    if secondary_y:
+        ax = panels.at[panid,'axes'][1] 
+        panels.at[panid,'used2nd'] = True
+    else: 
+        ax = panels.at[panid,'axes'][0]
+
+    aptype = apdict['type']
+    if aptype == 'scatter':
+        size  = apdict['markersize']
+        mark  = apdict['marker']
+        color = apdict['color']
+        alpha = apdict['alpha']
+        if isinstance(mark,(list,tuple,np.ndarray)):
+            _mscatter(xdates,ydata,ax=ax,m=mark,s=size,color=color,alpha=alpha)
+        else:
+            ax.scatter(xdates,ydata,s=size,marker=mark,color=color,alpha=alpha)
+    elif aptype == 'bar':
+        width  = 0.8 if apdict['width'] is None else apdict['width']
+        bottom = apdict['bottom']
+        color  = apdict['color']
+        alpha  = apdict['alpha']
+        ax.bar(xdates,ydata,width=width,bottom=bottom,color=color,alpha=alpha)
+    elif aptype == 'line':
+        ls     = apdict['linestyle']
+        color  = apdict['color']
+        width  = apdict['width'] if apdict['width'] is not None else 1.6*config['_width_config']['line_width']
+        alpha  = apdict['alpha']
+        ax.plot(xdates,ydata,linestyle=ls,color=color,linewidth=width,alpha=alpha)
+    else:
+        raise ValueError('addplot type "'+str(aptype)+'" NOT yet supported.')
+
+    if apdict['mav'] is not None:
+        apmavprices = _plot_mav(ax,config,xdates,ydata,apdict['mav'])
+
+    return ax
+
 
 def _set_ylabels_side(ax_pri,ax_sec,primary_on_right):
     # put the primary axis on one side,
