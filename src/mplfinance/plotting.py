@@ -444,7 +444,7 @@ def plot( data, **kwargs ):
         lo = math.log(max(math.fabs(np.nanmin(lows)),1e-7),10) - 0.5
         hi = math.log(max(math.fabs(np.nanmax(highs)),1e-7),10) + 0.5
 
-        panels['mag'] = [None]*len(panels)  # create 'mag' column
+        panels['mag'] = [None]*len(panels)  # create 'mag'nitude column
 
         panels.at[config['main_panel'],'mag'] = {'lo':lo,'hi':hi} # update main panel magnitude range
 
@@ -464,6 +464,9 @@ def plot( data, **kwargs ):
             panid = apdict['panel']
             if   panid == 'main' : panid = 0  # for backwards compatibility
             elif panid == 'lower': panid = 1  # for backwards compatibility
+
+            if apdict['y_on_right'] is not None:
+                panels.at[panid,'y_on_right'] = apdict['y_on_right']
 
             #--------------------------------------------------------------#
             # Note: _auto_secondary_y() sets the 'magnitude' column in the
@@ -805,6 +808,9 @@ def _valid_addplot_kwargs():
 
         'secondary_y' : { 'Default'     : 'auto',
                           'Validator'   : lambda value: isinstance(value,bool) or value == 'auto' },
+
+        'y_on_right'  : { 'Default'     : None,
+                          'Validator'   : lambda value: isinstance(value,bool) },
         
         'ylabel'      : { 'Default'     : None,
                           'Validator'   : lambda value: isinstance(value,str) },
