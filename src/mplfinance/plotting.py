@@ -67,6 +67,15 @@ def _warn_no_xgaps_deprecated(value):
                   category=DeprecationWarning)
     return isinstance(value,bool)
 
+def _warn_set_ylim_deprecated(value):
+    warnings.warn('\n\n ================================================================= '+
+                  '\n\n   WARNING: `set_ylim=(ymin,ymax)` kwarg '+
+                    '\n             has been replaced with: '+
+                    '\n            `ylim=(ymin,ymax)`.'+
+                  '\n\n ================================================================ ',
+                  category=DeprecationWarning)
+    return isinstance(value,bool)
+
 
 def _valid_plot_kwargs():
     '''
@@ -156,16 +165,18 @@ def _valid_plot_kwargs():
         'returnfig'                 : { 'Default'     : False, 
                                         'Validator'   : lambda value: isinstance(value,bool) },
 
-        'return_calculated_values'  : {'Default': None,
-                                       'Validator': lambda value: isinstance(value, dict) and len(value) == 0},
+        'return_calculated_values'  : {'Default'      : None,
+                                       'Validator'    : lambda value: isinstance(value, dict) and len(value) == 0},
 
-        'set_ylim'                  : {'Default': None,
-                                       'Validator': lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
-                                                                  and all([isinstance(v,(int,float)) for v in value])},
+        'set_ylim'                  : {'Default'      : None,
+                                       'Validator'    : lambda value: _warn_set_ylim_deprecated(value) },
  
-        'set_ylim_panelB'           : {'Default': None,
-                                       'Validator': lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
-                                                                  and all([isinstance(v,(int,float)) for v in value])},
+        'ylim'                      : {'Default'      : None,
+                                       'Validator'    : lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
+                                                                      and all([isinstance(v,(int,float)) for v in value])},
+ 
+        'set_ylim_panelB'           : {'Default'      : None,
+                                       'Validator'    : lambda value: _warn_set_ylim_deprecated(value) },
  
         'hlines'                    : { 'Default'     : None, 
                                         'Validator'   : lambda value: _hlines_validator(value) },
@@ -348,8 +359,8 @@ def plot( data, **kwargs ):
     miny = np.nanmin(_lows)
     maxy = np.nanmax(_highs)
 
-    if config['set_ylim'] is not None:
-        axA1.set_ylim(config['set_ylim'][0], config['set_ylim'][1])
+    if config['ylim'] is not None:
+        axA1.set_ylim(config['ylim'][0], config['ylim'][1])
     elif config['tight_layout']:
         axA1.set_xlim(minx,maxx)
         ydelta = 0.01 * (maxy-miny)
@@ -492,8 +503,17 @@ def plot( data, **kwargs ):
                 #datalim = (minx, min(l)), (maxx, max(h))
                 #ax.update_datalim(datalim)
                 ax.autoscale_view() 
-                if (apdict["ylabel"] is not None):
-                    ax.set_ylabel(apdict["ylabel"])
+                if (apdict['ylabel'] is not None):
+                    ax.set_ylabel(apdict['ylabel'])
+                if apdict['ylim'] is not None:
+                    ax.set_ylim(apdict['ylim'][0],apdict['ylim'][1])
+               #elif config['tight_layout']:
+               #    ax.set_xlim(minx,maxx)
+               #    ydelta = 0.01 * (maxy-miny)
+               #    ax.set_ylim(miny-ydelta,maxy+ydelta)
+               #else:
+               #    corners = (minx, miny), (maxx, maxy)
+               #    ax.update_datalim(corners)
                 continue
 
             if isinstance(apdata,list) and not isinstance(apdata[0],(float,int)):
@@ -525,32 +545,46 @@ def plot( data, **kwargs ):
                 else: 
                     ax = panels.at[panid,'axes'][0]
 
-                if (apdict["ylabel"] is not None):
-                    ax.set_ylabel(apdict["ylabel"])
-
                 aptype = apdict['type']
                 if aptype == 'scatter':
                     size  = apdict['markersize']
                     mark  = apdict['marker']
                     color = apdict['color']
+                    alpha = apdict['alpha']
                     if isinstance(mark,(list,tuple,np.ndarray)):
-                        _mscatter(xdates, ydata, ax=ax, m=mark, s=size, color=color)
+                        _mscatter(xdates,ydata,ax=ax,m=mark,s=size,color=color,alpha=alpha)
                     else:
-                        ax.scatter(xdates, ydata, s=size, marker=mark, color=color)
+                        ax.scatter(xdates,ydata,s=size,marker=mark,color=color,alpha=alpha)
                 elif aptype == 'bar':
-                    width  = apdict['width']
+                    width  = 0.8 if apdict['width'] is None else apdict['width']
                     bottom = apdict['bottom']
                     color  = apdict['color']
                     alpha  = apdict['alpha']
-                    ax.bar(xdates, ydata, width=width, bottom=bottom, color=color, alpha=alpha)
+                    ax.bar(xdates,ydata,width=width,bottom=bottom,color=color,alpha=alpha)
                 elif aptype == 'line':
-                    ls    = apdict['linestyle']
-                    color = apdict['color']
-                    ax.plot(xdates, ydata, linestyle=ls, color=color)
+                    ls     = apdict['linestyle']
+                    color  = apdict['color']
+                    width  = apdict['width']
+                    alpha  = apdict['alpha']
+                    ax.plot(xdates,ydata,linestyle=ls,color=color,linewidth=width,alpha=alpha)
                 else:
                     raise ValueError('addplot type "'+str(aptype)+'" NOT yet supported.')
+
                 if apdict['mav'] is not None:
                     apmavprices = _plot_mav(ax,config,xdates,ydata,apdict['mav'])
+
+                if (apdict["ylabel"] is not None):
+                    ax.set_ylabel(apdict["ylabel"])
+
+                if apdict['ylim'] is not None:
+                    ax.set_ylim(apdict['ylim'][0],apdict['ylim'][1])
+               #elif config['tight_layout']:
+               #    ax.set_xlim(minx,maxx)
+               #    ydelta = 0.01 * (maxy-miny)
+               #    ax.set_ylim(miny-ydelta,maxy+ydelta)
+               #else:
+               #    corners = (minx, miny), (maxx, maxy)
+               #    ax.update_datalim(corners)
 
     if config['fill_between'] is not None:
         fb    = config['fill_between']
@@ -567,24 +601,12 @@ def plot( data, **kwargs ):
         ax = panels.at[panid,'axes'][0]
         ax.fill_between(**fb)
             
-    if config['set_ylim_panelB'] is not None:
-        miny = config['set_ylim_panelB'][0]
-        maxy = config['set_ylim_panelB'][1]
-        panels.at[1,'axes'][0].set_ylim( miny, maxy )
-
-    # put the twinx() on the "other" side:
-    if style['y_on_right']:
-        for ax in panels['axes'].values:
-            ax[0].yaxis.set_label_position('right')
-            ax[0].yaxis.tick_right()
-            ax[1].yaxis.set_label_position('left')
-            ax[1].yaxis.tick_left()
-    else:
-        for ax in panels['axes'].values:
-            ax[0].yaxis.set_label_position('left')
-            ax[0].yaxis.tick_left()
-            ax[1].yaxis.set_label_position('right')
-            ax[1].yaxis.tick_right()
+    # put the primary axis on one side,
+    # and the twinx() on the "other" side:
+    for panid,row in panels.iterrows():
+        ax = row['axes']
+        y_on_right = style['y_on_right'] if row['y_on_right'] is None else row['y_on_right']
+        _set_ylabels_side(ax[0],ax[1],y_on_right)
 
     # TODO: ================================================================
     # TODO:  Investigate:
@@ -679,7 +701,23 @@ def plot( data, **kwargs ):
     # print('rcpdfhead(3)=',rcpdf.head(3))
     # return # rcpdf
 
-def _plot_mav(ax,config,xdates,prices,apmav=None):
+def _set_ylabels_side(ax_pri,ax_sec,primary_on_right):
+    # put the primary axis on one side,
+    # and the twinx() on the "other" side:
+    if primary_on_right == True:
+        ax_pri.yaxis.set_label_position('right')
+        ax_pri.yaxis.tick_right()
+        ax_sec.yaxis.set_label_position('left')
+        ax_sec.yaxis.tick_left()
+    elif primary_on_right == False:
+        ax_pri.yaxis.set_label_position('left')
+        ax_pri.yaxis.tick_left()
+        ax_sec.yaxis.set_label_position('right')
+        ax_sec.yaxis.tick_right()
+    else:
+        raise ValueError('primary_on_right must be `True` or `False`')
+
+def _plot_mav(ax,config,xdates,prices,apmav=None,apwidth=None):
     style = config['style']
     if apmav is not None:
         mavgs = apmav
@@ -754,14 +792,14 @@ def _valid_addplot_kwargs():
         'linestyle'   : { 'Default'     : None,
                           'Validator'   : lambda value: value in valid_linestyles },
 
-        'width'       : { 'Default'     : 0.8,
+        'width'       : { 'Default'     : None, # width of `bar` or `line` 
                           'Validator'   : lambda value: isinstance(value,(int,float)) or
                                                         all([isinstance(v,(int,float)) for v in value]) },
 
-        'bottom'      : { 'Default'     : 0,
+        'bottom'      : { 'Default'     : 0,  # bottom for `type=bar` plots
                           'Validator'   : lambda value: isinstance(value,(int,float)) or
                                                         all([isinstance(v,(int,float)) for v in value]) },
-        'alpha'       : { 'Default'     : 1,
+        'alpha'       : { 'Default'     : 1,  # alpha of `bar`, `line`, or `scatter`
                           'Validator'   : lambda value: isinstance(value,(int,float)) or
                                                         all([isinstance(v,(int,float)) for v in value]) },
 
@@ -770,6 +808,10 @@ def _valid_addplot_kwargs():
         
         'ylabel'      : { 'Default'     : None,
                           'Validator'   : lambda value: isinstance(value,str) },
+
+        'ylim'        : {'Default'      : None,
+                         'Validator'    : lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
+                                                                      and all([isinstance(v,(int,float)) for v in value])},
     }
 
     _validate_vkwargs_dict(vkwargs)

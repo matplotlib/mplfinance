@@ -112,7 +112,7 @@ Returns
                                height=_nones,
                                used2nd=[False]*len(pset),
                                title=_nones,
-                               ylabel=_nones),
+                               y_on_right=_nones),
                           index=pset)
     panels.index.name = 'panid'
 
