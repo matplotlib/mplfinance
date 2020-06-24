@@ -11,8 +11,8 @@
 
 ---
 
-# <a name="announcements"></a>Announcing Version 0.12.5 Enhancements
-### [Version 0.12.5 brings a number of enhancements to mplfinance. Click here for full details.](https://github.com/matplotlib/mplfinance/blob/master/RELEASE_NOTES.md)
+# <a name="announcements"></a>Announcing Version 0.12.5 and 0.12.6 Enhancements
+### [Version 0.12.5 and 0.12.6 bring a number of enhancements to mplfinance. Click here for full details.](https://github.com/matplotlib/mplfinance/blob/master/RELEASE_NOTES.md)
 
 ---
 
