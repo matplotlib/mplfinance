@@ -1,4 +1,39 @@
-### <a name="v0.12.5a0"></a>v0.12.5a0 &nbsp;&nbsp;&nbsp;&nbsp; Released Date 2020-06-08
+### <a name="v0.12.6a0"></a>v0.12.6a0 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; released 2020-06-24
+#### Enhancements
+- **`make_addplot()`** enhancements:
+  - **support `type=` ` ohlc ` and ` candle ` (issue [#168](https://github.com/matplotlib/mplfinance/issues/168))**
+  - support ` mav ` kwarg
+  - support `y_on_right` kwarg
+  - support `ylim` kwarg
+  - expand impact of `width` and `alpha` kwargs (originally affected only `make_addplot(data,type='bar')` plots).
+     - use `alpha` also on `scatter` plots.
+     - use `width` and `alpha` also on `line` plots (issue [#185](https://github.com/matplotlib/mplfinance/issues/185))
+- improve default line-widths algorithm
+- rename `set_ylim` kwarg to `ylim` to be consistent with `ylabel` kwarg.
+- deprecate `set_ylim_panelB` (use `ylim` in `make_addplot()` instead).
+#### Bug fixes
+- `axisoff` and `tight_layout` should be independent of each other (issue [#180](https://github.com/matplotlib/mplfinance/issues/180))
+- fix Spyder console block/hang when _not inline_ call `mpf.plot()`.  (issues [#151](https://github.com/matplotlib/mplfinance/issues/151) and [#183](https://github.com/matplotlib/mplfinance/issues/183))
+- fix incorrect linestyles character for dotted (issue [#186](https://github.com/matplotlib/mplfinance/issues/186))
+---
+
+### <a name="v0.12.5a3"></a>v0.12.5a3 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; released 2020-06-16
+#### Enhancements
+- improvements to width adjustment algorithm (issue [#174](https://github.com/matplotlib/mplfinance/issues/174))
+- automatic width adjustment now also adjusts `mav` lines widths. (issue [#171](https://github.com/matplotlib/mplfinance/issues/171))
+
+---
+
+### <a name="v0.12.5a2"></a>v0.12.5a2 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; released 2020-06-08
+#### Enhancements
+- Support setting `ylabel` in `make_addplot()` (Thank you [Andy Sum](https://github.com/AndySum) for coding.)
+- Add `saxbelow` kwarg to `set_axisbelow()`, defaults to `True` so grid lines do not show through candles, etc.
+#### Buf Fixes
+- fix `tight_layout` issue [#156](https://github.com/matplotlib/mplfinance/issues/156) (`tight_layout` not affecting Figure Title; Thank you [Markus Schulze](https://github.com/fxhuhn) for pointing this out.)
+
+---
+
+### <a name="v0.12.5a1"></a>v0.12.5a1 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; released 2020-06-07
 #### Enhancements
 - **[Subplots: Create up to 10 "panels"](https://github.com/matplotlib/mplfinance/blob/master/markdown/subplots.md)**
   - Can modify relative sizes of panels
@@ -35,7 +70,7 @@
 ---
 ---
 
-### v0.12.4a0  &nbsp;&nbsp;&nbsp;&nbsp; Release Date 2020-05-01
+### v0.12.4a0  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; released 2020-05-01
 
   - regression tests for new API
   - **[Renko plots](https://github.com/matplotlib/mplfinance/blob/master/examples/price-movement_plots.ipynb)** [(issue #11)](https://github.com/matplotlib/mplfinance/issues/11) &nbsp;&nbsp;&nbsp;&nbsp;(Thank you [Caleb Coffin @coffincw](https://github.com/coffincw))
@@ -52,12 +87,12 @@
   
 
 ---
-- **v0.12.3a3  &nbsp;&nbsp;&nbsp;&nbsp; Released 2020-03-04**
+- **v0.12.3a3  &nbsp;&nbsp;&nbsp;&nbsp; released 2020-03-04**
 
   - `linecolor` kwarg for line plots &nbsp;&nbsp;&nbsp;&nbsp;(Thank you Caleb Coffin @coffincw)
   - implement save figure to in-memory buffer &nbsp;&nbsp;&nbsp;&nbsp;(Thank you Caleb Coffin @coffincw)
 ---
-- **v0.12.3a2 &nbsp;&nbsp;&nbsp;&nbsp; Released 2020-02-21**
+- **v0.12.3a2 &nbsp;&nbsp;&nbsp;&nbsp; released 2020-02-21**
 
   - implement custom markers (issue#30) &nbsp;&nbsp;&nbsp;&nbsp;(Thank you Amir Atashin @amiaty)
   - fix minor issue with chart `type` validator &nbsp;&nbsp;&nbsp;&nbsp;(Thank you Amir Atashin @amiaty)
