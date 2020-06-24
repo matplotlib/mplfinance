@@ -274,7 +274,7 @@ def _valid_lines_kwargs():
                          a limited set of allowed values) may also validate that the
                          kwarg value is one of the allowed values.
     '''
-    valid_linestyles = ['-','solid','--','dashed','-.','dashdot','.','dotted',None,' ','']
+    valid_linestyles = ['-','solid','--','dashed','-.','dashdot',':','dotted',None,' ','']
     vkwargs = {
         'hlines'    : { 'Default'     : None,
                         'Validator'   : _bypass_kwarg_validation },

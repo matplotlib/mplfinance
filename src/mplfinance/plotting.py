@@ -67,6 +67,15 @@ def _warn_no_xgaps_deprecated(value):
                   category=DeprecationWarning)
     return isinstance(value,bool)
 
+def _warn_set_ylim_deprecated(value):
+    warnings.warn('\n\n ================================================================= '+
+                  '\n\n   WARNING: `set_ylim=(ymin,ymax)` kwarg '+
+                    '\n             has been replaced with: '+
+                    '\n            `ylim=(ymin,ymax)`.'+
+                  '\n\n ================================================================ ',
+                  category=DeprecationWarning)
+    return isinstance(value,bool)
+
 
 def _valid_plot_kwargs():
     '''
@@ -150,22 +159,24 @@ def _valid_plot_kwargs():
         'savefig'                   : { 'Default'     : None, 
                                         'Validator'   : lambda value: isinstance(value,dict) or isinstance(value,str) or isinstance(value, io.BytesIO) },
  
-        'block'                     : { 'Default'     : True, 
+        'block'                     : { 'Default'     : None, 
                                         'Validator'   : lambda value: isinstance(value,bool) },
  
         'returnfig'                 : { 'Default'     : False, 
                                         'Validator'   : lambda value: isinstance(value,bool) },
 
-        'return_calculated_values'  : {'Default': None,
-                                       'Validator': lambda value: isinstance(value, dict) and len(value) == 0},
+        'return_calculated_values'  : {'Default'      : None,
+                                       'Validator'    : lambda value: isinstance(value, dict) and len(value) == 0},
 
-        'set_ylim'                  : {'Default': None,
-                                       'Validator': lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
-                                                                  and all([isinstance(v,(int,float)) for v in value])},
+        'set_ylim'                  : {'Default'      : None,
+                                       'Validator'    : lambda value: _warn_set_ylim_deprecated(value) },
  
-        'set_ylim_panelB'           : {'Default': None,
-                                       'Validator': lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
-                                                                  and all([isinstance(v,(int,float)) for v in value])},
+        'ylim'                      : {'Default'      : None,
+                                       'Validator'    : lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
+                                                                      and all([isinstance(v,(int,float)) for v in value])},
+ 
+        'set_ylim_panelB'           : {'Default'      : None,
+                                       'Validator'    : lambda value: _warn_set_ylim_deprecated(value) },
  
         'hlines'                    : { 'Default'     : None, 
                                         'Validator'   : lambda value: _hlines_validator(value) },
@@ -253,10 +264,12 @@ def plot( data, **kwargs ):
 
     style = config['style']
     if isinstance(style,str):
-        style = _styles._get_mpfstyle(style)
+        style = config['style'] = _styles._get_mpfstyle(style)
 
     if isinstance(style,dict):
         _styles._apply_mpfstyle(style)
+    else:
+       raise TypeError('style should be a `dict`; why is it not?')
     
     if config['figsize'] is None:
         w,h = config['figratio']
@@ -320,39 +333,13 @@ def plot( data, **kwargs ):
         for collection in collections:
             axA1.add_collection(collection)
 
-    mavgs = config['mav']
-    if mavgs is not None:
-        if isinstance(mavgs,int):
-            mavgs = mavgs,      # convert to tuple 
-        if len(mavgs) > 7:
-            mavgs = mavgs[0:7]  # take at most 7
-     
-        if style['mavcolors'] is not None:
-            mavc = cycle(style['mavcolors'])
-        else:
-            mavc = None
-
-        # Get rcParams['lines.linewidth'] and scale it
-        # according to the deinsity of data??
-
-        for mav in mavgs:
-            if ptype in VALID_PMOVE_TYPES:
-                mavprices = pd.Series(brick_values).rolling(mav).mean().values
-            else:
-                mavprices = pd.Series(closes).rolling(mav).mean().values
-
-            lw = config['_width_config']['line_width']
-            if mavc:
-                axA1.plot(xdates, mavprices, linewidth=lw, color=next(mavc))
-            else:
-                axA1.plot(xdates, mavprices, linewidth=lw)
+    if ptype in VALID_PMOVE_TYPES:
+        mavprices = _plot_mav(axA1,config,xdates,brick_values)
+    else:
+        mavprices = _plot_mav(axA1,config,xdates,closes)
 
     avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
     if not config['tight_layout']:
-        #print('plot: xdates[-1]=',xdates[-1])
-        #print('plot: xdates[ 0]=',xdates[ 0])
-        #print('plot: len(xdates)=',len(xdates))
-        #print('plot: avg_dist_between_points =',avg_dist_between_points)
         minx = xdates[0]  - avg_dist_between_points
         maxx = xdates[-1] + avg_dist_between_points
     else:
@@ -371,14 +358,9 @@ def plot( data, **kwargs ):
 
     miny = np.nanmin(_lows)
     maxy = np.nanmax(_highs)
-    #if len(xdates) > 1:
-    #   stdy = (stat.stdev(_lows) + stat.stdev(_highs)) / 2.0
-    #else:  # kludge special case
-    #   stdy = 0.02 * math.fabs(maxy - miny)
-    # print('minx,miny,maxx,maxy,stdy=',minx,miny,maxx,maxy,stdy)
 
-    if config['set_ylim'] is not None:
-        axA1.set_ylim(config['set_ylim'][0], config['set_ylim'][1])
+    if config['ylim'] is not None:
+        axA1.set_ylim(config['ylim'][0], config['ylim'][1])
     elif config['tight_layout']:
         axA1.set_xlim(minx,maxx)
         ydelta = 0.01 * (maxy-miny)
@@ -396,9 +378,13 @@ def plot( data, **kwargs ):
             retdict[prekey+'_size'] = size
             if config['volume']:
                 retdict[prekey+'_volumes'] = volumes
-        if mavgs is not None:
-            for i in range(0, len(mavgs)):
-                retdict['mav' + str(mavgs[i])] = mavprices
+        if config['mav'] is not None:
+            mav = config['mav']
+            if len(mav) != len(mavprices):
+                warnings.warn('len(mav)='+str(len(mav))+' BUT len(mavprices)='+str(len(mavprices)))
+            else:
+                for jj in range(0,len(mav)):     
+                    retdict['mav' + str(mav[jj])] = mavprices[jj]
         retdict['minx'] = minx
         retdict['maxx'] = maxx
         retdict['miny'] = miny
@@ -458,7 +444,7 @@ def plot( data, **kwargs ):
         lo = math.log(max(math.fabs(np.nanmin(lows)),1e-7),10) - 0.5
         hi = math.log(max(math.fabs(np.nanmax(highs)),1e-7),10) + 0.5
 
-        panels['mag'] = [None]*len(panels)  # create 'mag' column
+        panels['mag'] = [None]*len(panels)  # create 'mag'nitude column
 
         panels.at[config['main_panel'],'mag'] = {'lo':lo,'hi':hi} # update main panel magnitude range
 
@@ -474,82 +460,52 @@ def plot( data, **kwargs ):
             raise TypeError('addplot must be `dict`, or `list of dict`, NOT '+str(type(addplot)))
 
         for apdict in addplot:
-            apdata = apdict['data']
-            if isinstance(apdata,list) and not isinstance(apdata[0],(float,int)):
-                raise TypeError('apdata is list but NOT of float or int')
-            if isinstance(apdata,pd.DataFrame): 
-                havedf = True
-            else:
-                havedf = False      # must be a single series or array
-                apdata = [apdata,]  # make it iterable
 
-            for column in apdata:
-                if havedf:
-                    ydata = apdata.loc[:,column]
+            panid = apdict['panel']
+            if   panid == 'main' : panid = 0  # for backwards compatibility
+            elif panid == 'lower': panid = 1  # for backwards compatibility
+
+            if apdict['y_on_right'] is not None:
+                panels.at[panid,'y_on_right'] = apdict['y_on_right']
+
+            aptype = apdict['type']
+            if aptype == 'ohlc' or aptype == 'candle':
+                ax = _addplot_collections(panid,panels,apdict,xdates,config)
+                if (apdict['ylabel'] is not None):
+                    ax.set_ylabel(apdict['ylabel'])
+                if apdict['ylim'] is not None:
+                    ax.set_ylim(apdict['ylim'][0],apdict['ylim'][1])
+               #elif config['tight_layout']:
+               #    ax.set_xlim(minx,maxx)
+               #    ydelta = 0.01 * (maxy-miny)
+               #    ax.set_ylim(miny-ydelta,maxy+ydelta)
+               #else:
+               #    corners = (minx, miny), (maxx, maxy)
+               #    ax.update_datalim(corners)
+            else:         
+                apdata = apdict['data']
+                if isinstance(apdata,list) and not isinstance(apdata[0],(float,int)):
+                    raise TypeError('apdata is list but NOT of float or int')
+                if isinstance(apdata,pd.DataFrame): 
+                    havedf = True
                 else:
-                    ydata = column
-                yd = [y for y in ydata if not math.isnan(y)]
-                ymhi = math.log(max(math.fabs(np.nanmax(yd)),1e-7),10)
-                ymlo = math.log(max(math.fabs(np.nanmin(yd)),1e-7),10)
-                secondary_y = False
-                panid = apdict['panel']
-                if   panid == 'main' : panid = 0  # for backwards compatibility
-                elif panid == 'lower': panid = 1  # for backwards compatibility
-                if apdict['secondary_y'] == 'auto':
-                    # If mag(nitude) for this panel is not yet set, then set it
-                    # here, as this is the first ydata to be plotted on this panel:
-                    # i.e. consider this to be the 'primary' axis for this panel.
-                    p = panid,'mag'
-                    if panels.at[p] is None:
-                        panels.at[p] = {'lo':ymlo,'hi':ymhi}
-                    elif ymlo < panels.at[p]['lo'] or ymhi > panels.at[p]['hi']:
-                        secondary_y = True
-                    #if secondary_y:
-                    #    print('auto says USE secondary_y ... for panel',panid)
-                    #else:
-                    #    print('auto says do NOT use secondary_y ... for panel',panid)
-                else:
-                    secondary_y = apdict['secondary_y']
-                    #print("apdict['secondary_y'] says secondary_y is",secondary_y)
+                    havedf = False      # must be a single series or array
+                    apdata = [apdata,]  # make it iterable
 
-                if secondary_y:
-                    ax = panels.at[panid,'axes'][1] 
-                    panels.at[panid,'used2nd'] = True
-                else: 
-                    ax = panels.at[panid,'axes'][0]
-
-                if (apdict["ylabel"] is not None):
-                    ax.set_ylabel(apdict["ylabel"])
-
-                aptype = apdict['type']
-                if aptype == 'scatter':
-                    size  = apdict['markersize']
-                    mark  = apdict['marker']
-                    color = apdict['color']
-                    if isinstance(mark,(list,tuple,np.ndarray)):
-                        _mscatter(xdates, ydata, ax=ax, m=mark, s=size, color=color)
-                    else:
-                        ax.scatter(xdates, ydata, s=size, marker=mark, color=color)
-                elif aptype == 'bar':
-                    width  = apdict['width']
-                    bottom = apdict['bottom']
-                    color  = apdict['color']
-                    alpha  = apdict['alpha']
-                    ax.bar(xdates, ydata, width=width, bottom=bottom, color=color, alpha=alpha)
-                elif aptype == 'line':
-                    ls    = apdict['linestyle']
-                    color = apdict['color']
-                    ax.plot(xdates, ydata, linestyle=ls, color=color)
-                #elif aptype == 'ohlc' or aptype == 'candle':
-                # This won't work as is, because here we are looping through one column at a time
-                # and mpf_collections needs ohlc columns:
-                #    collections =_construct_mpf_collections(aptype,dates,xdates,opens,highs,lows,closes,volumes,config,style)
-                #    if len(collections) == 1: collections = [collections]
-                #    for collection in collections:
-                #        ax.add_collection(collection)
-                else:
-                    raise ValueError('addplot type "'+str(aptype)+'" NOT yet supported.')
-
+                for column in apdata:
+                    ydata = apdata.loc[:,column] if havedf else column
+                    ax = _addplot_columns(panid,panels,ydata,apdict,xdates,config)
+                    if (apdict["ylabel"] is not None):
+                        ax.set_ylabel(apdict["ylabel"])
+                    if apdict['ylim'] is not None:
+                        ax.set_ylim(apdict['ylim'][0],apdict['ylim'][1])
+                   #elif config['tight_layout']:
+                   #    ax.set_xlim(minx,maxx)
+                   #    ydelta = 0.01 * (maxy-miny)
+                   #    ax.set_ylim(miny-ydelta,maxy+ydelta)
+                   #else:
+                   #    corners = (minx, miny), (maxx, maxy)
+                   #    ax.update_datalim(corners)
 
     if config['fill_between'] is not None:
         fb    = config['fill_between']
@@ -566,24 +522,12 @@ def plot( data, **kwargs ):
         ax = panels.at[panid,'axes'][0]
         ax.fill_between(**fb)
             
-    if config['set_ylim_panelB'] is not None:
-        miny = config['set_ylim_panelB'][0]
-        maxy = config['set_ylim_panelB'][1]
-        panels.at[1,'axes'][0].set_ylim( miny, maxy )
-
-    # put the twinx() on the "other" side:
-    if style['y_on_right']:
-        for ax in panels['axes'].values:
-            ax[0].yaxis.set_label_position('right')
-            ax[0].yaxis.tick_right()
-            ax[1].yaxis.set_label_position('left')
-            ax[1].yaxis.tick_left()
-    else:
-        for ax in panels['axes'].values:
-            ax[0].yaxis.set_label_position('left')
-            ax[0].yaxis.tick_left()
-            ax[1].yaxis.set_label_position('right')
-            ax[1].yaxis.tick_right()
+    # put the primary axis on one side,
+    # and the twinx() on the "other" side:
+    for panid,row in panels.iterrows():
+        ax = row['axes']
+        y_on_right = style['y_on_right'] if row['y_on_right'] is None else row['y_on_right']
+        _set_ylabels_side(ax[0],ax[1],y_on_right)
 
     # TODO: ================================================================
     # TODO:  Investigate:
@@ -604,6 +548,12 @@ def plot( data, **kwargs ):
         #fig.autofmt_xdate()
 
     axA1.autoscale_view()  # Is this really necessary??
+                           # It appears to me, based on experience coding types 'ohlc' and 'candle'
+                           # for `addplot`, that this IS necessary when the only thing done to the
+                           # the axes is .add_collection().  (However, if ax.plot() .scatter() or
+                           # .bar() was called, then possibly this is not necessary; not entirely
+                           # sure, but it definitely was necessary to get 'ohlc' and 'candle' 
+                           # working in `addplot`).
 
     axA1.set_ylabel(config['ylabel'])
 
@@ -641,19 +591,17 @@ def plot( data, **kwargs ):
 
     if config['axisoff']:
         for ax in axlist:
-            ax.set_xlim(xdates[0],xdates[-1])
             ax.set_axis_off()
 
     if config['savefig'] is not None:
         save = config['savefig']
         if isinstance(save,dict):
-            # Expand to fill chart if axisoff
-            if config['axisoff'] and 'bbox_inches' not in save:
+            if config['tight_layout'] and 'bbox_inches' not in save:
                 plt.savefig(**save,bbox_inches='tight')
             else:
                 plt.savefig(**save)
         else:
-            if config['axisoff']:
+            if config['tight_layout']:
                 plt.savefig(save,bbox_inches='tight')
             else:
                 plt.savefig(save)
@@ -674,12 +622,159 @@ def plot( data, **kwargs ):
     # print('rcpdfhead(3)=',rcpdf.head(3))
     # return # rcpdf
 
+def _addplot_collections(panid,panels,apdict,xdates,config):
+
+    apdata = apdict['data']
+    aptype = apdict['type']
+   
+    #--------------------------------------------------------------#
+    # Note: _auto_secondary_y() sets the 'magnitude' column in the
+    #       `panels` dataframe, which is needed for automatically
+    #       determining if secondary_y is needed.  Therefore we call
+    #       _auto_secondary_y() for *all* addplots, even those that
+    #       are set to True or False (not 'auto') for secondary_y
+    #       because their magnitudes may be needed if *any* apdicts
+    #       contain secondary_y='auto'.
+    #       In theory we could first loop through all apdicts to see
+    #       if any have secondary_y='auto', but since that is the
+    #       default value, we will just assume we have at least one.
+
+    valid_apc_types = ['ohlc','candle']
+    if aptype not in valid_apc_types:
+        raise TypeError('Invalid aptype='+str(aptype)+'. Must be one of '+str(valid_apc_types))
+    if not isinstance(apdata,pd.DataFrame):
+        raise TypeError('addplot type "'+aptype+'" MUST be accompanied by addplot data of type `pd.DataFrame`')
+    d,o,h,l,c,v = _check_and_prepare_data(apdata,config)
+    collections = _construct_mpf_collections(aptype,d,xdates,o,h,l,c,v,config,config['style'])
+    lo = math.log(max(math.fabs(np.nanmin(l)),1e-7),10) - 0.5
+    hi = math.log(max(math.fabs(np.nanmax(h)),1e-7),10) + 0.5
+    secondary_y = _auto_secondary_y( panels, panid, lo, hi )
+    if 'auto' != apdict['secondary_y']:
+        secondary_y = apdict['secondary_y'] 
+    if secondary_y:
+        ax = panels.at[panid,'axes'][1] 
+        panels.at[panid,'used2nd'] = True
+    else: 
+        ax = panels.at[panid,'axes'][0]
+    for coll in collections:
+        ax.add_collection(coll)
+    if apdict['mav'] is not None:
+        apmavprices = _plot_mav(ax,config,xdates,c,apdict['mav'])
+    ax.autoscale_view()
+    return ax
+
+def _addplot_columns(panid,panels,ydata,apdict,xdates,config):
+    secondary_y = False
+    if apdict['secondary_y'] == 'auto':
+        yd = [y for y in ydata if not math.isnan(y)]
+        ymhi = math.log(max(math.fabs(np.nanmax(yd)),1e-7),10)
+        ymlo = math.log(max(math.fabs(np.nanmin(yd)),1e-7),10)
+        secondary_y = _auto_secondary_y( panels, panid, ymlo, ymhi )
+    else:
+        secondary_y = apdict['secondary_y']
+        #print("apdict['secondary_y'] says secondary_y is",secondary_y)
+
+    if secondary_y:
+        ax = panels.at[panid,'axes'][1] 
+        panels.at[panid,'used2nd'] = True
+    else: 
+        ax = panels.at[panid,'axes'][0]
+
+    aptype = apdict['type']
+    if aptype == 'scatter':
+        size  = apdict['markersize']
+        mark  = apdict['marker']
+        color = apdict['color']
+        alpha = apdict['alpha']
+        if isinstance(mark,(list,tuple,np.ndarray)):
+            _mscatter(xdates,ydata,ax=ax,m=mark,s=size,color=color,alpha=alpha)
+        else:
+            ax.scatter(xdates,ydata,s=size,marker=mark,color=color,alpha=alpha)
+    elif aptype == 'bar':
+        width  = 0.8 if apdict['width'] is None else apdict['width']
+        bottom = apdict['bottom']
+        color  = apdict['color']
+        alpha  = apdict['alpha']
+        ax.bar(xdates,ydata,width=width,bottom=bottom,color=color,alpha=alpha)
+    elif aptype == 'line':
+        ls     = apdict['linestyle']
+        color  = apdict['color']
+        width  = apdict['width'] if apdict['width'] is not None else 1.6*config['_width_config']['line_width']
+        alpha  = apdict['alpha']
+        ax.plot(xdates,ydata,linestyle=ls,color=color,linewidth=width,alpha=alpha)
+    else:
+        raise ValueError('addplot type "'+str(aptype)+'" NOT yet supported.')
+
+    if apdict['mav'] is not None:
+        apmavprices = _plot_mav(ax,config,xdates,ydata,apdict['mav'])
+
+    return ax
+
+
+def _set_ylabels_side(ax_pri,ax_sec,primary_on_right):
+    # put the primary axis on one side,
+    # and the twinx() on the "other" side:
+    if primary_on_right == True:
+        ax_pri.yaxis.set_label_position('right')
+        ax_pri.yaxis.tick_right()
+        ax_sec.yaxis.set_label_position('left')
+        ax_sec.yaxis.tick_left()
+    elif primary_on_right == False:
+        ax_pri.yaxis.set_label_position('left')
+        ax_pri.yaxis.tick_left()
+        ax_sec.yaxis.set_label_position('right')
+        ax_sec.yaxis.tick_right()
+    else:
+        raise ValueError('primary_on_right must be `True` or `False`')
+
+def _plot_mav(ax,config,xdates,prices,apmav=None,apwidth=None):
+    style = config['style']
+    if apmav is not None:
+        mavgs = apmav
+    else:
+        mavgs = config['mav']
+    mavp_list = []
+    if mavgs is not None:
+        if isinstance(mavgs,int):
+            mavgs = mavgs,      # convert to tuple 
+        if len(mavgs) > 7:
+            mavgs = mavgs[0:7]  # take at most 7
+     
+        if style['mavcolors'] is not None:
+            mavc = cycle(style['mavcolors'])
+        else:
+            mavc = None
+
+        for mav in mavgs:
+            mavprices = pd.Series(prices).rolling(mav).mean().values
+            lw = config['_width_config']['line_width']
+            if mavc:
+                ax.plot(xdates, mavprices, linewidth=lw, color=next(mavc))
+            else:
+                ax.plot(xdates, mavprices, linewidth=lw)
+            mavp_list.append(mavprices)
+    return mavp_list
+
+def _auto_secondary_y( panels, panid, ylo, yhi ):
+    # If mag(nitude) for this panel is not yet set, then set it
+    # here, as this is the first ydata to be plotted on this panel:
+    # i.e. consider this to be the 'primary' axis for this panel.
+    secondary_y = False
+    p = panid,'mag'
+    if panels.at[p] is None:
+        panels.at[p] = {'lo':ylo,'hi':yhi}
+    elif ylo < panels.at[p]['lo'] or yhi > panels.at[p]['hi']:
+        secondary_y = True
+    #if secondary_y:
+    #    print('auto says USE secondary_y ... for panel',panid)
+    #else:
+    #    print('auto says do NOT use secondary_y ... for panel',panid)
+    return secondary_y
 
 def _valid_addplot_kwargs():
 
     valid_linestyles = ('-','solid','--','dashed','-.','dashdot','.','dotted',None,' ','')
-    #valid_types = ('line','scatter','bar','ohlc','candle')
-    valid_types = ('line','scatter','bar')
+    valid_types = ('line','scatter','bar', 'ohlc', 'candle')
 
     vkwargs = {
         'scatter'     : { 'Default'     : False,
@@ -688,6 +783,9 @@ def _valid_addplot_kwargs():
         'type'        : { 'Default'     : 'line',
                           'Validator'   : lambda value: value in valid_types },
 
+        'mav'         : { 'Default'     : None,
+                          'Validator'   : _mav_validator },
+        
         'panel'       : { 'Default'     : 0, 
                           'Validator'   : lambda value: _valid_panel_id(value) },
 
@@ -704,22 +802,29 @@ def _valid_addplot_kwargs():
         'linestyle'   : { 'Default'     : None,
                           'Validator'   : lambda value: value in valid_linestyles },
 
-        'width'       : { 'Default'     : 0.8,
+        'width'       : { 'Default'     : None, # width of `bar` or `line` 
                           'Validator'   : lambda value: isinstance(value,(int,float)) or
                                                         all([isinstance(v,(int,float)) for v in value]) },
 
-        'bottom'      : { 'Default'     : 0,
+        'bottom'      : { 'Default'     : 0,  # bottom for `type=bar` plots
                           'Validator'   : lambda value: isinstance(value,(int,float)) or
                                                         all([isinstance(v,(int,float)) for v in value]) },
-        'alpha'       : { 'Default'     : 1,
+        'alpha'       : { 'Default'     : 1,  # alpha of `bar`, `line`, or `scatter`
                           'Validator'   : lambda value: isinstance(value,(int,float)) or
                                                         all([isinstance(v,(int,float)) for v in value]) },
 
         'secondary_y' : { 'Default'     : 'auto',
                           'Validator'   : lambda value: isinstance(value,bool) or value == 'auto' },
+
+        'y_on_right'  : { 'Default'     : None,
+                          'Validator'   : lambda value: isinstance(value,bool) },
         
         'ylabel'      : { 'Default'     : None,
                           'Validator'   : lambda value: isinstance(value,str) },
+
+        'ylim'        : {'Default'      : None,
+                         'Validator'    : lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
+                                                                      and all([isinstance(v,(int,float)) for v in value])},
     }
 
     _validate_vkwargs_dict(vkwargs)
