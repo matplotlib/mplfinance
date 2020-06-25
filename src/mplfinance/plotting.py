@@ -719,13 +719,11 @@ def _set_ylabels_side(ax_pri,ax_sec,primary_on_right):
         ax_pri.yaxis.tick_right()
         ax_sec.yaxis.set_label_position('left')
         ax_sec.yaxis.tick_left()
-    elif primary_on_right == False:
+    else:  # treat non-True as False, whether False, None, or anything else.
         ax_pri.yaxis.set_label_position('left')
         ax_pri.yaxis.tick_left()
         ax_sec.yaxis.set_label_position('right')
         ax_sec.yaxis.tick_right()
-    else:
-        raise ValueError('primary_on_right must be `True` or `False`')
 
 def _plot_mav(ax,config,xdates,prices,apmav=None,apwidth=None):
     style = config['style']
