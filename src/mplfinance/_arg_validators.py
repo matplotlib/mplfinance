@@ -26,7 +26,16 @@ def _check_and_prepare_data(data, config):
     if not isinstance(data.index,pd.core.indexes.datetimes.DatetimeIndex):
         raise TypeError('Expect data.index as DatetimeIndex')
 
-    o, h, l, c, v = config["columns"]
+    # We will not be fully case-insensitive (since Pandas columns as NOT case-insensitive)
+    # but because so many people have requested it, for the default column names we will
+    # try both Capitalized and lower case:
+    columns = config['columns']
+    if columns is None:
+        columns =  ('Open', 'High', 'Low', 'Close', 'Volume')
+        if all([c.lower() in data for c in columns[0:4]]):
+            columns =  ('open', 'high', 'low', 'close', 'volume')
+        
+    o, h, l, c, v = columns
     cols = [o, h, l, c]
 
     dates   = mdates.date2num(data.index.to_pydatetime())

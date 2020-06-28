@@ -92,7 +92,7 @@ def _valid_plot_kwargs():
     '''
 
     vkwargs = {
-        'columns'                   : { 'Default'     : ('Open', 'High', 'Low', 'Close', 'Volume'),
+        'columns'                   : { 'Default'     : None, # use default names: ('Open', 'High', 'Low', 'Close', 'Volume')
                                         'Validator'   : lambda value: isinstance(value, (tuple, list))
                                                                    and len(value) == 5
                                                                    and all(isinstance(c, str) for c in value) },
