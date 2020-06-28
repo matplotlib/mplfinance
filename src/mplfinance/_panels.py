@@ -144,10 +144,57 @@ Returns
 
     #print('panels=')
     #print(panels)
+
+    # TODO:  Throughout this section, right_pad is intentionally *less* 
+    #        than left_pad.  This assumes that the y-axis labels are on
+    #        the left, which is true for many mpf_styles, but *not* all.
+    #        Ideally need to determine which side has the axis labels.
+    #        And keep in mind, if secondary_y is in effect, then both
+    #        sides can have axis labels.
+
+    left_pad    = 0.18
+    right_pad   = 0.10
+    top_pad     = 0.12
+    bot_pad     = 0.18
+
+    scale_left = scale_right = scale_top = scale_bot = 1.0
+
+    scale_padding = config['scale_padding']
+    if isinstance(scale_padding,dict):
+        if 'left'   in scale_padding: scale_left  = scale_padding['left']
+        if 'right'  in scale_padding: scale_right = scale_padding['right']
+        if 'top'    in scale_padding: scale_top   = scale_padding['top']
+        if 'bottom' in scale_padding: scale_bot   = scale_padding['bottom']
+    else: # isinstance(scale_padding,(int,float):
+        scale_left = scale_right = scale_top = scale_bot = scale_padding
+        
+    if config['tight_layout']:
+        right_pad   *= 0.4
+        top_pad     *= 0.4
+        scale_left  *= 0.6
+        scale_right *= 0.6
+        scale_top   *= 0.6
+        scale_bot   *= 0.6
+
+    left_pad  *= scale_left
+    right_pad *= scale_right
+    top_pad   *= scale_top
+    bot_pad   *= scale_bot
+
+    plot_height = 1.0 - (bot_pad  + top_pad  )
+    plot_width  = 1.0 - (left_pad + right_pad)
+
+    #   print('scale_padding=',scale_padding)
+    #   print('left_pad =',left_pad)
+    #   print('right_pad=',right_pad)
+    #   print('top_pad  =',top_pad)
+    #   print('bot_pad  =',bot_pad)
+    #   print('plot_height =',plot_height)
+    #   print('plot_width  =',plot_width)
         
     psum = sum(pratios)
     for panid,size in enumerate(pratios):
-        panels.at[panid,'height'] = 0.7 * size / psum
+        panels.at[panid,'height'] = plot_height * size / psum
 
     # Now create the Axes:
 
@@ -157,9 +204,9 @@ Returns
         panels.at[panid,'lift'] = lift
         if panid == 0:
             # rect = [left, bottom, width, height] 
-            ax0 = figure.add_axes( [0.15, 0.18+lift, 0.70, height] )
+            ax0 = figure.add_axes( [left_pad, bot_pad+lift, plot_width, height] )
         else:
-            ax0 = figure.add_axes( [0.15, 0.18+lift, 0.70, height], sharex=panels.at[0,'axes'][0] )
+            ax0 = figure.add_axes( [left_pad, bot_pad+lift, plot_width, height], sharex=panels.at[0,'axes'][0] )
         ax1 = ax0.twinx()
         ax1.grid(False)
         if config['saxbelow']:      # issue#115 issuecomment-639446764
