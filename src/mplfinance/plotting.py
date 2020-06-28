@@ -32,6 +32,7 @@ from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 from mplfinance._arg_validators import _kwarg_not_implemented, _bypass_kwarg_validation
 from mplfinance._arg_validators import _hlines_validator, _vlines_validator
 from mplfinance._arg_validators import _alines_validator, _tlines_validator
+from mplfinance._arg_validators import _scale_padding_validator
 from mplfinance._arg_validators import _valid_panel_id
 
 from mplfinance._panels import _build_panels
@@ -237,6 +238,9 @@ def _valid_plot_kwargs():
 
         'saxbelow'                  : { 'Default'     : True,  # Issue#115 Comment#639446764
                                         'Validator'   : lambda value: isinstance(value,bool) },
+        
+        'scale_padding'             : { 'Default'     : 1.0,   # Issue#193 
+                                        'Validator'   : lambda value: _scale_padding_validator(value) },
     }
 
     _validate_vkwargs_dict(vkwargs)

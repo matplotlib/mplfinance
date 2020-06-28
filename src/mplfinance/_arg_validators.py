@@ -242,3 +242,18 @@ def _process_kwargs(kwargs, vkwargs):
 
 def _valid_panel_id(panid):
     return panid in ['main','lower'] or (isinstance(panid,int) and panid >= 0 and panid < 10)
+
+def _scale_padding_validator(value):
+    if isinstance(value,(int,float)):
+        return True
+    elif isinstance(value,dict):
+        valid_keys=('left','right','top','bottom')
+        for key in value:
+            if key not in valid_keys:
+                raise ValueError('Invalid key "'+str(key)+'" found in `scale_padding` dict.')
+            if not isinstance(value[key],(int,float)):
+                raise ValueError('`scale_padding` dict contains non-number at key "'+str(key)+'"') 
+        return True
+    else:
+        raise ValueError('`scale_padding` kwarg must be a number, or dict of (left,right,top,bottom) numbers.')
+    return False
