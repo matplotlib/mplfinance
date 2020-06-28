@@ -1,6 +1,8 @@
 import matplotlib.dates  as mdates
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+import matplotlib.axes   as mpl_axes
+import matplotlib.figure as mpl_fig
 import pandas as pd
 import numpy  as np
 import copy
@@ -33,7 +35,7 @@ from mplfinance._arg_validators import _kwarg_not_implemented, _bypass_kwarg_val
 from mplfinance._arg_validators import _hlines_validator, _vlines_validator
 from mplfinance._arg_validators import _alines_validator, _tlines_validator
 from mplfinance._arg_validators import _scale_padding_validator
-from mplfinance._arg_validators import _valid_panel_id
+from mplfinance._arg_validators import _valid_panel_id, _check_for_external_axes
 
 from mplfinance._panels import _build_panels
 from mplfinance._panels import _set_ticks_on_bottom_panel_only
@@ -104,7 +106,7 @@ def _valid_plot_kwargs():
                                         'Validator'   : lambda value: value in _styles.available_styles() or isinstance(value,dict) },
  
         'volume'                    : { 'Default'     : False,
-                                        'Validator'   : lambda value: isinstance(value,bool) },
+                                        'Validator'   : lambda value: isinstance(value,bool) or isinstance(value,mpl_axes.Axes) },
  
         'mav'                       : { 'Default'     : None,
                                         'Validator'   : _mav_validator },
@@ -241,6 +243,12 @@ def _valid_plot_kwargs():
         
         'scale_padding'             : { 'Default'     : 1.0,   # Issue#193 
                                         'Validator'   : lambda value: _scale_padding_validator(value) },
+
+        'ax'                        : { 'Default'     : None,
+                                        'Validator'   : lambda value: isinstance(value,mpl_axes.Axes) },
+        
+        'fig'                       : { 'Default'     : None,
+                                        'Validator'   : lambda value: isinstance(value,mpl_fig.Figure) },
     }
 
     _validate_vkwargs_dict(vkwargs)
@@ -266,14 +274,17 @@ def plot( data, **kwargs ):
         err = "`addplot` is not supported for `type='" + config['type'] +"'`"
         raise ValueError(err)
 
+    external_axes_mode = _check_for_external_axes(config)
+    print('external_axes_mode =',external_axes_mode)
+
     style = config['style']
     if isinstance(style,str):
         style = config['style'] = _styles._get_mpfstyle(style)
 
     if isinstance(style,dict):
-        _styles._apply_mpfstyle(style)
+        if not external_axes_mode: _styles._apply_mpfstyle(style)
     else:
-       raise TypeError('style should be a `dict`; why is it not?')
+        raise TypeError('style should be a `dict`; why is it not?')
     
     if config['figsize'] is None:
         w,h = config['figratio']
@@ -289,15 +300,22 @@ def plot( data, **kwargs ):
     else:
         fsize = config['figsize']
     
-    fig = plt.figure()
+    if external_axes_mode:
+        fig = config['fig']
+    else:
+        fig = plt.figure()
+
     fig.set_size_inches(fsize)
 
     if config['volume'] and volumes is None:
         raise ValueError('Request for volume, but NO volume data.')
 
-    panels = _build_panels(fig, config)
-
-    volumeAxes = panels.at[config['volume_panel'],'axes'][0] if config['volume'] is True else None
+    if external_axes_mode:
+        panels     = None
+        volumeAxes = config['volume']
+    else:
+        panels = _build_panels(fig, config)
+        volumeAxes = panels.at[config['volume_panel'],'axes'][0] if config['volume'] is True else None
 
     fmtstring = _determine_format_string( dates, config['datetime_format'] )
 
@@ -310,7 +328,10 @@ def plot( data, **kwargs ):
         formatter = IntegerIndexDateTimeFormatter(dates, fmtstring)
         xdates = np.arange(len(dates))
 
-    axA1 = panels.at[config['main_panel'],'axes'][0]
+    if external_axes_mode:
+        axA1 = config['ax']
+    else:
+        axA1 = panels.at[config['main_panel'],'axes'][0]
 
     # Will have to handle widths config separately for PMOVE types ??
     config['_width_config'] = _determine_width_config(xdates, config)
@@ -437,7 +458,11 @@ def plot( data, **kwargs ):
         volumeAxes.set_ylim( miny, maxy )
 
     xrotation = config['xrotation']
-    _set_ticks_on_bottom_panel_only(panels,formatter,rotation=xrotation)
+    if not external_axes_mode:
+        _set_ticks_on_bottom_panel_only(panels,formatter,rotation=xrotation)
+    else:
+        axA1.tick_params(axis='x',rotation=xrotation)
+        axA1.xaxis.set_major_formatter(formatter)
 
     addplot = config['addplot']
     if addplot is not None and ptype not in VALID_PMOVE_TYPES:
@@ -511,7 +536,7 @@ def plot( data, **kwargs ):
                    #    corners = (minx, miny), (maxx, maxy)
                    #    ax.update_datalim(corners)
 
-    if config['fill_between'] is not None:
+    if config['fill_between'] is not None and not external_axes_mode:
         fb    = config['fill_between']
         panid = config['main_panel']
         if isinstance(fb,dict):
@@ -528,10 +553,14 @@ def plot( data, **kwargs ):
             
     # put the primary axis on one side,
     # and the twinx() on the "other" side:
-    for panid,row in panels.iterrows():
-        ax = row['axes']
-        y_on_right = style['y_on_right'] if row['y_on_right'] is None else row['y_on_right']
-        _set_ylabels_side(ax[0],ax[1],y_on_right)
+    if not external_axes_mode:
+        for panid,row in panels.iterrows():
+            ax = row['axes']
+            y_on_right = style['y_on_right'] if row['y_on_right'] is None else row['y_on_right']
+            _set_ylabels_side(ax[0],ax[1],y_on_right)
+    else:
+        y_on_right = style['y_on_right']
+        _set_ylabels_side(axA1,None,y_on_right)
 
     # TODO: ================================================================
     # TODO:  Investigate:
@@ -584,9 +613,13 @@ def plot( data, **kwargs ):
         else:
             fig.suptitle(config['title'],size='x-large',weight='semibold', va='center')
 
-    for panid,row in panels.iterrows():
-        if not row['used2nd']:
-            row['axes'][1].set_visible(False)
+    if not external_axes_mode:
+        for panid,row in panels.iterrows():
+            if not row['used2nd']:
+                row['axes'][1].set_visible(False)
+
+    if external_axes_mode:
+        return None
 
     # Should we create a new kwarg to return a flattened axes list
     # versus a list of tuples of primary and secondary axes?
@@ -721,13 +754,15 @@ def _set_ylabels_side(ax_pri,ax_sec,primary_on_right):
     if primary_on_right == True:
         ax_pri.yaxis.set_label_position('right')
         ax_pri.yaxis.tick_right()
-        ax_sec.yaxis.set_label_position('left')
-        ax_sec.yaxis.tick_left()
+        if ax_sec is not None:
+            ax_sec.yaxis.set_label_position('left')
+            ax_sec.yaxis.tick_left()
     else:  # treat non-True as False, whether False, None, or anything else.
         ax_pri.yaxis.set_label_position('left')
         ax_pri.yaxis.tick_left()
-        ax_sec.yaxis.set_label_position('right')
-        ax_sec.yaxis.tick_right()
+        if ax_sec is not None:
+            ax_sec.yaxis.set_label_position('right')
+            ax_sec.yaxis.tick_right()
 
 def _plot_mav(ax,config,xdates,prices,apmav=None,apwidth=None):
     style = config['style']
@@ -827,6 +862,9 @@ def _valid_addplot_kwargs():
         'ylim'        : {'Default'      : None,
                          'Validator'    : lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
                                                                       and all([isinstance(v,(int,float)) for v in value])},
+
+        'ax'          : {'Default'      : None,
+                         'Validator'    : lambda value: isinstance(value,mpl_axes.Axes) },
     }
 
     _validate_vkwargs_dict(vkwargs)
