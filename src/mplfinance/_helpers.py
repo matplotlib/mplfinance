@@ -2,6 +2,7 @@
 Some helper functions for mplfinance.
 """
 
+import datetime
 import matplotlib.dates as mdates
 import numpy as np
 
