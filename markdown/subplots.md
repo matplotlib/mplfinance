@@ -37,4 +37,9 @@
   - plotting multiple ohlc/candlestick plots on the same axes.
   - plotting multiple candlestick plots side-by-side, or in any other geometry desired.
   - It is expected that this Matplotlib Method will also provide the ability to do **event handling** and/or **monitoring** (live updating), but presently I'm not 100% sure about this (due to my own limited experience with matplotlib event handling and monitoring).
----
+
+ * When implemented, the Matplotlib Method will look something like this:  Users to use any matplotlib API they want to create their Figures and Axes (aka subplots), however there will be certain restrictions on how they are passed into `mpf.plot()`
+
+1. `mpf.plot()` will have an `ax=` kwarg to pass in **any matplotlib Axes** that you want, however you **must also pass in the Figure** that contains that Axes instance using the `fig=` kwarg.  (If you pass in a _different_ Figure, one that does not contain your axes, then `mpf.plot()` won't know it, but behavior will be undefined, i.e. no guarantees).
+2. If you specify the `ax=` kwarg when calling `mpf.plot()`, **and you also want to plot volume, then you must also** pass in an Axes instance for the volume; so instead of `volume=True`, you would say `volume=my_axes_for_volume` where my_axes_for_volume is an instance of a matplotlib Axes (i.e. subplot).
+3. Similarly, if you specify `ax=` for `mpf.plot()` **then you must also specify** `ax=` for all calls to `make_addplot()`
