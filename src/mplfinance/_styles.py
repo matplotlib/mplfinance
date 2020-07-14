@@ -125,6 +125,33 @@ def _valid_mpf_color_spec(value):
              )
            )
 
+def _valid_mpf_style(value):
+    if value in available_styles():
+        return True
+    if not isinstance(value,dict):
+        return False
+    if 'marketcolors' not in value:
+        return False
+    if not isinstance(value['marketcolors'],dict):
+        return False
+    # {'candle': {'up': 'b', 'down': 'g'},
+    #  'edge': {'up': 'k', 'down': 'k'},
+    #  'wick': {'up': 'k', 'down': 'k'},
+    #  'ohlc': {'up': 'k', 'down': 'k'},
+    #  'volume': {'up': '#1f77b4', 'down': '#1f77b4'},
+    #  'vcedge': {'up': '#1f77b4', 'down': '#1f77b4'},
+    #  'vcdopcod': False,
+    #  'alpha': 0.9}
+    for item in ('candle','edge','wick','ohlc','volume'):
+        if item not in value['marketcolors']:
+            return False
+        itemcolors = value['marketcolors'][item]
+        if not isinstance(itemcolors,dict):
+            return False
+        if 'up' not in itemcolors or 'down' not in itemcolors:
+            return False
+    return True
+
 def _valid_make_marketcolors_kwargs():
     vkwargs = {
         'up'         : { 'Default'     : None,

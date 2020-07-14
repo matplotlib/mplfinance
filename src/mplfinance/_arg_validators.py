@@ -303,18 +303,18 @@ def _check_for_external_axes(config):
 
     # At this point, if we have not raised an exception, then plot(ax=) and make_addplot(ax=)
     # are in sync: either they are all None, or they are all of type `matplotlib.axes.Axes`.
-    # Therefore we only need plot(ax=), i.e. config['ax'], as we check `volume` and `fig`:
+    # Therefore we only need plot(ax=), i.e. config['ax'], as we check `volume`: ### and `fig`:
 
     if config['ax'] is None:
         if isinstance(config['volume'],mpl.axes.Axes):
             raise ValueError('`volume` set to external Axes requires all other Axes be external.')
-        if config['fig'] is not None:
-            raise ValueError('`fig` kwarg must be None if `ax` kwarg is None.')
+        #if config['fig'] is not None:
+        #    raise ValueError('`fig` kwarg must be None if `ax` kwarg is None.')
     else:
         if not isinstance(config['volume'],mpl.axes.Axes) and config['volume'] != False:
             raise ValueError('`volume` must be of type `matplotlib.axis.Axes`')
-        if not isinstance(config['fig'],mpl.figure.Figure):
-            raise ValueError('`fig` kwarg must be of type `matplotlib.figure.Figure`')
+        #if not isinstance(config['fig'],mpl.figure.Figure):
+        #    raise ValueError('`fig` kwarg must be of type `matplotlib.figure.Figure`')
     
     external_axes_mode = True if isinstance(config['ax'],mpl.axes.Axes) else False
     return external_axes_mode
