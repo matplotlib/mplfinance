@@ -279,7 +279,6 @@ def plot( data, **kwargs ):
         raise ValueError(err)
 
     external_axes_mode = _check_for_external_axes(config)
-    print('external_axes_mode =',external_axes_mode)
 
     if external_axes_mode:
         if config['figscale'] is not None:
@@ -307,9 +306,11 @@ def plot( data, **kwargs ):
         style = config['ax'].mpfstyle
     elif style is None:
         style = 'default'
-    
+
     if isinstance(style,str):
-        style = config['style'] = _styles._get_mpfstyle(style)
+        style = _styles._get_mpfstyle(style)
+
+    config['style'] = style
 
     if isinstance(style,dict):
         if not external_axes_mode: _styles._apply_mpfstyle(style)
@@ -332,8 +333,9 @@ def plot( data, **kwargs ):
 
     if external_axes_mode:
         panels     = None
-        volumeAxes = config['volume']
-        volumeAxes.set_axisbelow(config['saxbelow'])
+        if config['volume']:
+            volumeAxes = config['volume']
+            volumeAxes.set_axisbelow(config['saxbelow'])
     else:
         panels = _build_panels(fig, config)
         volumeAxes = panels.at[config['volume_panel'],'axes'][0] if config['volume'] is True else None
@@ -417,14 +419,9 @@ def plot( data, **kwargs ):
     elif config['tight_layout']:
         axA1.set_xlim(minx,maxx)
 
-    print("config['ylim']=",config['ylim'])
-    print("config['xlim']=",config['xlim'])
-    print("config['tight_layout']=",config['tight_layout'])
-
     if (config['ylim'] is None and
         config['xlim'] is None and
         not config['tight_layout']):
-        print('True all None')
         corners = (minx, miny), (maxx, maxy)
         axA1.update_datalim(corners)
 
