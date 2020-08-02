@@ -22,8 +22,12 @@ from   mplfinance import _styles
           - Figure.add_axes() 
           - Figure.subplot()  (this is analogous to pyplot.subplot() which calls Figure.add_subplot())
           - Figure.subplots() 
+
+     (3) A wrapper to matplot.pyplot.show(), because it happens often enough, when using mplfinance,
+         that sometimes one has to import matplotlib.pyplot *ONLY* for the purpose of calling .show()
 """
 
+show = plt.show  # Not a true wrapper, rather an assignment.
 
 def _check_for_and_apply_style(kwargs):
 

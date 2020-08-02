@@ -497,21 +497,27 @@ def plot( data, **kwargs ):
 
     addplot = config['addplot']
     if addplot is not None and ptype not in VALID_PMOVE_TYPES:
-        # Calculate the Order of Magnitude Range ('mag')
-        # If addplot['secondary_y'] == 'auto', then: If the addplot['data']
-        # is out of the Order of Magnitude Range, then use secondary_y.
-        # Calculate omrange for Main panel, and for Lower (volume) panel:
-        lo = math.log(max(math.fabs(np.nanmin(lows)),1e-7),10) - 0.5
-        hi = math.log(max(math.fabs(np.nanmax(highs)),1e-7),10) + 0.5
+        # NOTE: If in external_axes_mode, then all code relating
+        #       to panels and secondary_y becomes irrrelevant.
+        #       If the user wants something on a secondary_y then user should
+        #       determine that externally, and pass in the appropriate axes.
 
-        panels['mag'] = [None]*len(panels)  # create 'mag'nitude column
+        if not external_axes_mode:
+            # Calculate the Order of Magnitude Range ('mag')
+            # If addplot['secondary_y'] == 'auto', then: If the addplot['data']
+            # is out of the Order of Magnitude Range, then use secondary_y.
 
-        panels.at[config['main_panel'],'mag'] = {'lo':lo,'hi':hi} # update main panel magnitude range
+            lo = math.log(max(math.fabs(np.nanmin(lows)),1e-7),10) - 0.5
+            hi = math.log(max(math.fabs(np.nanmax(highs)),1e-7),10) + 0.5
 
-        if config['volume']:
-            lo = math.log(max(math.fabs(np.nanmin(volumes)),1e-7),10) - 0.5
-            hi = math.log(max(math.fabs(np.nanmax(volumes)),1e-7),10) + 0.5
-            panels.at[config['volume_panel'],'mag'] = {'lo':lo,'hi':hi}
+            panels['mag'] = [None]*len(panels)  # create 'mag'nitude column
+
+            panels.at[config['main_panel'],'mag'] = {'lo':lo,'hi':hi} # update main panel magnitude range
+
+            if config['volume']:
+                lo = math.log(max(math.fabs(np.nanmin(volumes)),1e-7),10) - 0.5
+                hi = math.log(max(math.fabs(np.nanmax(volumes)),1e-7),10) + 0.5
+                panels.at[config['volume_panel'],'mag'] = {'lo':lo,'hi':hi}
 
         if isinstance(addplot,dict):
             addplot = [addplot,]   # make list of dict to be consistent
@@ -521,11 +527,12 @@ def plot( data, **kwargs ):
 
         for apdict in addplot:
 
-            panid = apdict['panel']
-            if   panid == 'main' : panid = 0  # for backwards compatibility
-            elif panid == 'lower': panid = 1  # for backwards compatibility
-            if apdict['y_on_right'] is not None:
-                panels.at[panid,'y_on_right'] = apdict['y_on_right']
+            panid = apdict['panel'] 
+            if not external_axes_mode:
+                if   panid == 'main' : panid = 0  # for backwards compatibility
+                elif panid == 'lower': panid = 1  # for backwards compatibility
+                if apdict['y_on_right'] is not None:
+                    panels.at[panid,'y_on_right'] = apdict['y_on_right']
 
             aptype = apdict['type']
             if aptype == 'ohlc' or aptype == 'candle':
@@ -545,6 +552,8 @@ def plot( data, **kwargs ):
                     ax = _addplot_columns(panid,panels,ydata,apdict,xdates,config)
                     _addplot_apply_supplements(ax,apdict)
 
+    # fill_between is NOT supported for external_axes_mode
+    # (caller can easily call ax.fill_between() themselves).
     if config['fill_between'] is not None and not external_axes_mode:
         fb    = config['fill_between']
         panid = config['main_panel']
@@ -696,6 +705,7 @@ def _addplot_collections(panid,panels,apdict,xdates,config):
 
     apdata = apdict['data']
     aptype = apdict['type']
+    external_axes_mode = apdict['ax'] is not None
    
     #--------------------------------------------------------------#
     # Note: _auto_secondary_y() sets the 'magnitude' column in the
@@ -716,16 +726,21 @@ def _addplot_collections(panid,panels,apdict,xdates,config):
         raise TypeError('addplot type "'+aptype+'" MUST be accompanied by addplot data of type `pd.DataFrame`')
     d,o,h,l,c,v = _check_and_prepare_data(apdata,config)
     collections = _construct_mpf_collections(aptype,d,xdates,o,h,l,c,v,config,config['style'])
-    lo = math.log(max(math.fabs(np.nanmin(l)),1e-7),10) - 0.5
-    hi = math.log(max(math.fabs(np.nanmax(h)),1e-7),10) + 0.5
-    secondary_y = _auto_secondary_y( panels, panid, lo, hi )
-    if 'auto' != apdict['secondary_y']:
-        secondary_y = apdict['secondary_y'] 
-    if secondary_y:
-        ax = panels.at[panid,'axes'][1] 
-        panels.at[panid,'used2nd'] = True
-    else: 
-        ax = panels.at[panid,'axes'][0]
+
+    if not external_axes_mode:
+        lo = math.log(max(math.fabs(np.nanmin(l)),1e-7),10) - 0.5
+        hi = math.log(max(math.fabs(np.nanmax(h)),1e-7),10) + 0.5
+        secondary_y = _auto_secondary_y( panels, panid, lo, hi )
+        if 'auto' != apdict['secondary_y']:
+            secondary_y = apdict['secondary_y'] 
+        if secondary_y:
+            ax = panels.at[panid,'axes'][1] 
+            panels.at[panid,'used2nd'] = True
+        else: 
+            ax = panels.at[panid,'axes'][0]
+    else:
+        ax = apdict['ax']
+
     for coll in collections:
         ax.add_collection(coll)
     if apdict['mav'] is not None:
@@ -734,21 +749,25 @@ def _addplot_collections(panid,panels,apdict,xdates,config):
     return ax
 
 def _addplot_columns(panid,panels,ydata,apdict,xdates,config):
-    secondary_y = False
-    if apdict['secondary_y'] == 'auto':
-        yd = [y for y in ydata if not math.isnan(y)]
-        ymhi = math.log(max(math.fabs(np.nanmax(yd)),1e-7),10)
-        ymlo = math.log(max(math.fabs(np.nanmin(yd)),1e-7),10)
-        secondary_y = _auto_secondary_y( panels, panid, ymlo, ymhi )
-    else:
-        secondary_y = apdict['secondary_y']
-        #print("apdict['secondary_y'] says secondary_y is",secondary_y)
+    external_axes_mode = apdict['ax'] is not None
+    if not external_axes_mode:
+        secondary_y = False
+        if apdict['secondary_y'] == 'auto':
+            yd = [y for y in ydata if not math.isnan(y)]
+            ymhi = math.log(max(math.fabs(np.nanmax(yd)),1e-7),10)
+            ymlo = math.log(max(math.fabs(np.nanmin(yd)),1e-7),10)
+            secondary_y = _auto_secondary_y( panels, panid, ymlo, ymhi )
+        else:
+            secondary_y = apdict['secondary_y']
+            #print("apdict['secondary_y'] says secondary_y is",secondary_y)
 
-    if secondary_y:
-        ax = panels.at[panid,'axes'][1] 
-        panels.at[panid,'used2nd'] = True
-    else: 
-        ax = panels.at[panid,'axes'][0]
+        if secondary_y:
+            ax = panels.at[panid,'axes'][1] 
+            panels.at[panid,'used2nd'] = True
+        else: 
+            ax = panels.at[panid,'axes'][0]
+    else:
+        ax = apdict['ax']
 
     aptype = apdict['type']
     if aptype == 'scatter':
