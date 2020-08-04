@@ -89,13 +89,13 @@
 ---
 - **v0.12.3a3  &nbsp;&nbsp;&nbsp;&nbsp; released 2020-03-04**
 
-  - `linecolor` kwarg for line plots &nbsp;&nbsp;&nbsp;&nbsp;(Thank you Caleb Coffin @coffincw)
-  - implement save figure to in-memory buffer &nbsp;&nbsp;&nbsp;&nbsp;(Thank you Caleb Coffin @coffincw)
+  - `linecolor` kwarg for line plots &nbsp;&nbsp;&nbsp;&nbsp;(Thank you [Caleb Coffin @coffincw](https://github.com/coffincw))
+  - implement save figure to in-memory buffer &nbsp;&nbsp;&nbsp;&nbsp;(Thank you [Caleb Coffin @coffincw](https://github.com/coffincw))
 ---
 - **v0.12.3a2 &nbsp;&nbsp;&nbsp;&nbsp; released 2020-02-21**
 
-  - implement custom markers (issue#30) &nbsp;&nbsp;&nbsp;&nbsp;(Thank you Amir Atashin @amiaty)
-  - fix minor issue with chart `type` validator &nbsp;&nbsp;&nbsp;&nbsp;(Thank you Amir Atashin @amiaty)
+  - implement custom markers (issue#30) &nbsp;&nbsp;&nbsp;&nbsp;(Thank you [Amir Atashin @amiaty](https://github.com/amiaty))
+  - fix minor issue with chart `type` validator &nbsp;&nbsp;&nbsp;&nbsp;(Thank you [Amir Atashin @amiaty](https://github.com/amiaty))
   - add internal functions: `_bypass_kwarg_validation()` and `_kwarg_not_implemented()`
 ---
 - **v0.12.3a1 &nbsp;&nbsp;&nbsp;&nbsp; Released 2020-02-16**
