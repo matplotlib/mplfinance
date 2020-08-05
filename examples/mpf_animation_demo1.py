@@ -1,3 +1,10 @@
+'''
+This file contains a simple animation demo using mplfinance "external axes mode".
+
+Note that presently mplfinance does not support "blitting" (blitting makes animation
+more efficient).  Nonetheless, the animation is efficient enough to update at least
+once per second, and typically more frequently depending on the size of the plot.
+'''
 import pandas as pd
 import mplfinance as mpf
 import matplotlib.animation as animation

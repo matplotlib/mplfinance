@@ -1,3 +1,19 @@
+'''
+This file contains a animation demo using mplfinance "external axes mode",
+in which animate both the display of candlesticks as well as the display
+of MACD (Moving Average Convergence Divergence) visual analysis.
+
+In this example, instead of creating the Figure and Axes external to mplfiance,
+we allow mplfinance to create the Figure and Axes using its "panel method", and
+set kwarg `returnfig=True` so that mplfinance will return the Figure and Axes.
+
+We then take those Axes and pass them back into mplfinance ("external axes mode")
+as part of the animation.
+
+Note that presently mplfinance does not support "blitting" (blitting makes animation
+more efficient).  Nonetheless, the animation is efficient enough to update at least
+once per second, and typically more frequently depending on the size of the plot.
+'''
 import pandas as pd
 import mplfinance as mpf
 import matplotlib.animation as animation
