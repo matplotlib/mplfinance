@@ -145,6 +145,13 @@ Returns
     #print('panels=')
     #print(panels)
 
+    # TODO:  Throughout this section, right_pad is intentionally *less* 
+    #        than left_pad.  This assumes that the y-axis labels are on
+    #        the left, which is true for many mpf_styles, but *not* all.
+    #        Ideally need to determine which side has the axis labels.
+    #        And keep in mind, if secondary_y is in effect, then both
+    #        sides can have axis labels.
+
     left_pad    = 0.18
     right_pad   = 0.10
     top_pad     = 0.12

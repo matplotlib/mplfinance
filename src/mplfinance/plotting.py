@@ -1,6 +1,8 @@
 import matplotlib.dates  as mdates
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+import matplotlib.axes   as mpl_axes
+import matplotlib.figure as mpl_fig
 import pandas as pd
 import numpy  as np
 import copy
@@ -33,7 +35,7 @@ from mplfinance._arg_validators import _kwarg_not_implemented, _bypass_kwarg_val
 from mplfinance._arg_validators import _hlines_validator, _vlines_validator
 from mplfinance._arg_validators import _alines_validator, _tlines_validator
 from mplfinance._arg_validators import _scale_padding_validator
-from mplfinance._arg_validators import _valid_panel_id
+from mplfinance._arg_validators import _valid_panel_id, _check_for_external_axes
 
 from mplfinance._panels import _build_panels
 from mplfinance._panels import _set_ticks_on_bottom_panel_only
@@ -100,11 +102,11 @@ def _valid_plot_kwargs():
                                         'Validator'   : lambda value: value in ('candle','candlestick','ohlc','ohlc_bars',
                                                                                 'line','renko','pnf') },
  
-        'style'                     : { 'Default'     : 'default',
-                                        'Validator'   : lambda value: value in _styles.available_styles() or isinstance(value,dict) },
+        'style'                     : { 'Default'     : None,
+                                        'Validator'   : _styles._valid_mpf_style },
  
         'volume'                    : { 'Default'     : False,
-                                        'Validator'   : lambda value: isinstance(value,bool) },
+                                        'Validator'   : lambda value: isinstance(value,bool) or isinstance(value,mpl_axes.Axes) },
  
         'mav'                       : { 'Default'     : None,
                                         'Validator'   : _mav_validator },
@@ -127,10 +129,10 @@ def _valid_plot_kwargs():
         'show_nontrading'           : { 'Default'     : False, 
                                         'Validator'   : lambda value: isinstance(value,bool) },
  
-        'figscale'                  : { 'Default'     : 1.0, # scale base figure size up or down.
+        'figscale'                  : { 'Default'     : None, # scale base figure size up or down.
                                         'Validator'   : lambda value: isinstance(value,float) or isinstance(value,int) },
  
-        'figratio'                  : { 'Default'     : DEFAULT_FIGRATIO, # aspect ratio; scaled to 8.0 height
+        'figratio'                  : { 'Default'     : None, # aspect ratio; scaled to 8.0 height
                                         'Validator'   : lambda value: isinstance(value,(tuple,list))
                                                                       and len(value) == 2
                                                                       and isinstance(value[0],(float,int))
@@ -145,7 +147,10 @@ def _valid_plot_kwargs():
         'linecolor'                 : { 'Default'     : None, # line color in line plot
                                         'Validator'   : lambda value: mcolors.is_color_like(value) },
 
-        'title'                     : { 'Default'     : None, # Plot Title
+        'title'                     : { 'Default'     : None, # Figure Title
+                                        'Validator'   : lambda value: isinstance(value,str) },
+ 
+        'axtitle'                   : { 'Default'     : None, # Axes Title (subplot title)
                                         'Validator'   : lambda value: isinstance(value,str) },
  
         'ylabel'                    : { 'Default'     : 'Price', # y-axis label
@@ -173,6 +178,10 @@ def _valid_plot_kwargs():
                                        'Validator'    : lambda value: _warn_set_ylim_deprecated(value) },
  
         'ylim'                      : {'Default'      : None,
+                                       'Validator'    : lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
+                                                                      and all([isinstance(v,(int,float)) for v in value])},
+ 
+        'xlim'                      : {'Default'      : None,
                                        'Validator'    : lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
                                                                       and all([isinstance(v,(int,float)) for v in value])},
  
@@ -241,6 +250,9 @@ def _valid_plot_kwargs():
         
         'scale_padding'             : { 'Default'     : 1.0,   # Issue#193 
                                         'Validator'   : lambda value: _scale_padding_validator(value) },
+
+        'ax'                        : { 'Default'     : None,
+                                        'Validator'   : lambda value: isinstance(value,mpl_axes.Axes) },
     }
 
     _validate_vkwargs_dict(vkwargs)
@@ -266,38 +278,67 @@ def plot( data, **kwargs ):
         err = "`addplot` is not supported for `type='" + config['type'] +"'`"
         raise ValueError(err)
 
+    external_axes_mode = _check_for_external_axes(config)
+
+    if external_axes_mode:
+        if config['figscale'] is not None:
+            warnings.warn('\n\n ================================================================= '+
+                          '\n\n   WARNING: `figscale` has NO effect in External Axes Mode.'+
+                          '\n\n ================================================================ ',
+                          category=UserWarning)
+        if config['figratio'] is not None:
+            warnings.warn('\n\n ================================================================= '+
+                          '\n\n   WARNING: `figratio` has NO effect in External Axes Mode.'+
+                          '\n\n ================================================================ ',
+                          category=UserWarning)
+        if config['figsize'] is not None:
+            warnings.warn('\n\n ================================================================= '+
+                          '\n\n   WARNING: `figsize` has NO effect in External Axes Mode.'+
+                          '\n\n ================================================================ ',
+                          category=UserWarning)
+    else:
+        if config['figscale'] is None: config['figscale'] = 1.0
+        if config['figratio'] is None: config['figratio'] = DEFAULT_FIGRATIO
+
     style = config['style']
+
+    if external_axes_mode and hasattr(config['ax'],'mpfstyle') and style is None:
+        style = config['ax'].mpfstyle
+    elif style is None:
+        style = 'default'
+
     if isinstance(style,str):
-        style = config['style'] = _styles._get_mpfstyle(style)
+        style = _styles._get_mpfstyle(style)
+
+    config['style'] = style
 
     if isinstance(style,dict):
-        _styles._apply_mpfstyle(style)
+        if not external_axes_mode: _styles._apply_mpfstyle(style)
     else:
-       raise TypeError('style should be a `dict`; why is it not?')
-    
-    if config['figsize'] is None:
-        w,h = config['figratio']
-        r = float(w)/float(h)
-        if r < 0.20 or r > 5.0:
-            raise ValueError('"figratio" (aspect ratio)  must be between 0.20 and 5.0 (but is '+str(r)+')')
-        default_scale = DEFAULT_FIGRATIO[1]/h
-        h *= default_scale
-        w *= default_scale
-        base      = (w,h)
-        figscale  = config['figscale']
-        fsize     = [d*figscale for d in base]
+        raise TypeError('style should be a `dict`; why is it not?')
+
+    # ----------------------------------------------------------------------
+    # TODO:  Add some warnings, or raise an exception, if external_axes_mode
+    #        and user is trying to figscale, figratio, or figsize.
+    # ----------------------------------------------------------------------
+
+    if not external_axes_mode:
+        fig = plt.figure()
+        _adjust_figsize(fig,config)
     else:
-        fsize = config['figsize']
-    
-    fig = plt.figure()
-    fig.set_size_inches(fsize)
+        fig = None
 
     if config['volume'] and volumes is None:
         raise ValueError('Request for volume, but NO volume data.')
 
-    panels = _build_panels(fig, config)
-
-    volumeAxes = panels.at[config['volume_panel'],'axes'][0] if config['volume'] is True else None
+    if external_axes_mode:
+        panels     = None
+        if config['volume']:
+            volumeAxes = config['volume']
+            volumeAxes.set_axisbelow(config['saxbelow'])
+    else:
+        panels = _build_panels(fig, config)
+        volumeAxes = panels.at[config['volume_panel'],'axes'][0] if config['volume'] is True else None
 
     fmtstring = _determine_format_string( dates, config['datetime_format'] )
 
@@ -310,7 +351,11 @@ def plot( data, **kwargs ):
         formatter = IntegerIndexDateTimeFormatter(dates, fmtstring)
         xdates = np.arange(len(dates))
 
-    axA1 = panels.at[config['main_panel'],'axes'][0]
+    if external_axes_mode:
+        axA1 = config['ax']
+        axA1.set_axisbelow(config['saxbelow'])
+    else:
+        axA1 = panels.at[config['main_panel'],'axes'][0]
 
     # Will have to handle widths config separately for PMOVE types ??
     config['_width_config'] = _determine_width_config(xdates, config)
@@ -366,10 +411,17 @@ def plot( data, **kwargs ):
     if config['ylim'] is not None:
         axA1.set_ylim(config['ylim'][0], config['ylim'][1])
     elif config['tight_layout']:
-        axA1.set_xlim(minx,maxx)
         ydelta = 0.01 * (maxy-miny)
         axA1.set_ylim(miny-ydelta,maxy+ydelta)
-    else:
+
+    if config['xlim'] is not None:
+        axA1.set_xlim(config['xlim'][0], config['xlim'][1])
+    elif config['tight_layout']:
+        axA1.set_xlim(minx,maxx)
+
+    if (config['ylim'] is None and
+        config['xlim'] is None and
+        not config['tight_layout']):
         corners = (minx, miny), (maxx, maxy)
         axA1.update_datalim(corners)
 
@@ -437,25 +489,35 @@ def plot( data, **kwargs ):
         volumeAxes.set_ylim( miny, maxy )
 
     xrotation = config['xrotation']
-    _set_ticks_on_bottom_panel_only(panels,formatter,rotation=xrotation)
+    if not external_axes_mode:
+        _set_ticks_on_bottom_panel_only(panels,formatter,rotation=xrotation)
+    else:
+        axA1.tick_params(axis='x',rotation=xrotation)
+        axA1.xaxis.set_major_formatter(formatter)
 
     addplot = config['addplot']
     if addplot is not None and ptype not in VALID_PMOVE_TYPES:
-        # Calculate the Order of Magnitude Range ('mag')
-        # If addplot['secondary_y'] == 'auto', then: If the addplot['data']
-        # is out of the Order of Magnitude Range, then use secondary_y.
-        # Calculate omrange for Main panel, and for Lower (volume) panel:
-        lo = math.log(max(math.fabs(np.nanmin(lows)),1e-7),10) - 0.5
-        hi = math.log(max(math.fabs(np.nanmax(highs)),1e-7),10) + 0.5
+        # NOTE: If in external_axes_mode, then all code relating
+        #       to panels and secondary_y becomes irrrelevant.
+        #       If the user wants something on a secondary_y then user should
+        #       determine that externally, and pass in the appropriate axes.
 
-        panels['mag'] = [None]*len(panels)  # create 'mag'nitude column
+        if not external_axes_mode:
+            # Calculate the Order of Magnitude Range ('mag')
+            # If addplot['secondary_y'] == 'auto', then: If the addplot['data']
+            # is out of the Order of Magnitude Range, then use secondary_y.
 
-        panels.at[config['main_panel'],'mag'] = {'lo':lo,'hi':hi} # update main panel magnitude range
+            lo = math.log(max(math.fabs(np.nanmin(lows)),1e-7),10) - 0.5
+            hi = math.log(max(math.fabs(np.nanmax(highs)),1e-7),10) + 0.5
 
-        if config['volume']:
-            lo = math.log(max(math.fabs(np.nanmin(volumes)),1e-7),10) - 0.5
-            hi = math.log(max(math.fabs(np.nanmax(volumes)),1e-7),10) + 0.5
-            panels.at[config['volume_panel'],'mag'] = {'lo':lo,'hi':hi}
+            panels['mag'] = [None]*len(panels)  # create 'mag'nitude column
+
+            panels.at[config['main_panel'],'mag'] = {'lo':lo,'hi':hi} # update main panel magnitude range
+
+            if config['volume']:
+                lo = math.log(max(math.fabs(np.nanmin(volumes)),1e-7),10) - 0.5
+                hi = math.log(max(math.fabs(np.nanmax(volumes)),1e-7),10) + 0.5
+                panels.at[config['volume_panel'],'mag'] = {'lo':lo,'hi':hi}
 
         if isinstance(addplot,dict):
             addplot = [addplot,]   # make list of dict to be consistent
@@ -465,27 +527,17 @@ def plot( data, **kwargs ):
 
         for apdict in addplot:
 
-            panid = apdict['panel']
-            if   panid == 'main' : panid = 0  # for backwards compatibility
-            elif panid == 'lower': panid = 1  # for backwards compatibility
-
-            if apdict['y_on_right'] is not None:
-                panels.at[panid,'y_on_right'] = apdict['y_on_right']
+            panid = apdict['panel'] 
+            if not external_axes_mode:
+                if   panid == 'main' : panid = 0  # for backwards compatibility
+                elif panid == 'lower': panid = 1  # for backwards compatibility
+                if apdict['y_on_right'] is not None:
+                    panels.at[panid,'y_on_right'] = apdict['y_on_right']
 
             aptype = apdict['type']
             if aptype == 'ohlc' or aptype == 'candle':
                 ax = _addplot_collections(panid,panels,apdict,xdates,config)
-                if (apdict['ylabel'] is not None):
-                    ax.set_ylabel(apdict['ylabel'])
-                if apdict['ylim'] is not None:
-                    ax.set_ylim(apdict['ylim'][0],apdict['ylim'][1])
-               #elif config['tight_layout']:
-               #    ax.set_xlim(minx,maxx)
-               #    ydelta = 0.01 * (maxy-miny)
-               #    ax.set_ylim(miny-ydelta,maxy+ydelta)
-               #else:
-               #    corners = (minx, miny), (maxx, maxy)
-               #    ax.update_datalim(corners)
+                _addplot_apply_supplements(ax,apdict)
             else:         
                 apdata = apdict['data']
                 if isinstance(apdata,list) and not isinstance(apdata[0],(float,int)):
@@ -495,23 +547,14 @@ def plot( data, **kwargs ):
                 else:
                     havedf = False      # must be a single series or array
                     apdata = [apdata,]  # make it iterable
-
                 for column in apdata:
                     ydata = apdata.loc[:,column] if havedf else column
                     ax = _addplot_columns(panid,panels,ydata,apdict,xdates,config)
-                    if (apdict["ylabel"] is not None):
-                        ax.set_ylabel(apdict["ylabel"])
-                    if apdict['ylim'] is not None:
-                        ax.set_ylim(apdict['ylim'][0],apdict['ylim'][1])
-                   #elif config['tight_layout']:
-                   #    ax.set_xlim(minx,maxx)
-                   #    ydelta = 0.01 * (maxy-miny)
-                   #    ax.set_ylim(miny-ydelta,maxy+ydelta)
-                   #else:
-                   #    corners = (minx, miny), (maxx, maxy)
-                   #    ax.update_datalim(corners)
+                    _addplot_apply_supplements(ax,apdict)
 
-    if config['fill_between'] is not None:
+    # fill_between is NOT supported for external_axes_mode
+    # (caller can easily call ax.fill_between() themselves).
+    if config['fill_between'] is not None and not external_axes_mode:
         fb    = config['fill_between']
         panid = config['main_panel']
         if isinstance(fb,dict):
@@ -528,10 +571,14 @@ def plot( data, **kwargs ):
             
     # put the primary axis on one side,
     # and the twinx() on the "other" side:
-    for panid,row in panels.iterrows():
-        ax = row['axes']
-        y_on_right = style['y_on_right'] if row['y_on_right'] is None else row['y_on_right']
-        _set_ylabels_side(ax[0],ax[1],y_on_right)
+    if not external_axes_mode:
+        for panid,row in panels.iterrows():
+            ax = row['axes']
+            y_on_right = style['y_on_right'] if row['y_on_right'] is None else row['y_on_right']
+            _set_ylabels_side(ax[0],ax[1],y_on_right)
+    else:
+        y_on_right = style['y_on_right']
+        _set_ylabels_side(axA1,None,y_on_right)
 
     # TODO: ================================================================
     # TODO:  Investigate:
@@ -574,6 +621,9 @@ def plot( data, **kwargs ):
                 offset = '\n'+offset
             vol_label = config['ylabel_lower'] + offset
         volumeAxes.set_ylabel(vol_label)
+        if external_axes_mode:
+            volumeAxes.tick_params(axis='x',rotation=xrotation)
+            volumeAxes.xaxis.set_major_formatter(formatter)
 
     if config['title'] is not None:
         if config['tight_layout']:
@@ -584,9 +634,16 @@ def plot( data, **kwargs ):
         else:
             fig.suptitle(config['title'],size='x-large',weight='semibold', va='center')
 
-    for panid,row in panels.iterrows():
-        if not row['used2nd']:
-            row['axes'][1].set_visible(False)
+    if config['axtitle'] is not None:
+        axA1.set_title(config['axtitle'])
+
+    if not external_axes_mode:
+        for panid,row in panels.iterrows():
+            if not row['used2nd']:
+                row['axes'][1].set_visible(False)
+
+    if external_axes_mode:
+        return None
 
     # Should we create a new kwarg to return a flattened axes list
     # versus a list of tuples of primary and secondary axes?
@@ -626,10 +683,29 @@ def plot( data, **kwargs ):
     # print('rcpdfhead(3)=',rcpdf.head(3))
     # return # rcpdf
 
+def _adjust_figsize(fig,config):
+    if fig is None:
+        return
+    if config['figsize'] is None:
+        w,h = config['figratio']
+        r = float(w)/float(h)
+        if r < 0.20 or r > 5.0:
+            raise ValueError('"figratio" (aspect ratio)  must be between 0.20 and 5.0 (but is '+str(r)+')')
+        default_scale = DEFAULT_FIGRATIO[1]/h
+        h *= default_scale
+        w *= default_scale
+        base      = (w,h)
+        figscale  = config['figscale']
+        fsize     = [d*figscale for d in base]
+    else:
+        fsize = config['figsize']
+    fig.set_size_inches(fsize)
+
 def _addplot_collections(panid,panels,apdict,xdates,config):
 
     apdata = apdict['data']
     aptype = apdict['type']
+    external_axes_mode = apdict['ax'] is not None
    
     #--------------------------------------------------------------#
     # Note: _auto_secondary_y() sets the 'magnitude' column in the
@@ -650,16 +726,21 @@ def _addplot_collections(panid,panels,apdict,xdates,config):
         raise TypeError('addplot type "'+aptype+'" MUST be accompanied by addplot data of type `pd.DataFrame`')
     d,o,h,l,c,v = _check_and_prepare_data(apdata,config)
     collections = _construct_mpf_collections(aptype,d,xdates,o,h,l,c,v,config,config['style'])
-    lo = math.log(max(math.fabs(np.nanmin(l)),1e-7),10) - 0.5
-    hi = math.log(max(math.fabs(np.nanmax(h)),1e-7),10) + 0.5
-    secondary_y = _auto_secondary_y( panels, panid, lo, hi )
-    if 'auto' != apdict['secondary_y']:
-        secondary_y = apdict['secondary_y'] 
-    if secondary_y:
-        ax = panels.at[panid,'axes'][1] 
-        panels.at[panid,'used2nd'] = True
-    else: 
-        ax = panels.at[panid,'axes'][0]
+
+    if not external_axes_mode:
+        lo = math.log(max(math.fabs(np.nanmin(l)),1e-7),10) - 0.5
+        hi = math.log(max(math.fabs(np.nanmax(h)),1e-7),10) + 0.5
+        secondary_y = _auto_secondary_y( panels, panid, lo, hi )
+        if 'auto' != apdict['secondary_y']:
+            secondary_y = apdict['secondary_y'] 
+        if secondary_y:
+            ax = panels.at[panid,'axes'][1] 
+            panels.at[panid,'used2nd'] = True
+        else: 
+            ax = panels.at[panid,'axes'][0]
+    else:
+        ax = apdict['ax']
+
     for coll in collections:
         ax.add_collection(coll)
     if apdict['mav'] is not None:
@@ -668,21 +749,25 @@ def _addplot_collections(panid,panels,apdict,xdates,config):
     return ax
 
 def _addplot_columns(panid,panels,ydata,apdict,xdates,config):
-    secondary_y = False
-    if apdict['secondary_y'] == 'auto':
-        yd = [y for y in ydata if not math.isnan(y)]
-        ymhi = math.log(max(math.fabs(np.nanmax(yd)),1e-7),10)
-        ymlo = math.log(max(math.fabs(np.nanmin(yd)),1e-7),10)
-        secondary_y = _auto_secondary_y( panels, panid, ymlo, ymhi )
-    else:
-        secondary_y = apdict['secondary_y']
-        #print("apdict['secondary_y'] says secondary_y is",secondary_y)
+    external_axes_mode = apdict['ax'] is not None
+    if not external_axes_mode:
+        secondary_y = False
+        if apdict['secondary_y'] == 'auto':
+            yd = [y for y in ydata if not math.isnan(y)]
+            ymhi = math.log(max(math.fabs(np.nanmax(yd)),1e-7),10)
+            ymlo = math.log(max(math.fabs(np.nanmin(yd)),1e-7),10)
+            secondary_y = _auto_secondary_y( panels, panid, ymlo, ymhi )
+        else:
+            secondary_y = apdict['secondary_y']
+            #print("apdict['secondary_y'] says secondary_y is",secondary_y)
 
-    if secondary_y:
-        ax = panels.at[panid,'axes'][1] 
-        panels.at[panid,'used2nd'] = True
-    else: 
-        ax = panels.at[panid,'axes'][0]
+        if secondary_y:
+            ax = panels.at[panid,'axes'][1] 
+            panels.at[panid,'used2nd'] = True
+        else: 
+            ax = panels.at[panid,'axes'][0]
+    else:
+        ax = apdict['ax']
 
     aptype = apdict['type']
     if aptype == 'scatter':
@@ -714,6 +799,13 @@ def _addplot_columns(panid,panels,ydata,apdict,xdates,config):
 
     return ax
 
+def _addplot_apply_supplements(ax,apdict):
+    if (apdict['ylabel'] is not None):
+        ax.set_ylabel(apdict['ylabel'])
+    if apdict['ylim'] is not None:
+        ax.set_ylim(apdict['ylim'][0],apdict['ylim'][1])
+    if apdict['title'] is not None:
+        ax.set_title(apdict['title'])
 
 def _set_ylabels_side(ax_pri,ax_sec,primary_on_right):
     # put the primary axis on one side,
@@ -721,13 +813,15 @@ def _set_ylabels_side(ax_pri,ax_sec,primary_on_right):
     if primary_on_right == True:
         ax_pri.yaxis.set_label_position('right')
         ax_pri.yaxis.tick_right()
-        ax_sec.yaxis.set_label_position('left')
-        ax_sec.yaxis.tick_left()
+        if ax_sec is not None:
+            ax_sec.yaxis.set_label_position('left')
+            ax_sec.yaxis.tick_left()
     else:  # treat non-True as False, whether False, None, or anything else.
         ax_pri.yaxis.set_label_position('left')
         ax_pri.yaxis.tick_left()
-        ax_sec.yaxis.set_label_position('right')
-        ax_sec.yaxis.tick_right()
+        if ax_sec is not None:
+            ax_sec.yaxis.set_label_position('right')
+            ax_sec.yaxis.tick_right()
 
 def _plot_mav(ax,config,xdates,prices,apmav=None,apwidth=None):
     style = config['style']
@@ -827,6 +921,12 @@ def _valid_addplot_kwargs():
         'ylim'        : {'Default'      : None,
                          'Validator'    : lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
                                                                       and all([isinstance(v,(int,float)) for v in value])},
+
+        'title'       : { 'Default'     : None,
+                          'Validator'   : lambda value: isinstance(value,str) },
+
+        'ax'          : {'Default'      : None,
+                         'Validator'    : lambda value: isinstance(value,mpl_axes.Axes) },
     }
 
     _validate_vkwargs_dict(vkwargs)
