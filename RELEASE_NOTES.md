@@ -1,3 +1,25 @@
+### <a name="v0.12.7a0"></a>v0.12.7a0 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; released 2020-08-07
+#### Enhancements
+
+- [**External Axes Mode**](https://github.com/matplotlib/mplfinance/blob/master/markdown/subplots.md#the-matplotlib-method)
+  - [Issue #114: Display multiple plots in a row](https://github.com/matplotlib/mplfinance/issues/114).
+  - [Issue #209: Allow plotting on the existing AXIS](https://github.com/matplotlib/mplfinance/issues/209).
+  
+- [**Animation Support**](https://github.com/matplotlib/mplfinance/blob/master/markdown/animation.md):
+  - [Issue #25: Support animation/live updating of OHLCV data plots](https://github.com/matplotlib/mplfinance/issues/25).
+  
+---
+### <a name="v0.12.6a3"></a>v0.12.6a3 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; released 2020-06-28
+- accept lower case column names in dataframe (i.e. 'close' is the same as 'Close') ([Issue #197](https://github.com/matplotlib/mplfinance/issues/197))
+---
+### <a name="v0.12.6a2"></a>v0.12.6a2 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; released 2020-06-28
+- `tight_layout` now supports adjusting Figure borders (padding) around plot. ([Issue #196](https://github.com/matplotlib/mplfinance/issues/196))
+---
+### <a name="v0.12.6a1"></a>v0.12.6a1 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; released 2020-06-25
+- `make_mpf_style()` may set `y_on_right=None`: prevent crash by treating `None` the same as `False`. ([Issue #190](https://github.com/matplotlib/mplfinance/issues/190))
+
+---
+
 ### <a name="v0.12.6a0"></a>v0.12.6a0 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; released 2020-06-24
 #### Enhancements
 - **`make_addplot()`** enhancements:
