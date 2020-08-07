@@ -1,4 +1,7 @@
-### <a name="v0.12.7a0"></a>v0.12.7a0 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; released 2020-08-07
+####
+---
+
+### <a name="v0.12.7a0"></a>v0.12.7a0 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; released 2020-08-09
 #### Enhancements
 
 - [**External Axes Mode**](https://github.com/matplotlib/mplfinance/blob/master/markdown/subplots.md#the-matplotlib-method)
