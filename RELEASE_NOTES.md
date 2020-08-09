@@ -4,11 +4,11 @@
 ### <a name="v0.12.7a0"></a>v0.12.7a0 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; released 2020-08-09
 #### Enhancements
 
-- [**External Axes Mode**](https://github.com/matplotlib/mplfinance/blob/master/markdown/subplots.md#the-matplotlib-method)
+- [**External Axes Mode**](https://github.com/matplotlib/mplfinance/blob/master/markdown/subplots.md#external-axes-method)
   - [Issue #114: Display multiple plots in a row](https://github.com/matplotlib/mplfinance/issues/114).
   - [Issue #209: Allow plotting on the existing AXIS](https://github.com/matplotlib/mplfinance/issues/209).
   
-- [**Animation Support**](https://github.com/matplotlib/mplfinance/blob/master/markdown/animation.md):
+- [**Animation Support**](https://github.com/matplotlib/mplfinance/blob/master/markdown/animation.md#animation-support-in-mplfinance):
   - [Issue #25: Support animation/live updating of OHLCV data plots](https://github.com/matplotlib/mplfinance/issues/25).
   
 ---
