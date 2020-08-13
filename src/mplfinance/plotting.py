@@ -149,6 +149,9 @@ def _valid_plot_kwargs():
 
         'title'                     : { 'Default'     : None, # Figure Title
                                         'Validator'   : lambda value: isinstance(value,str) },
+
+        'title_lightweight'         : { 'Default'     : None, # Semibold or light title weight
+                                        'Validator'   : lambda value: isinstance(value,bool) },
  
         'axtitle'                   : { 'Default'     : None, # Axes Title (subplot title)
                                         'Validator'   : lambda value: isinstance(value,str) },
@@ -630,10 +633,16 @@ def plot( data, **kwargs ):
             # IMPORTANT: 0.89 is based on the top of the top panel
             #            being at 0.18+0.7 = 0.88.  See _panels.py
             # If the value changes there, then it needs to change here.
-            fig.suptitle(config['title'],size='x-large',weight='semibold', va='bottom', y=0.89)
+            if config['title_lightweight']:
+                fig.suptitle(config['title'],size='x-large',weight='light', va='bottom', y=0.89)
+            else:
+                fig.suptitle(config['title'],size='x-large',weight='semibold', va='bottom', y=0.89)
         else:
-            fig.suptitle(config['title'],size='x-large',weight='semibold', va='center')
-
+            if config['title_lightweight']:
+                fig.suptitle(config['title'], size='x-large',weight='light', va='center')
+            else:
+                fig.suptitle(config['title'],size='x-large',weight='semibold', va='center')
+    
     if config['axtitle'] is not None:
         axA1.set_title(config['axtitle'])
 
