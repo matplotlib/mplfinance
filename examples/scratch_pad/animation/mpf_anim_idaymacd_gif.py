@@ -25,7 +25,7 @@ mpf.__version__
 class RealTimeAPI():
     def __init__(self):
         self.data_pointer = 0
-        self.data_frame = pd.read_csv('data/SP500_NOV2019_IDayRVol.csv',index_col=0,parse_dates=True)
+        self.data_frame = pd.read_csv('../../data/SP500_NOV2019_IDayRVol.csv',index_col=0,parse_dates=True)
         #self.data_frame = self.data_frame.iloc[0:120,:]
         self.df_len = len(self.data_frame)
 
@@ -117,8 +117,11 @@ def animate(ival):
 
 ani = animation.FuncAnimation(fig,animate,interval=50)
 
-print('about to save')
-ani.save('idaygcmacd.gif', writer='imagemagick',fps=5)
-print('DONE saving')
+##  print('about to save')
+##  ani.save('idaygcmacd.gif', writer='imagemagick',fps=5)
+##  print('DONE saving')
+
+import matplotlib.pyplot as plt
+print('Backend: ',plt.get_backend())
 
 mpf.show()
