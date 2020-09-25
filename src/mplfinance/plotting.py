@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import matplotlib.axes   as mpl_axes
 import matplotlib.figure as mpl_fig
+import matplotlib.ticker as mtk
 import pandas as pd
 import numpy  as np
 import copy
@@ -471,6 +472,13 @@ def plot( data, **kwargs ):
         if collection is not None:
             axA1.add_collection(collection)
 
+    xrotation = config['xrotation']
+    if not external_axes_mode:
+        _set_ticks_on_bottom_panel_only(panels,formatter,rotation=xrotation)
+    else:
+        axA1.tick_params(axis='x',rotation=xrotation)
+        axA1.xaxis.set_major_formatter(formatter)
+
     datalen = len(xdates)
     if config['volume']:
         vup,vdown = style['marketcolors']['volume'].values()
@@ -487,13 +495,6 @@ def plot( data, **kwargs ):
         miny = 0.3 * np.nanmin(volumes)
         maxy = 1.1 * np.nanmax(volumes)
         volumeAxes.set_ylim( miny, maxy )
-
-    xrotation = config['xrotation']
-    if not external_axes_mode:
-        _set_ticks_on_bottom_panel_only(panels,formatter,rotation=xrotation)
-    else:
-        axA1.tick_params(axis='x',rotation=xrotation)
-        axA1.xaxis.set_major_formatter(formatter)
 
     addplot = config['addplot']
     if addplot is not None and ptype not in VALID_PMOVE_TYPES:
@@ -609,9 +610,14 @@ def plot( data, **kwargs ):
     axA1.set_ylabel(config['ylabel'])
 
     if config['volume']:
-        volumeAxes.figure.canvas.draw()  # This is needed to calculate offset
-        offset = volumeAxes.yaxis.get_major_formatter().get_offset()
-        volumeAxes.yaxis.offsetText.set_visible(False)
+        if external_axes_mode:
+            volumeAxes.tick_params(axis='x',rotation=xrotation)
+            volumeAxes.xaxis.set_major_formatter(formatter)
+        #volumeAxes.figure.canvas.draw()  # This is needed to calculate offset
+        volumeAxes.yaxis.set_major_formatter(mtk.FormatStrFormatter('%.0e'))
+        #offset = volumeAxes.yaxis.get_major_formatter().get_offset()
+        #volumeAxes.yaxis.offsetText.set_visible(False)
+        offset = ''
         if len(offset) > 0:
             offset = (' x '+offset)
         if config['ylabel_lower'] is None:
@@ -621,9 +627,6 @@ def plot( data, **kwargs ):
                 offset = '\n'+offset
             vol_label = config['ylabel_lower'] + offset
         volumeAxes.set_ylabel(vol_label)
-        if external_axes_mode:
-            volumeAxes.tick_params(axis='x',rotation=xrotation)
-            volumeAxes.xaxis.set_major_formatter(formatter)
     
     if config['title'] is not None:
         if config['tight_layout']:
