@@ -79,6 +79,14 @@ def _warn_set_ylim_deprecated(value):
                   category=DeprecationWarning)
     return isinstance(value,bool)
 
+def _tzinfo_dates(dates,tzinfo=None):
+    if tzinfo != None:  # assume 'UTC'; later implement others
+        return dates
+    dts = copy.deepcopy(dates)
+    for ix, d in enumerate(dts):
+        dts[ix] = d.replace(tzinfo)
+    return dts
+        
 
 def _valid_plot_kwargs():
     '''
@@ -255,7 +263,10 @@ def _valid_plot_kwargs():
                                         'Validator'   : lambda value: isinstance(value,mpl_axes.Axes) },
 
         'volume_exponent'           : { 'Default'     : None,
-                                        'Validator'   : lambda value: isinstance(value,int) or value == 'legacy'},
+                                        'Validator'   : lambda value: isinstance(value,int) or value == 'legacy' },
+
+        'tzinfo'                    : { 'Default'     : None,
+                                        'Validator'   : lambda value: isinstance(value,string) },
     }
 
     _validate_vkwargs_dict(vkwargs)
@@ -349,9 +360,9 @@ def plot( data, **kwargs ):
 
     if config['show_nontrading']:
         formatter = mdates.DateFormatter(fmtstring)
-        xdates = dates
+        xdates = _tzinfo_dates(dates,tzinfo=config['tzinfo'])
     else:
-        formatter = IntegerIndexDateTimeFormatter(dates, fmtstring)
+        formatter = IntegerIndexDateTimeFormatter(_tzinfo_dates(dates,tzinfo=config['tzinfo']),fmtstring)
         xdates = np.arange(len(dates))
 
     if external_axes_mode:
