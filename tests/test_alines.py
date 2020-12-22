@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from   matplotlib.testing.compare import compare_images
 
 print('mpf.__version__ =',mpf.__version__)                 # for the record
+print('mpf.__file__ =',mpf.__file__)                       # for the record
 print("plt.rcParams['backend'] =",plt.rcParams['backend']) # for the record
 
 base='alines'

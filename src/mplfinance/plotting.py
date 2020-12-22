@@ -253,6 +253,9 @@ def _valid_plot_kwargs():
 
         'ax'                        : { 'Default'     : None,
                                         'Validator'   : lambda value: isinstance(value,mpl_axes.Axes) },
+
+        'volume_exponent'           : { 'Default'     : None,
+                                        'Validator'   : lambda value: isinstance(value,int) or value == 'legacy'},
     }
 
     _validate_vkwargs_dict(vkwargs)
@@ -484,9 +487,9 @@ def plot( data, **kwargs ):
 
         adjc =  _adjust_color_brightness(vcolors,0.90)
         volumeAxes.bar(xdates,volumes,width=w,linewidth=lw,color=vcolors,ec=adjc)
-        miny = 0.3 * np.nanmin(volumes)
-        maxy = 1.1 * np.nanmax(volumes)
-        volumeAxes.set_ylim( miny, maxy )
+        vymin = 0.3 * np.nanmin(volumes)
+        vymax = 1.1 * np.nanmax(volumes)
+        volumeAxes.set_ylim(vymin,vymax)
 
     xrotation = config['xrotation']
     if not external_axes_mode:
@@ -609,11 +612,35 @@ def plot( data, **kwargs ):
     axA1.set_ylabel(config['ylabel'])
 
     if config['volume']:
-        volumeAxes.figure.canvas.draw()  # This is needed to calculate offset
-        offset = volumeAxes.yaxis.get_major_formatter().get_offset()
+        if external_axes_mode:
+            volumeAxes.tick_params(axis='x',rotation=xrotation)
+            volumeAxes.xaxis.set_major_formatter(formatter)
+        vxp = config['volume_exponent']
+        if vxp == 'legacy':
+            volumeAxes.figure.canvas.draw()  # This is needed to calculate offset
+            offset = volumeAxes.yaxis.get_major_formatter().get_offset()
+            if len(offset) > 0:
+                offset = (' x '+offset)
+        elif isinstance(vxp,int) and vxp > 0:
+            volumeAxes.ticklabel_format(useOffset=False,scilimits=(vxp,vxp),axis='y')
+            offset = '  $10^{'+str(vxp)+'}$'
+        elif isinstance(vxp,int) and vxp == 0:
+            volumeAxes.ticklabel_format(useOffset=False,style='plain',axis='y')
+            offset = ''
+        else:
+            offset = ''
+            scilims = plt.rcParams['axes.formatter.limits']
+            if scilims[0] < scilims[1]:
+                for power in (5,4,3,2,1):
+                    xp = scilims[1]*power
+                    if vymax >= 10.**xp:
+                        volumeAxes.ticklabel_format(useOffset=False,scilimits=(xp,xp),axis='y')
+                        offset = '  $10^{'+str(xp)+'}$'
+                        break
+            elif scilims[0] == scilims[1] and scilims[1] != 0:
+                volumeAxes.ticklabel_format(useOffset=False,scilimits=scilims,axis='y')
+                offset = ' $10^'+str(scilims[1])+'$'
         volumeAxes.yaxis.offsetText.set_visible(False)
-        if len(offset) > 0:
-            offset = (' x '+offset)
         if config['ylabel_lower'] is None:
             vol_label = 'Volume'+offset
         else:
@@ -621,9 +648,6 @@ def plot( data, **kwargs ):
                 offset = '\n'+offset
             vol_label = config['ylabel_lower'] + offset
         volumeAxes.set_ylabel(vol_label)
-        if external_axes_mode:
-            volumeAxes.tick_params(axis='x',rotation=xrotation)
-            volumeAxes.xaxis.set_major_formatter(formatter)
     
     if config['title'] is not None:
         if config['tight_layout']:
