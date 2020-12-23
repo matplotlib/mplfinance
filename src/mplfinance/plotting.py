@@ -256,6 +256,9 @@ def _valid_plot_kwargs():
 
         'volume_exponent'           : { 'Default'     : None,
                                         'Validator'   : lambda value: isinstance(value,int) or value == 'legacy'},
+
+        'tz_localize'               : { 'Default'     : True,
+                                        'Validator'   : lambda value: isinstance(value,bool) },
     }
 
     _validate_vkwargs_dict(vkwargs)

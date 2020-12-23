@@ -40,7 +40,10 @@ def _check_and_prepare_data(data, config):
     o, h, l, c, v = columns
     cols = [o, h, l, c]
 
-    dates   = mdates.date2num(data.index.to_pydatetime())
+    if config['tz_localize']:
+        dates   = mdates.date2num(data.index.tz_localize(None).to_pydatetime())
+    else:  # Just in case someone was depending on this bug (Issue 236)
+        dates   = mdates.date2num(data.index.to_pydatetime())
     opens   = data[o].values
     highs   = data[h].values
     lows    = data[l].values
