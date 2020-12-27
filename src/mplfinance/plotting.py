@@ -263,10 +263,10 @@ def _valid_plot_kwargs():
                                         'Validator'   : lambda value: isinstance(value,mpl_axes.Axes) },
 
         'volume_exponent'           : { 'Default'     : None,
-                                        'Validator'   : lambda value: isinstance(value,int) or value == 'legacy' },
+                                        'Validator'   : lambda value: isinstance(value,int) or value == 'legacy'},
 
-        'tzinfo'                    : { 'Default'     : None,
-                                        'Validator'   : lambda value: isinstance(value,string) },
+        'tz_localize'               : { 'Default'     : True,
+                                        'Validator'   : lambda value: isinstance(value,bool) },
     }
 
     _validate_vkwargs_dict(vkwargs)
