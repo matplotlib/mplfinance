@@ -79,14 +79,6 @@ def _warn_set_ylim_deprecated(value):
                   category=DeprecationWarning)
     return isinstance(value,bool)
 
-def _tzinfo_dates(dates,tzinfo=None):
-    if tzinfo != None:  # assume 'UTC'; later implement others
-        return dates
-    dts = copy.deepcopy(dates)
-    for ix, d in enumerate(dts):
-        dts[ix] = d.replace(tzinfo)
-    return dts
-        
 
 def _valid_plot_kwargs():
     '''
@@ -360,9 +352,9 @@ def plot( data, **kwargs ):
 
     if config['show_nontrading']:
         formatter = mdates.DateFormatter(fmtstring)
-        xdates = _tzinfo_dates(dates,tzinfo=config['tzinfo'])
+        xdates = dates
     else:
-        formatter = IntegerIndexDateTimeFormatter(_tzinfo_dates(dates,tzinfo=config['tzinfo']),fmtstring)
+        formatter = IntegerIndexDateTimeFormatter(dates, fmtstring)
         xdates = np.arange(len(dates))
 
     if external_axes_mode:
