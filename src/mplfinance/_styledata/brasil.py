@@ -1,5 +1,5 @@
 style = {'base_mpl_style': 'fast',
-         'marketcolors': {'candle': {'up': '#fedf00', 'down': '#002776'},
+         'marketcolors': {'candle': {'up': '#fedf00', 'down': '#002776', 'up_hollow': '#fedf00', 'down_hollow': '#002776'},
                           'edge'  : {'up': '#fedf00', 'down': '#002776'},
                           'wick'  : {'up': '#fedf00', 'down': '#002776'},
                           'ohlc'  : {'up': '#fedf00', 'down': '#002776'},

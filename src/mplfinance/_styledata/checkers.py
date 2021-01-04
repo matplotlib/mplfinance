@@ -1,5 +1,5 @@
 style = {'base_mpl_style': 'ggplot',
-         'marketcolors'  : {'candle': {'up': '#000000', 'down': '#ff0000'},
+         'marketcolors'  : {'candle': {'up': '#000000', 'down': '#ff0000', 'up_hollow': '#000000', 'down_hollow': '#ff0000'},
                             'edge'  : {'up': '#000000', 'down': '#ff0000'},
                             'wick'  : {'up': '#606060', 'down': '#606060'},
                             'ohlc'  : {'up': '#000000', 'down': '#ff0000'},

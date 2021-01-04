@@ -1,6 +1,6 @@
 style = dict(style_name    = 'binance',
              base_mpl_style= 'seaborn-darkgrid',
-             marketcolors  = {'candle'  : {'up':'#70a800', 'down':'#ea0070'},
+             marketcolors  = {'candle'  : {'up':'#70a800', 'down':'#ea0070', 'up_hollow':'#70a800', 'down_hollow':'#ea0070'},
                               'edge'    : {'up':'#70a800', 'down':'#ea0070'},
                               'wick'    : {'up':'#70a800', 'down':'#ea0070'},
                               'ohlc'    : {'up':'#70a800', 'down':'#ea0070'},

@@ -1,6 +1,6 @@
 style = dict(style_name    = 'mike',
              base_mpl_style= 'dark_background', 
-             marketcolors  = {'candle'  : {'up':'#000000', 'down':'#0080ff'},
+             marketcolors  = {'candle'  : {'up':'#000000', 'down':'#0080ff', 'up_hollow':'#000000', 'down_hollow':'#0080ff'},
                               'edge'    : {'up':'#ffffff', 'down':'#0080ff'},
                               'wick'    : {'up':'#ffffff', 'down':'#ffffff'},
                               'ohlc'    : {'up':'#ffffff', 'down':'#ffffff'},

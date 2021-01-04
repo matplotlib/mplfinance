@@ -1,6 +1,6 @@
 style = dict(style_name    = 'blueskies',
              base_mpl_style='fast', 
-             marketcolors  = {'candle'  : {'up':'w', 'down':'#0095ff'},
+             marketcolors  = {'candle'  : {'up':'w', 'down':'#0095ff', 'up_hollow':'w_hollow', 'down':'#0095ff'},
                               'edge'    : {'up':'k', 'down':'#0095ff'},
                               'wick'    : {'up':'k', 'down':'#0095ff'},
                               'ohlc'    : {'up':'#0095ff', 'down':'#0095ff'},
