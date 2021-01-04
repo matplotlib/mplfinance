@@ -14,6 +14,7 @@ from mplfinance._styledata import brasil
 from mplfinance._styledata import yahoo
 from mplfinance._styledata import checkers
 from mplfinance._styledata import binance
+from mplfinance._styledata import hollow
 
 _style_names = [n for n in dir() if not n.startswith('_')]
 
