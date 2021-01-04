@@ -159,6 +159,12 @@ def _valid_make_marketcolors_kwargs():
 
         'down'       : { 'Default'     : None,
                          'Validator'   : lambda value: mcolors.is_color_like(value) },
+        
+        'up_hollow'     : { 'Default'     : None,
+                         'Validator'   : lambda value: mcolors.is_color_like(value) },
+        
+        'down_hollow'     : { 'Default'     : None,
+                         'Validator'   : lambda value: mcolors.is_color_like(value) },
 
         'alpha'       : { 'Default'     : None,
                          'Validator'   : lambda value: ( isinstance(value,float) and
@@ -219,6 +225,7 @@ def make_marketcolors(**kwargs):
 
     up   = config['up']
     down = config['down']
+    hollow = config['down']
     if up is not None and down is not None:
         marketcolors.update(candle=dict(up=up,down=down))
     elif up is not None:
@@ -229,6 +236,10 @@ def make_marketcolors(**kwargs):
         candle = marketcolors['candle']
         candle.update(down=down)
         marketcolors.update(down=down)
+    elif hollow is not None:
+        candle = marketcolors['candle']
+        candle.update(hollow=hollow)
+        marketcolors.update(hollow=hollow)
 
     def _check_and_set_mktcolor(candle,**kwarg):
         if len(kwarg) != 1:

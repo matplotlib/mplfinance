@@ -100,7 +100,7 @@ def _valid_plot_kwargs():
                                                                    and all(isinstance(c, str) for c in value) },
         'type'                      : { 'Default'     : 'ohlc',
                                         'Validator'   : lambda value: value in ('candle','candlestick','ohlc','ohlc_bars',
-                                                                                'line','renko','pnf') },
+                                                                                'line','renko','pnf','hollow_candle') },
  
         'style'                     : { 'Default'     : None,
                                         'Validator'   : _styles._valid_mpf_style },

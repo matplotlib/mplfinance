@@ -86,7 +86,7 @@ def _valid_plot_kwargs():
                                                                    and all(isinstance(c, str) for c in value) },
         'type'                      : { 'Default'     : 'ohlc',
                                         'Validator'   : lambda value: value in ('candle','candlestick','ohlc','ohlc_bars',
-                                                                                'line','renko','pnf') },
+                                                                                'line','renko','pnf','hollow_candle') },
  
         'style'                     : { 'Default'     : 'default',
                                         'Validator'   : lambda value: value in _styles.available_styles() or isinstance(value,dict) },
