@@ -170,8 +170,8 @@ def _updownhollow_colors(upcolor,downcolor,uphollow,downhollow,opens,closes):
         return upcolor
     umap = {True : upcolor, False : uphollow}
     dmap = {True : downcolor, False : downhollow}
-    _list = [ umap[cls < opn] if cls > cls0 else dmap[cls < opn] for opn0,cls0,opn,cls in zip(opens[0:-1],closes[0:-1],opens[1:],closes[1:]) ]
-    first = umap[closes[0] < opens[0]]
+    _list = [umap[cls > opn] if cls > cls0 else dmap[cls < opn] for opn0,cls0,opn,cls in zip(opens[0:-1],closes[0:-1],opens[1:],closes[1:]) ]
+    first = upcolor if closes[0] > opens[0] else downcolor
     return [first] + _list
 
 
@@ -488,6 +488,17 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
     return [rangeCollection, barCollection]
 
 
+def alpha_handler(color, alpha):
+    """Checks the color input for an alpha value. Returns the rgba color code with lesser
+    of existing or provided alpha
+    """
+    color_code = mcolors.to_rgba(color)
+    if color_code[-1] <= alpha:
+        return color_code
+    else:
+        return  mcolors.to_rgba(color, alpha)
+
+
 def _construct_hollow_candlestick_collections(dates, opens, highs, lows, closes, marketcolors=None, config=None):
     """Represent the open, close as a bar line and high low range as a
     vertical line. Same as basic candlestick, but utilizes solid and hollow candlesticks
@@ -519,7 +530,7 @@ def _construct_hollow_candlestick_collections(dates, opens, highs, lows, closes,
     _check_input(opens, highs, lows, closes)
 
     if marketcolors is None:
-        marketcolors = _get_mpfstyle('classic')['marketcolors']
+        marketcolors = _get_mpfstyle('hollow')['marketcolors']
         #print('default market colors:',marketcolors)
 
     datalen = len(dates)
@@ -544,10 +555,13 @@ def _construct_hollow_candlestick_collections(dates, opens, highs, lows, closes,
 
     alpha  = marketcolors['alpha']
 
-    uc     = mcolors.to_rgba(marketcolors['candle'][ 'up' ], alpha)
-    dc     = mcolors.to_rgba(marketcolors['candle']['down'], alpha)
-    uh     = mcolors.to_rgba(marketcolors['candle']['up_hollow'], alpha)
-    dh     = mcolors.to_rgba(marketcolors['candle']['down_hollow'], alpha)
+    uc     = alpha_handler(marketcolors['candle'][ 'up' ], alpha)
+    dc     = alpha_handler(marketcolors['candle']['down'], alpha)
+    try:
+        uh     = alpha_handler(marketcolors['hollow']['up'], alpha)
+        dh     = alpha_handler(marketcolors['hollow']['down'], alpha)
+    except KeyError as e:
+        raise Exception('Improper style definition for hollow candle type plotting') from e
     colors = _updownhollow_colors(uc, dc, uh, dh, opens, closes)
 
     uc     = mcolors.to_rgba(marketcolors['edge'][ 'up' ], 1.0)
