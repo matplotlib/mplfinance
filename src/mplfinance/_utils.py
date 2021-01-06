@@ -168,11 +168,10 @@ def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False):
 def _updownhollow_colors(upcolor,downcolor,uphollow,downhollow,opens,closes):
     if upcolor == downcolor == downhollow== uphollow:
         return upcolor
-    cmap = {True : upcolor, False : downcolor}
-    first = cmap[opens[0] < closes[0]]
     umap = {True : upcolor, False : uphollow}
     dmap = {True : downcolor, False : downhollow}
-    _list = [ umap[cls > opn] if cls > cls0 else dmap[cls < opn] for opn0,cls0,opn,cls in zip(opens[0:-1],closes[0:-1],opens[1:],closes[1:]) ]
+    _list = [ umap[cls < opn] if cls > cls0 else dmap[cls < opn] for opn0,cls0,opn,cls in zip(opens[0:-1],closes[0:-1],opens[1:],closes[1:]) ]
+    first = umap[closes[0] < opens[0]]
     return [first] + _list
 
 
