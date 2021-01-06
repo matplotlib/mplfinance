@@ -1,6 +1,7 @@
 style = dict(style_name    = 'hollow',
              base_mpl_style= 'seaborn-darkgrid', 
-             marketcolors  = {'candle'  : {'up':'w', 'down':'r', 'up_hollow':'k', 'down_hollow':'w'},
+             marketcolors  = {'candle' : {'up':(0,0,0,0), 'down':'r'},
+                              'hollow' : {'up':'k', 'down':(0,0,0,0)},
                               'edge'    : {'up':'k', 'down':'r'},
                               'wick'    : {'up':'k', 'down':'r'},
                               'ohlc'    : {'up':'k', 'down':'r'},
@@ -23,5 +24,5 @@ style = dict(style_name    = 'hollow',
                                ('font.weight'     , 'medium'  ),
                                ('font.size'       ,  12.0     ),
                              ],
-             base_mpf_style= 'default'
+             base_mpf_style= 'hollow'
             )
