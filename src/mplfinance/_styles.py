@@ -94,6 +94,9 @@ def _valid_make_mpf_style_kwargs():
         'rc'            : { 'Default'     : None,
                             'Validator'   : lambda value: isinstance(value,dict) },
 
+        'style_name'    : { 'Default'     : None,
+                            'Validator'   : lambda value: isinstance(value,str) },
+
     }
     _validate_vkwargs_dict(vkwargs)
     return vkwargs
@@ -160,7 +163,10 @@ def _valid_make_marketcolors_kwargs():
         'down'       : { 'Default'     : None,
                          'Validator'   : lambda value: mcolors.is_color_like(value) },
 
-        'alpha'       : { 'Default'     : None,
+        'hollow'     : { 'Default'     : None,
+                         'Validator'   : lambda value: mcolors.is_color_like(value) },
+
+        'alpha'      : { 'Default'     : None,
                          'Validator'   : lambda value: ( isinstance(value,float) and
                                                          0.0 <= value and 1.0 >= value ) },
 
@@ -230,7 +236,6 @@ def make_marketcolors(**kwargs):
         candle.update(down=down)
         marketcolors.update(down=down)
 
-
     def _check_and_set_mktcolor(candle,**kwarg):
         if len(kwarg) != 1:
             raise ValueError('Expect only ONE kwarg')
@@ -258,6 +263,9 @@ def make_marketcolors(**kwargs):
                 kwa = {kw:config[kw]}
             c   = _check_and_set_mktcolor(candle,**kwa)
             marketcolors.update([(kw,c)])
+
+    if config['hollow'] is not None:
+        marketcolors.update({'hollow':config['hollow']})
 
     if config['alpha'] is not None:
         marketcolors.update({'alpha':config['alpha']})

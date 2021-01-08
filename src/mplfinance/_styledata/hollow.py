@@ -1,10 +1,10 @@
 style = dict(style_name    = 'hollow',
              base_mpl_style= 'seaborn-darkgrid', 
-             marketcolors  = {'candle' : {'up':(0,0,0,0), 'down':'r'},
-                              'hollow' : {'up':'k', 'down':(0,0,0,0)},
+             marketcolors  = {'candle'  : {'up':'k', 'down':'r'},
                               'edge'    : {'up':'k', 'down':'r'},
                               'wick'    : {'up':'k', 'down':'r'},
                               'ohlc'    : {'up':'k', 'down':'r'},
+                              'hollow'  : 'w',
                               'volume'  : {'up':'#1f77b4', 'down':'#1f77b4'},
                               'vcedge'  : {'up':'#1f77b4', 'down':'#1f77b4'},
                               'vcdopcod': False, # Volume Color is Per Price Change On Day
