@@ -3,8 +3,6 @@
 # mplfinance
 matplotlib utilities for the visualization, and visual analysis, of financial data
 
----
-
 ##  Installation
 ```bash
 pip install --upgrade mplfinance
@@ -173,7 +171,6 @@ daily.tail(3)
 </table>
 
 
----
 <br>
 
 After importing mplfinance, plotting OHLC data is as simple as calling `mpf.plot()` on the dataframe
@@ -188,7 +185,6 @@ mpf.plot(daily)
 ![png](https://raw.githubusercontent.com/matplotlib/mplfinance/master/readme_files/readme_4_1.png)
 
 
----
 <br>
 
 The default plot type, as you can see above, is `'ohlc'`.  Other plot types can be specified with the keyword argument `type`, for example, `type='candle'`, `type='line'`, `type='renko'`, or `type='pnf'`
@@ -588,9 +584,7 @@ It is my intention to archive the `matplotlib/mpl-finance` repository soon, and 
 ---
 ## <a name="oldapi"></a>old API availability
 
-**With this new ` mplfinance ` package installed, in addition to the new API, users can still access the old API**.<br> The old API may be removed some day, but for the foreseeable future we will keep it ... at least until we are very confident that users of the old API can accomplish the same things with the new API.
-
----
+**With this new ` mplfinance ` package installed, in addition to the new API, users can still access the old API**.<br> The old API may be removed some day, but for the foreseeable future we will keep it ... at least until we are very confident that users of the old API can accomplish the same things with the new API.  
 
 To access the old API with the new ` mplfinance ` package installed, change the old import statments
 
@@ -613,11 +607,4 @@ where `<method>` indicates the method you want to import, for example:
 
 ```python
     from mplfinance.original_flavor import candlestick_ohlc
-```
-
----
-
-
-```python
-
 ```
