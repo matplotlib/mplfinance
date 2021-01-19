@@ -383,7 +383,7 @@ intraday.tail(3)
 
 
 
-The above dataframe contains Open,High,Low,Close data at 1 minute intervervals for the S&P 500 stock index for November 5, 6, 7 and 8, 2019.  Let's look at the last hour of trading on November 6th, with a 7 minute and 12 minute moving average.
+The above dataframe contains Open,High,Low,Close data at 1 minute intervals for the S&P 500 stock index for November 5, 6, 7 and 8, 2019.  Let's look at the last hour of trading on November 6th, with a 7 minute and 12 minute moving average.
 
 
 ```python
@@ -582,9 +582,9 @@ My name is Daniel Goldfarb.  In November 2019, I became the maintainer of `matpl
 It is my intention to archive the `matplotlib/mpl-finance` repository soon, and direct everyone to `matplotlib/mplfinance`.  The main reason for the rename is to avoid confusion with the hyphen and the underscore: As it was, `mpl-finance` was *installed with the hyphen, but imported with an underscore `mpl_finance`.*  Going forward it will be a simple matter of both installing and importing `mplfinance`.
 
 ---
-## <a name="oldapi"></a>old API availability
+## <a name="oldapi"></a>Old API availability
 
-**With this new ` mplfinance ` package installed, in addition to the new API, users can still access the old API**.<br> The old API may be removed some day, but for the foreseeable future we will keep it ... at least until we are very confident that users of the old API can accomplish the same things with the new API.  
+**With this new ` mplfinance ` package installed, in addition to the new API, users can still access the old API**.<br> The old API may be removed someday, but for the foreseeable future we will keep it ... at least until we are very confident that users of the old API can accomplish the same things with the new API.  
 
 To access the old API with the new ` mplfinance ` package installed, change the old import statments
 
