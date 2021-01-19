@@ -1,22 +1,24 @@
 [![Build Status](https://travis-ci.org/matplotlib/mplfinance.svg?branch=master)](https://travis-ci.org/matplotlib/mplfinance)
 
 # mplfinance
-## matplotlib utilities for the visualization, and visual analysis, of financial data
+matplotlib utilities for the visualization, and visual analysis, of financial data
 
 ---
 
-# Installation
-## &nbsp;&nbsp;&nbsp;`pip install --upgrade mplfinance`
-   - mplfinance requires [matplotlib](https://pypi.org/project/matplotlib/) and [pandas](https://pypi.org/project/pandas/)
+##  Installation
+```bash
+pip install --upgrade mplfinance
+```
+- mplfinance requires [matplotlib](https://pypi.org/project/matplotlib/) and [pandas](https://pypi.org/project/pandas/)
 
 ---
 
-# <a name="announcements"></a>Announcing Version 0.12.7
-### [External Axes Mode and Animation Support.](https://github.com/matplotlib/mplfinance/blob/master/RELEASE_NOTES.md)
+## <a name="announcements"></a>Announcing Version 0.12.7
+[External Axes Mode and Animation Support.](https://github.com/matplotlib/mplfinance/blob/master/RELEASE_NOTES.md)
 
 ---
 
-# <a name="tutorials"></a>Contents and Tutorials
+## <a name="tutorials"></a>Contents and Tutorials
 
   - **[The New API](https://github.com/matplotlib/mplfinance#newapi)**
   - **[Tutorials](https://github.com/matplotlib/mplfinance#tutorials)**
@@ -59,7 +61,7 @@ I am very interested to hear from you regarding what you think of the new `mplfi
 
 ---
 
-# <a name="usage"></a>Basic Usage
+## <a name="usage"></a>Basic Usage
 Start with a Pandas DataFrame containing OHLC data.  For example,
 
 
@@ -584,7 +586,7 @@ My name is Daniel Goldfarb.  In November 2019, I became the maintainer of `matpl
 It is my intention to archive the `matplotlib/mpl-finance` repository soon, and direct everyone to `matplotlib/mplfinance`.  The main reason for the rename is to avoid confusion with the hyphen and the underscore: As it was, `mpl-finance` was *installed with the hyphen, but imported with an underscore `mpl_finance`.*  Going forward it will be a simple matter of both installing and importing `mplfinance`.
 
 ---
-### <a name="oldapi"></a>old API availability
+## <a name="oldapi"></a>old API availability
 
 **With this new ` mplfinance ` package installed, in addition to the new API, users can still access the old API**.<br> The old API may be removed some day, but for the foreseeable future we will keep it ... at least until we are very confident that users of the old API can accomplish the same things with the new API.
 
