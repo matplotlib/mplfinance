@@ -94,6 +94,9 @@ def _valid_make_mpf_style_kwargs():
         'rc'            : { 'Default'     : None,
                             'Validator'   : lambda value: isinstance(value,dict) },
 
+        'style_name'    : { 'Default'     : None,
+                            'Validator'   : lambda value: isinstance(value,str) },
+
     }
     _validate_vkwargs_dict(vkwargs)
     return vkwargs
@@ -181,6 +184,9 @@ def _valid_make_marketcolors_kwargs():
                          'Validator'   : lambda value: isinstance(value,dict)
                                                        or isinstance(value,str) 
                                                        or mcolors.is_color_like(value) },
+
+        'vcdopcod'   : { 'Default'     : False,
+                         'Validator'   : lambda value: isinstance(value,bool) },
 
         'inherit'    : { 'Default'     : False,
                          'Validator'   : lambda value: isinstance(value,bool) },
