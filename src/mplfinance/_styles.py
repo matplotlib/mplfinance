@@ -267,4 +267,7 @@ def make_marketcolors(**kwargs):
     if config['alpha'] is not None:
         marketcolors.update({'alpha':config['alpha']})
 
+    if config['vcdopcod'] is not None:
+        marketcolors.update({'vcdopcod':config['vcdopcod']})
+
     return marketcolors
