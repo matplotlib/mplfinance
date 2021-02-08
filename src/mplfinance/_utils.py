@@ -171,7 +171,7 @@ def _updownhollow_colors(upcolor,downcolor,hollowcolor,opens,closes):
     umap = {True : hollowcolor, False : upcolor  }
     dmap = {True : hollowcolor, False : downcolor}
     first = umap[closes[0] > opens[0]]
-    _list = [ umap[cls > opn] if cls > cls0 else dmap[cls > opn] for opn0,cls0,opn,cls in zip(opens[0:-1],closes[0:-1],opens[1:],closes[1:]) ]
+    _list = [ umap[cls > opn] if cls > cls0 else dmap[cls > opn] for cls0,opn,cls in zip(closes[0:-1],opens[1:],closes[1:]) ]
     return [first] + _list
 
 
