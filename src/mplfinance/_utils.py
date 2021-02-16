@@ -68,7 +68,7 @@ def _construct_mpf_collections(ptype,dates,xdates,opens,highs,lows,closes,volume
         collections = _construct_candlestick_collections(xdates, opens, highs, lows, closes,
                                                          marketcolors=style['marketcolors'],config=config )
 
-    elif ptype =='hollow_candle':
+    elif ptype =='hollow_and_filled':
             collections = _construct_hollow_candlestick_collections(xdates, opens, highs, lows, closes,
                                                          marketcolors=style['marketcolors'],config=config )
 

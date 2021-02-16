@@ -30,6 +30,7 @@ from mplfinance._utils import _mscatter
 from mplfinance import _styles
 
 from mplfinance._arg_validators import _check_and_prepare_data, _mav_validator
+from mplfinance._arg_validators import _get_valid_plot_types
 from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 from mplfinance._arg_validators import _kwarg_not_implemented, _bypass_kwarg_validation
 from mplfinance._arg_validators import _hlines_validator, _vlines_validator
@@ -99,8 +100,7 @@ def _valid_plot_kwargs():
                                                                    and len(value) == 5
                                                                    and all(isinstance(c, str) for c in value) },
         'type'                      : { 'Default'     : 'ohlc',
-                                        'Validator'   : lambda value: value in ('candle','candlestick','ohlc','ohlc_bars',
-                                                                                'line','renko','pnf','hollow_candle') },
+                                        'Validator'   : lambda value: value in _get_valid_plot_types() },
  
         'style'                     : { 'Default'     : None,
                                         'Validator'   : _styles._valid_mpf_style },
@@ -277,6 +277,9 @@ def plot( data, **kwargs ):
     """
 
     config = _process_kwargs(kwargs, _valid_plot_kwargs())
+
+    # translate alias types:
+    config['type'] = _get_valid_plot_types(config['type'])
     
     dates,opens,highs,lows,closes,volumes = _check_and_prepare_data(data, config)
 
