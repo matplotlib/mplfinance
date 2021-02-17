@@ -555,7 +555,8 @@ def _construct_hollow_candlestick_collections(dates, opens, highs, lows, closes,
     
     wickcolor = _updown_colors(uc, dc, opens, closes, use_prev_close=True)
 
-    lw = config['_width_config']['candle_linewidth']
+    # For hollow candles, we scale the candle linewidth up a little:
+    lw = 1.25 * config['_width_config']['candle_linewidth']
 
     rangeCollection = LineCollection(rangeSegments,
                                      colors=wickcolor,
