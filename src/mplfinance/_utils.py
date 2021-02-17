@@ -489,12 +489,15 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
 
 
 def _construct_hollow_candlestick_collections(dates, opens, highs, lows, closes, marketcolors=None, config=None):
-    """Represent the open, close as a bar line and high low range as a
-    vertical line. Same as basic candlestick, but utilizes solid and hollow candlesticks
+    """Represent today's open to close as a "bar" line (candle body)
+    and high low range as a vertical line (candle wick)
+     
+    If config['type']=='hollow_and_filled' (hollow and filled candles) then candle edge and
+    wick color depend on PREVIOUS close to today's close (up or down), and the center of the
+    candle body (hollow or filled) depends on the today's open to close (up or down).
 
     NOTE: this code assumes if any value open, low, high, close is
     missing they all are missing
-
 
     Parameters
     ----------
@@ -508,7 +511,7 @@ def _construct_hollow_candlestick_collections(dates, opens, highs, lows, closes,
         sequence of closing values
     marketcolors : dict of colors: up, down, edge, wick, alpha
     alpha : float
-        bar transparency
+        bar (candle body) transparency
 
     Returns
     -------
