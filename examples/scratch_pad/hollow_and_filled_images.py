@@ -62,3 +62,33 @@ st3 = mpf.make_mpf_style(base_mpf_style='classic',gridstyle='',facecolor='#79c0c
 mpf.plot(df ,style=st3,**kwargs,savefig='hollow_black_white.jpg')
 mpf.plot(dfs,style=st3,**kwargs,savefig='solid_black_white.jpg')
 
+##  
+##  df = pd.read_csv('data/SP500_NOV2019_Hist.csv',index_col=0,parse_dates=True)
+##  
+##  df.loc['2019-11-07','Open' ] = 3085
+##  df.loc['2019-11-07','Close'] = 3092
+##  df.loc['2019-11-07','Low'  ] = 3081
+##  df.loc['2019-11-07','High' ] = 3096
+##  
+##  df.loc['2019-11-08','Open' ] = 3085
+##  df.loc['2019-11-08','Close'] = 3092
+##  df.loc['2019-11-08','Low'  ] = 3081
+##  df.loc['2019-11-08','High' ] = 3096
+##  
+##  
+##  dfs = df.copy()
+##  dfs.loc['2019-11-07','Open' ] = 3092
+##  dfs.loc['2019-11-07','Close'] = 3085
+##  
+##  dfs.loc['2019-11-08','Open' ] = 3092
+##  dfs.loc['2019-11-08','Close'] = 3085
+##  
+##  neoclassic = mpf.make_mpf_style(base_mpf_style='classic',facecolor='cyan') 
+##  st = neoclassic
+##  st = mpf.make_mpf_style(base_mpf_style='nightclouds',gridstyle='')
+##  #st = mpf.make_mpf_style(base_mpf_style='sas',gridstyle='') #figcolor='#3C8284'
+##  st1 = mpf.make_mpf_style(base_mpf_style='classic',gridstyle='',facecolor='#56b0b3')
+##  #st1 = mpf.make_mpf_style(base_mpf_style='classic',gridstyle='',facecolor='#ffd6dd')
+##  mpf.plot(df.iloc[3:8],type='hollow_candle',volume=False,style=st1,figscale=1,update_width_config=dict(candle_linewidth=2.25))
+##  mpf.plot(dfs.iloc[3:8],type='hollow_candle',volume=False,style=st1,figscale=1,update_width_config=dict(candle_linewidth=2.25))
+##  
