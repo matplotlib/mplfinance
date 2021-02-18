@@ -68,7 +68,7 @@ def _construct_mpf_collections(ptype,dates,xdates,opens,highs,lows,closes,volume
         collections = _construct_candlestick_collections(xdates, opens, highs, lows, closes,
                                                          marketcolors=style['marketcolors'],config=config )
 
-    elif ptype =='hollow_candle':
+    elif ptype =='hollow_and_filled':
             collections = _construct_hollow_candlestick_collections(xdates, opens, highs, lows, closes,
                                                          marketcolors=style['marketcolors'],config=config )
 
@@ -165,13 +165,13 @@ def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False):
         return [first] + _list
 
 
-def _updownhollow_colors(upcolor,downcolor,uphollow,downhollow,opens,closes):
-    if upcolor == downcolor == downhollow== uphollow:
+def _updownhollow_colors(upcolor,downcolor,hollowcolor,opens,closes):
+    if upcolor == downcolor:
         return upcolor
-    umap = {True : upcolor, False : uphollow}
-    dmap = {True : downcolor, False : downhollow}
-    _list = [umap[cls > opn] if cls > cls0 else dmap[cls < opn] for opn0,cls0,opn,cls in zip(opens[0:-1],closes[0:-1],opens[1:],closes[1:]) ]
-    first = upcolor if closes[0] > opens[0] else downcolor
+    umap = {True : hollowcolor, False : upcolor  }
+    dmap = {True : hollowcolor, False : downcolor}
+    first = umap[closes[0] > opens[0]]
+    _list = [ umap[cls > opn] if cls > cls0 else dmap[cls > opn] for cls0,opn,cls in zip(closes[0:-1],opens[1:],closes[1:]) ]
     return [first] + _list
 
 
@@ -488,24 +488,16 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
     return [rangeCollection, barCollection]
 
 
-def alpha_handler(color, alpha):
-    """Checks the color input for an alpha value. Returns the rgba color code with lesser
-    of existing or provided alpha
-    """
-    color_code = mcolors.to_rgba(color)
-    if color_code[-1] <= alpha:
-        return color_code
-    else:
-        return  mcolors.to_rgba(color, alpha)
-
-
 def _construct_hollow_candlestick_collections(dates, opens, highs, lows, closes, marketcolors=None, config=None):
-    """Represent the open, close as a bar line and high low range as a
-    vertical line. Same as basic candlestick, but utilizes solid and hollow candlesticks
+    """Represent today's open to close as a "bar" line (candle body)
+    and high low range as a vertical line (candle wick)
+     
+    If config['type']=='hollow_and_filled' (hollow and filled candles) then candle edge and
+    wick color depend on PREVIOUS close to today's close (up or down), and the center of the
+    candle body (hollow or filled) depends on the today's open to close (up or down).
 
     NOTE: this code assumes if any value open, low, high, close is
     missing they all are missing
-
 
     Parameters
     ----------
@@ -519,7 +511,7 @@ def _construct_hollow_candlestick_collections(dates, opens, highs, lows, closes,
         sequence of closing values
     marketcolors : dict of colors: up, down, edge, wick, alpha
     alpha : float
-        bar transparency
+        bar (candle body) transparency
 
     Returns
     -------
@@ -530,7 +522,7 @@ def _construct_hollow_candlestick_collections(dates, opens, highs, lows, closes,
     _check_input(opens, highs, lows, closes)
 
     if marketcolors is None:
-        marketcolors = _get_mpfstyle('hollow')['marketcolors']
+        marketcolors = _get_mpfstyle('classic')['marketcolors']
         #print('default market colors:',marketcolors)
 
     datalen = len(dates)
@@ -555,24 +547,19 @@ def _construct_hollow_candlestick_collections(dates, opens, highs, lows, closes,
 
     alpha  = marketcolors['alpha']
 
-    uc     = alpha_handler(marketcolors['candle'][ 'up' ], alpha)
-    dc     = alpha_handler(marketcolors['candle']['down'], alpha)
-    try:
-        uh     = alpha_handler(marketcolors['hollow']['up'], alpha)
-        dh     = alpha_handler(marketcolors['hollow']['down'], alpha)
-    except KeyError as e:
-        raise Exception('Improper style definition for hollow candle type plotting') from e
-    colors = _updownhollow_colors(uc, dc, uh, dh, opens, closes)
-
-    uc     = mcolors.to_rgba(marketcolors['edge'][ 'up' ], 1.0)
-    dc     = mcolors.to_rgba(marketcolors['edge']['down'], 1.0)
-    edgecolor = _updownhollow_colors(uc, dc, uc, dc, opens, closes)
+    uc     = mcolors.to_rgba(marketcolors['candle'][ 'up' ], alpha)
+    dc     = mcolors.to_rgba(marketcolors['candle']['down'], alpha)
+   
+    hc = mcolors.to_rgba(marketcolors['hollow']) if 'hollow' in marketcolors else (0,0,0,0)
     
-    uc     = mcolors.to_rgba(marketcolors['wick'][ 'up' ], 1.0)
-    dc     = mcolors.to_rgba(marketcolors['wick']['down'], 1.0)
-    wickcolor = _updownhollow_colors(uc, dc, uc, dc, opens, closes)
+    colors = _updownhollow_colors(uc, dc, hc, opens, closes)  # for candle body.
 
-    lw = config['_width_config']['candle_linewidth']
+    edgecolor = _updown_colors(uc, dc, opens, closes, use_prev_close=True)
+    
+    wickcolor = _updown_colors(uc, dc, opens, closes, use_prev_close=True)
+
+    # For hollow candles, we scale the candle linewidth up a little:
+    lw = 1.25 * config['_width_config']['candle_linewidth']
 
     rangeCollection = LineCollection(rangeSegments,
                                      colors=wickcolor,

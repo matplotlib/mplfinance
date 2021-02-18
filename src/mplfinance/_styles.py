@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import copy
+import pprint
+import os.path as path
 
 from   mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 from   mplfinance._styledata      import _styles
@@ -94,6 +96,9 @@ def _valid_make_mpf_style_kwargs():
         'rc'            : { 'Default'     : None,
                             'Validator'   : lambda value: isinstance(value,dict) },
 
+        'style_name'    : { 'Default'     : None,
+                            'Validator'   : lambda value: isinstance(value,str) },
+
     }
     _validate_vkwargs_dict(vkwargs)
     return vkwargs
@@ -160,7 +165,10 @@ def _valid_make_marketcolors_kwargs():
         'down'       : { 'Default'     : None,
                          'Validator'   : lambda value: mcolors.is_color_like(value) },
 
-        'alpha'       : { 'Default'     : None,
+        'hollow'     : { 'Default'     : None,
+                         'Validator'   : lambda value: mcolors.is_color_like(value) },
+
+        'alpha'      : { 'Default'     : None,
                          'Validator'   : lambda value: ( isinstance(value,float) and
                                                          0.0 <= value and 1.0 >= value ) },
 
@@ -230,7 +238,6 @@ def make_marketcolors(**kwargs):
         candle.update(down=down)
         marketcolors.update(down=down)
 
-
     def _check_and_set_mktcolor(candle,**kwarg):
         if len(kwarg) != 1:
             raise ValueError('Expect only ONE kwarg')
@@ -259,7 +266,41 @@ def make_marketcolors(**kwargs):
             c   = _check_and_set_mktcolor(candle,**kwa)
             marketcolors.update([(kw,c)])
 
+    if config['hollow'] is not None:
+        marketcolors.update({'hollow':config['hollow']})
+
     if config['alpha'] is not None:
         marketcolors.update({'alpha':config['alpha']})
 
     return marketcolors
+
+def write_style_file(style,filename):
+    pp   = pprint.PrettyPrinter(indent=4,sort_dicts=False,compact=True)
+    strl = pp.pformat(style).splitlines()
+
+    if not isinstance(style,dict):
+        raise TypeError('Specified style must be in `dict` format')
+
+    if path.exists(filename):
+        print('"'+filename+'" exists.') 
+        answer = input(' Overwrite(Y/N)? ')
+        a = answer.lower()
+        if a != 'y' and a != 'yes':
+            raise FileExistsError
+
+    f = open(filename,'w')
+    f.write('style = '+strl[0].replace('{','dict(',1).replace("'","",2).replace(':',' =',1)+'\n')
+    for line in strl[1:-1]:
+        if "'" in line[0:5]:
+            f.write('            '+line.replace("'","",2).replace(':',' =',1)+'\n')
+        else:
+            f.write('            '+line+'\n')
+    line = strl[-1]
+    if "'" in line[0:5]:
+        line = line.replace("'","",2).replace(':',' =',1)[::-1]
+    else:
+        line = line[::-1]
+    f.write('            '+line.replace('}',')',1)[::-1]+'\n')
+    f.close()
+    print('Wrote style file "'+filename+'"')
+    return

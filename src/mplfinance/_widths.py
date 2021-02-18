@@ -31,17 +31,26 @@ _widths = _get_widths_df()
 
 def _valid_scale_width_kwargs():
     vkwargs = {
-        'ohlc'    : { 'Default'     : None,
-                      'Validator'   : lambda value: isinstance(value,(float,int)) },
+        'ohlc'             : { 'Default'     : None,
+                               'Validator'   : lambda value: isinstance(value,(float,int)) },
 
-        'volume'  : { 'Default'     : None,
-                      'Validator'   : lambda value: isinstance(value,(float,int)) },
+        'volume'           : { 'Default'     : None,
+                               'Validator'   : lambda value: isinstance(value,(float,int)) },
 
-        'candle'  : { 'Default'     : None,
-                      'Validator'   : lambda value: isinstance(value,(float,int)) },
+        'candle'           : { 'Default'     : None,
+                               'Validator'   : lambda value: isinstance(value,(float,int)) },
 
-        'lines'   : { 'Default'     : None,
-                      'Validator'   : lambda value: isinstance(value,(float,int)) },
+        'lines'            : { 'Default'     : None,
+                               'Validator'   : lambda value: isinstance(value,(float,int)) },
+
+        'volume_linewidth' : { 'Default'     : None,
+                               'Validator'   : lambda value: isinstance(value,(float,int)) },
+
+        'ohlc_linewidth'   : { 'Default'     : None,
+                               'Validator'   : lambda value: isinstance(value,(float,int)) },
+
+        'candle_linewidth' : { 'Default'     : None,
+                               'Validator'   : lambda value: isinstance(value,(float,int)) },
     }
     _validate_vkwargs_dict(vkwargs)
     return vkwargs
@@ -120,7 +129,12 @@ def _determine_width_config( xdates, config ):
             width_config['candle_width']  *= scale['candle']
         if scale['lines'] is not None:
             width_config['line_width']    *= scale['lines']
-        
+        if scale['volume_linewidth'] is not None:
+            width_config['volume_linewidth']  *= scale['volume_linewidth']
+        if scale['ohlc_linewidth'] is not None: 
+            width_config['ohlc_linewidth'  ]  *= scale['ohlc_linewidth']
+        if scale['candle_linewidth'] is not None:
+            width_config['candle_linewidth']  *= scale['candle_linewidth']
 
     if config['update_width_config'] is not None:
      
