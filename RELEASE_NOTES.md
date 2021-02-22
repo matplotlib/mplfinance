@@ -1,6 +1,25 @@
 ####
 ---
 
+### <a name="v0.12.7a4"></a>v0.12.7a4 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; released 2020-12-22
+
+- fix [timezone bug](https://github.com/matplotlib/mplfinance/issues/236).
+- set kwarg `tz=localize=False` for legacy timezone behavior
+
+- <a name="v0.12.7a3"></a>v0.12.7a3 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; merged 2020-12-21
+  - calculate volume exponent ( more efficient than extra call to `draw()`)
+  - support `volume_exponent` kwarg to allow user to manually choose volume exponent.
+  - add version information to pytest logs
+
+- <a name="v0.12.7a2"></a>v0.12.7a2 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; merged 2020-10-21
+  - Add "[growing candle animation](https://github.com/matplotlib/mplfinance/blob/master/examples/mpf_animation_growingcandle.py)" to examples.
+  - Bug fix for [issue #279](https://github.com/matplotlib/mplfinance/issues/279) `Mpf_Figure.subplots()` not working (always raising exception).
+
+- <a name="v0.12.7a1"></a>v0.12.7a1 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; merged 2020-08-16
+  - Support passing `dict` for kwarg `title=` (instead of just string) to allow modification of title font and all other kwargs available to matplotlib's [`Figure.suptitle()`](https://matplotlib.org/3.3.4/api/_as_gen/matplotlib.figure.Figure.html#matplotlib.figure.Figure.suptitle): The dict must include `title=<string>`.  Then just add whatever `Figure.suptitle()` kwargs to the dict that is passed to mplfinance's kwarg `title=`.  [Thank you Teddy Rowan](https://github.com/matplotlib/mplfinance/pull/237)
+
+---
+
 ### <a name="v0.12.7a0"></a>v0.12.7a0 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; released 2020-08-09
 #### Enhancements
 
