@@ -60,6 +60,31 @@ def _check_and_prepare_data(data, config):
 
     return dates, opens, highs, lows, closes, volumes
 
+def _get_valid_plot_types(plottype=None):
+
+    _alias_types = {
+        'candlestick'       : 'candle',
+        'ohlc_bars'         : 'ohlc',
+        'hollow_candle'     : 'hollow_and_filled',
+        'hollow'            : 'hollow_and_filled',
+        'hnf'               : 'hollow_and_filled',
+    }
+
+    _valid_types = ['candle','ohlc', 'line','renko','pnf','hollow_and_filled']
+
+    _valid_types_all = _valid_types.copy()
+    _valid_types_all.extend(_alias_types.keys())
+
+    if plottype is None:
+        return _valid_types_all
+
+    if plottype not in _valid_types_all:
+        return None
+    elif plottype in _alias_types:
+        return _alias_types[plottype]
+    else:
+        return plottype
+        
 
 def _mav_validator(mav_value):
     ''' 
