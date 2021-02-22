@@ -190,6 +190,9 @@ def _valid_make_marketcolors_kwargs():
                                                        or isinstance(value,str) 
                                                        or mcolors.is_color_like(value) },
 
+        'vcdopcod'   : { 'Default'     : False,
+                         'Validator'   : lambda value: isinstance(value,bool) },
+
         'inherit'    : { 'Default'     : False,
                          'Validator'   : lambda value: isinstance(value,bool) },
 
@@ -271,6 +274,9 @@ def make_marketcolors(**kwargs):
 
     if config['alpha'] is not None:
         marketcolors.update({'alpha':config['alpha']})
+
+    if config['vcdopcod'] is not None:
+        marketcolors.update({'vcdopcod':config['vcdopcod']})
 
     return marketcolors
 
