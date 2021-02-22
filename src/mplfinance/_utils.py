@@ -67,6 +67,11 @@ def _construct_mpf_collections(ptype,dates,xdates,opens,highs,lows,closes,volume
     if ptype == 'candle' or ptype == 'candlestick':
         collections = _construct_candlestick_collections(xdates, opens, highs, lows, closes,
                                                          marketcolors=style['marketcolors'],config=config )
+
+    elif ptype =='hollow_and_filled':
+            collections = _construct_hollow_candlestick_collections(xdates, opens, highs, lows, closes,
+                                                         marketcolors=style['marketcolors'],config=config )
+
     elif ptype == 'ohlc' or ptype == 'bars' or ptype == 'ohlc_bars':
         collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes,
                                                   marketcolors=style['marketcolors'],config=config )
@@ -158,6 +163,17 @@ def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False):
         first = cmap[opens[0] < closes[0]] 
         _list = [ cmap[pre < cls] for cls,pre in zip(closes[1:], closes) ]
         return [first] + _list
+
+
+def _updownhollow_colors(upcolor,downcolor,hollowcolor,opens,closes):
+    if upcolor == downcolor:
+        return upcolor
+    umap = {True : hollowcolor, False : upcolor  }
+    dmap = {True : hollowcolor, False : downcolor}
+    first = umap[closes[0] > opens[0]]
+    _list = [ umap[cls > opn] if cls > cls0 else dmap[cls > opn] for cls0,opn,cls in zip(closes[0:-1],opens[1:],closes[1:]) ]
+    return [first] + _list
+
 
 def _date_to_iloc(dtseries,date):
     d1s = dtseries.loc[date:]
@@ -470,6 +486,94 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
                                    )
 
     return [rangeCollection, barCollection]
+
+
+def _construct_hollow_candlestick_collections(dates, opens, highs, lows, closes, marketcolors=None, config=None):
+    """Represent today's open to close as a "bar" line (candle body)
+    and high low range as a vertical line (candle wick)
+     
+    If config['type']=='hollow_and_filled' (hollow and filled candles) then candle edge and
+    wick color depend on PREVIOUS close to today's close (up or down), and the center of the
+    candle body (hollow or filled) depends on the today's open to close (up or down).
+
+    NOTE: this code assumes if any value open, low, high, close is
+    missing they all are missing
+
+    Parameters
+    ----------
+    opens : sequence
+        sequence of opening values
+    highs : sequence
+        sequence of high values
+    lows : sequence
+        sequence of low values
+    closes : sequence
+        sequence of closing values
+    marketcolors : dict of colors: up, down, edge, wick, alpha
+    alpha : float
+        bar (candle body) transparency
+
+    Returns
+    -------
+    ret : list
+        (lineCollection, barCollection)
+    """
+    
+    _check_input(opens, highs, lows, closes)
+
+    if marketcolors is None:
+        marketcolors = _get_mpfstyle('classic')['marketcolors']
+        #print('default market colors:',marketcolors)
+
+    datalen = len(dates)
+
+    avg_dist_between_points = (dates[-1] - dates[0]) / float(datalen)
+
+    delta = config['_width_config']['candle_width'] / 2.0
+
+    barVerts = [((date - delta, open),
+                 (date - delta, close),
+                 (date + delta, close),
+                 (date + delta, open))
+                for date, open, close in zip(dates, opens, closes)]
+
+    rangeSegLow   = [((date, low), (date, min(open,close)))
+                     for date, low, open, close in zip(dates, lows, opens, closes)]
+    
+    rangeSegHigh  = [((date, high), (date, max(open,close)))
+                     for date, high, open, close in zip(dates, highs, opens, closes)]
+                      
+    rangeSegments = rangeSegLow + rangeSegHigh
+
+    alpha  = marketcolors['alpha']
+
+    uc     = mcolors.to_rgba(marketcolors['candle'][ 'up' ], alpha)
+    dc     = mcolors.to_rgba(marketcolors['candle']['down'], alpha)
+   
+    hc = mcolors.to_rgba(marketcolors['hollow']) if 'hollow' in marketcolors else (0,0,0,0)
+    
+    colors = _updownhollow_colors(uc, dc, hc, opens, closes)  # for candle body.
+
+    edgecolor = _updown_colors(uc, dc, opens, closes, use_prev_close=True)
+    
+    wickcolor = _updown_colors(uc, dc, opens, closes, use_prev_close=True)
+
+    # For hollow candles, we scale the candle linewidth up a little:
+    lw = 1.25 * config['_width_config']['candle_linewidth']
+
+    rangeCollection = LineCollection(rangeSegments,
+                                     colors=wickcolor,
+                                     linewidths=lw,
+                                     )
+
+    barCollection = PolyCollection(barVerts,
+                                   facecolors=colors,
+                                   edgecolors=edgecolor,
+                                   linewidths=lw
+                                   )
+
+    return [rangeCollection, barCollection]
+
 
 def _construct_renko_collections(dates, highs, lows, volumes, config_renko_params, closes, marketcolors=None):
     """Represent the price change with bricks
