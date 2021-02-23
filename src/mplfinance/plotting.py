@@ -427,7 +427,12 @@ def plot( data, **kwargs ):
         axA1.set_ylim(config['ylim'][0], config['ylim'][1])
     elif config['tight_layout']:
         ydelta = 0.01 * (maxy-miny)
-        axA1.set_ylim(miny-ydelta,maxy+ydelta)
+        if miny > 0.0:
+            # don't let it go negative:
+            setminy = max(0.9*miny,miny-ydelta)
+        else:
+            setminy = miny-ydelta
+        axA1.set_ylim(setminy,maxy+ydelta)
 
     if config['xlim'] is not None:
         axA1.set_xlim(config['xlim'][0], config['xlim'][1])
