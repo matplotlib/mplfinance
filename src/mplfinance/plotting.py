@@ -35,7 +35,7 @@ from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 from mplfinance._arg_validators import _kwarg_not_implemented, _bypass_kwarg_validation
 from mplfinance._arg_validators import _hlines_validator, _vlines_validator
 from mplfinance._arg_validators import _alines_validator, _tlines_validator
-from mplfinance._arg_validators import _scale_padding_validator
+from mplfinance._arg_validators import _scale_padding_validator, _yscale_validator
 from mplfinance._arg_validators import _valid_panel_id, _check_for_external_axes
 
 from mplfinance._panels import _build_panels
@@ -259,6 +259,12 @@ def _valid_plot_kwargs():
 
         'tz_localize'               : { 'Default'     : True,
                                         'Validator'   : lambda value: isinstance(value,bool) },
+
+        'yscale'                    : { 'Default'     : None,
+                                        'Validator'   : lambda value: _yscale_validator(value) },
+
+        'volume_yscale'             : { 'Default'     : None,
+                                        'Validator'   : lambda value: _yscale_validator(value) },
     }
 
     _validate_vkwargs_dict(vkwargs)
@@ -504,6 +510,15 @@ def plot( data, **kwargs ):
         axA1.tick_params(axis='x',rotation=xrotation)
         axA1.xaxis.set_major_formatter(formatter)
 
+    ysd = config['yscale']
+    if isinstance(ysd,dict):
+        yscale = ysd['yscale']
+        del      ysd['yscale']
+        axA1.set_yscale(yscale,**ysd)
+    elif isinstance(ysd,str):
+        axA1.set_yscale(ysd)
+ 
+
     addplot = config['addplot']
     if addplot is not None and ptype not in VALID_PMOVE_TYPES:
         # NOTE: If in external_axes_mode, then all code relating
@@ -621,32 +636,46 @@ def plot( data, **kwargs ):
         if external_axes_mode:
             volumeAxes.tick_params(axis='x',rotation=xrotation)
             volumeAxes.xaxis.set_major_formatter(formatter)
-        vxp = config['volume_exponent']
-        if vxp == 'legacy':
-            volumeAxes.figure.canvas.draw()  # This is needed to calculate offset
-            offset = volumeAxes.yaxis.get_major_formatter().get_offset()
-            if len(offset) > 0:
-                offset = (' x '+offset)
-        elif isinstance(vxp,int) and vxp > 0:
-            volumeAxes.ticklabel_format(useOffset=False,scilimits=(vxp,vxp),axis='y')
-            offset = '  $10^{'+str(vxp)+'}$'
-        elif isinstance(vxp,int) and vxp == 0:
-            volumeAxes.ticklabel_format(useOffset=False,style='plain',axis='y')
-            offset = ''
-        else:
-            offset = ''
-            scilims = plt.rcParams['axes.formatter.limits']
-            if scilims[0] < scilims[1]:
-                for power in (5,4,3,2,1):
-                    xp = scilims[1]*power
-                    if vymax >= 10.**xp:
-                        volumeAxes.ticklabel_format(useOffset=False,scilimits=(xp,xp),axis='y')
-                        offset = '  $10^{'+str(xp)+'}$'
-                        break
-            elif scilims[0] == scilims[1] and scilims[1] != 0:
-                volumeAxes.ticklabel_format(useOffset=False,scilimits=scilims,axis='y')
-                offset = ' $10^'+str(scilims[1])+'$'
-        volumeAxes.yaxis.offsetText.set_visible(False)
+
+        vscale = 'linear'
+        ysd = config['volume_yscale']
+        if isinstance(ysd,dict):
+            yscale = ysd['yscale']
+            del      ysd['yscale']
+            volumeAxes.set_yscale(yscale,**ysd)
+            vscale = yscale
+        elif isinstance(ysd,str):
+            volumeAxes.set_yscale(ysd)
+            vscale = ysd
+        offset = ''
+        if vscale == 'linear':
+            vxp = config['volume_exponent']
+            if vxp == 'legacy':
+                volumeAxes.figure.canvas.draw()  # This is needed to calculate offset
+                offset = volumeAxes.yaxis.get_major_formatter().get_offset()
+                if len(offset) > 0:
+                    offset = (' x '+offset)
+            elif isinstance(vxp,int) and vxp > 0:
+                volumeAxes.ticklabel_format(useOffset=False,scilimits=(vxp,vxp),axis='y')
+                offset = '  $10^{'+str(vxp)+'}$'
+            elif isinstance(vxp,int) and vxp == 0:
+                volumeAxes.ticklabel_format(useOffset=False,style='plain',axis='y')
+                offset = ''
+            else:
+                offset = ''
+                scilims = plt.rcParams['axes.formatter.limits']
+                if scilims[0] < scilims[1]:
+                    for power in (5,4,3,2,1):
+                        xp = scilims[1]*power
+                        if vymax >= 10.**xp:
+                            volumeAxes.ticklabel_format(useOffset=False,scilimits=(xp,xp),axis='y')
+                            offset = '  $10^{'+str(xp)+'}$'
+                            break
+                elif scilims[0] == scilims[1] and scilims[1] != 0:
+                    volumeAxes.ticklabel_format(useOffset=False,scilimits=scilims,axis='y')
+                    offset = ' $10^'+str(scilims[1])+'$'
+            volumeAxes.yaxis.offsetText.set_visible(False)
+
         if config['ylabel_lower'] is None:
             vol_label = 'Volume'+offset
         else:
@@ -848,6 +877,13 @@ def _addplot_apply_supplements(ax,apdict):
         ax.set_ylim(apdict['ylim'][0],apdict['ylim'][1])
     if apdict['title'] is not None:
         ax.set_title(apdict['title'])
+    ysd = apdict['yscale']
+    if isinstance(ysd,dict):
+        yscale = ysd['yscale']
+        del      ysd['yscale']
+        ax.set_yscale(yscale,**ysd)
+    elif isinstance(ysd,str):
+        ax.set_yscale(ysd)
 
 def _set_ylabels_side(ax_pri,ax_sec,primary_on_right):
     # put the primary axis on one side,
@@ -967,8 +1003,11 @@ def _valid_addplot_kwargs():
         'title'       : { 'Default'     : None,
                           'Validator'   : lambda value: isinstance(value,str) },
 
-        'ax'          : {'Default'      : None,
-                         'Validator'    : lambda value: isinstance(value,mpl_axes.Axes) },
+        'ax'          : { 'Default'      : None,
+                          'Validator'    : lambda value: isinstance(value,mpl_axes.Axes) },
+
+        'yscale'      : { 'Default'     : None,
+                          'Validator'   : lambda value: _yscale_validator(value) },
     }
 
     _validate_vkwargs_dict(vkwargs)
