@@ -1,6 +1,25 @@
 ####
 ---
 
+### <a name="v0.12.7a7"></a>v0.12.7a7 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; released 2021-02-22
+
+- Support [**`type=hollow_and_filled` candles**](https://github.com/matplotlib/mplfinance/blob/master/examples/hollow_and_filled_candles.ipynb). &nbsp; (Thank you [Kenan Arik](https://github.com/KenanHArik))
+- Add example to show [10 years of daily data and how resampling affects candlesticks](https://github.com/matplotlib/mplfinance/blob/master/examples/resample10years.ipynb).  &nbsp; (See also [issue 307](https://github.com/matplotlib/mplfinance/issues/307))
+- new function: **`mpf.write_style_file(style,filename)`** allows users to save their custom mpf styles.
+- support alias names for plot types.  <br>(for example "candle" is the same as "candlestick", and "hollow" is the same as "hollow_and_filled").
+- new styles: "**ibd**" and "**kenan**".
+- kwarg `scale_widths_adjustment` now supports `volume_linewidth`, `ohlc_linewidth`, and `candle_linewidth`.  <br>(see also [widths  notebook/tutorial](https://github.com/matplotlib/mplfinance/blob/master/examples/widths.ipynb))
+
+
+---
+
+### <a name="v0.12.7a5"></a>v0.12.7a5 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; released 2021-01-23
+
+- Add `style_name` kwarg to `mpf.make_mpf_style()`
+- Add `vcdopcod` kwarg to `mpf.make_marketcolors()` (volume color depends on price change-on-day).
+
+---
+
 ### <a name="v0.12.7a4"></a>v0.12.7a4 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; released 2020-12-22
 
 - fix [timezone bug](https://github.com/matplotlib/mplfinance/issues/236).
