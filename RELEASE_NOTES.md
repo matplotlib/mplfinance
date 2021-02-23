@@ -23,7 +23,7 @@
 ### <a name="v0.12.7a4"></a>v0.12.7a4 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; released 2020-12-22
 
 - fix [timezone bug](https://github.com/matplotlib/mplfinance/issues/236).
-- set kwarg `tz=localize=False` for legacy timezone behavior
+- set kwarg `tz_localize=False` for legacy timezone behavior
 
 - <a name="v0.12.7a3"></a>v0.12.7a3 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; merged 2020-12-21
   - calculate volume exponent ( more efficient than extra call to `draw()`)
