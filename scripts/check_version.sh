@@ -14,6 +14,7 @@ echo "PR: branch passed in: $pr_branch"
 git fetch origin +refs/pull/${pr_branch}/merge
 git checkout FETCH_HEAD
 # here is where we would do `pip3 install --upgrade pip`
+#pip3 install --upgrade numpy
 pip3 install .
 pr_version=$(python3 -c "import mplfinance; print(mplfinance.__version__)")
 git checkout master
