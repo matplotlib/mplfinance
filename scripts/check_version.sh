@@ -11,6 +11,8 @@ then
 fi
 
 echo "PR: branch passed in: $pr_branch"
+pip3 install --upgrade pip
+
 git fetch origin +refs/pull/${pr_branch}/merge
 git checkout FETCH_HEAD
 pip3 install .
