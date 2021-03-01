@@ -111,6 +111,17 @@ def make_mpf_style( **kwargs ):
 
     if config['base_mpf_style'] is not None:
         style  = _get_mpfstyle(config['base_mpf_style'])
+        # Have to handle 'rc' separately, so we don't wipe 
+        # out the 'rc' params in the `base_mpf_style` that
+        # are not specified in the `make_mpf_style` config:
+        if config['rc'] is not None:
+            rc = config['rc']
+            del config['rc']
+            if isinstance(style['rc'],list):
+                style['rc'] = dict(style['rc'])
+            if style['rc'] is None:
+                style['rc'] = {}
+            style['rc'].update(rc)
         update = [ (k,v) for k,v in config.items() if v is not None ]
         style.update(update)
     else:

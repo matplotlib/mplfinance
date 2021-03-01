@@ -143,6 +143,9 @@ def _valid_plot_kwargs():
                                                                       and len(value) == 2
                                                                       and isinstance(value[0],(float,int))
                                                                       and isinstance(value[1],(float,int)) },
+
+        'fontscale'                 : { 'Default'     : None, # scale all fonts up or down
+                                        'Validator'   : lambda value: isinstance(value,float) or isinstance(value,int) },
  
         'linecolor'                 : { 'Default'     : None, # line color in line plot
                                         'Validator'   : lambda value: mcolors.is_color_like(value) },
@@ -342,6 +345,8 @@ def plot( data, **kwargs ):
         _adjust_figsize(fig,config)
     else:
         fig = None
+
+    _adjust_fontsize(config)
 
     if config['volume'] and volumes is None:
         raise ValueError('Request for volume, but NO volume data.')
@@ -691,12 +696,14 @@ def plot( data, **kwargs ):
     
     if config['title'] is not None:
         if config['tight_layout']:
-            # IMPORTANT: 0.89 is based on the top of the top panel
+            # IMPORTANT: `y=0.89` is based on the top of the top panel
             #            being at 0.18+0.7 = 0.88.  See _panels.py
             # If the value changes there, then it needs to change here.
             title_kwargs = dict(size='x-large',weight='semibold', va='bottom', y=0.89)
         else:
             title_kwargs = dict(size='x-large',weight='semibold', va='center')
+        #if config['fontscale'] is not None and 'size' in title_kwargs:
+        #    del title_kwargs['size']
         if isinstance(config['title'],dict):
             title_dict = config['title']
             if 'title' not in title_dict:
@@ -776,6 +783,37 @@ def _adjust_figsize(fig,config):
     else:
         fsize = config['figsize']
     fig.set_size_inches(fsize)
+
+def _adjust_fontsize(config):
+    if config['fontscale'] is None:
+        return
+    if not isinstance(plt.rcParams['font.size'],(float,int)):
+        warnings.warn('\n\n ================================================================= '+
+                      '\n\n   WARNING: Unable to scale fonts: plt.rcParams["font.size"] is NOT a float!'+
+                      '\n\n ================================================================ ',
+                      category=UserWarning)
+        return
+    plt.rcParams['font.size'] *= config['fontscale']
+    # --------------------------------------------
+    # From: matplotlib.font_manager.font_scalings:
+    #    font_scalings = {
+    #        'xx-small': 0.579,
+    #        'x-small':  0.694,
+    #        'small':    0.833,
+    #        'medium':   1.0,
+    #        'large':    1.200,
+    #        'x-large':  1.440,
+    #        'xx-large': 1.728,
+    #        'larger':   1.2,
+    #        'smaller':  0.833,
+    #        None:       1.0,
+    #    }
+    # --------------------------------------------
+    fontstuff = ['axes.labelsize','axes.titlesize', 'figure.titlesize','legend.fontsize',
+                 'legend.title_fontsize','xtick.labelsize','ytick.labelsize']
+    for item in fontstuff:
+        if isinstance(plt.rcParams[item],(float,int)):
+            plt.rcParams[item] *= config['fontscale']
 
 def _addplot_collections(panid,panels,apdict,xdates,config):
 
