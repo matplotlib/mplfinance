@@ -154,7 +154,7 @@ def _valid_plot_kwargs():
                                         'Validator'   : lambda value: isinstance(value,(str,dict)) },
  
         'axtitle'                   : { 'Default'     : None, # Axes Title (subplot title)
-                                        'Validator'   : lambda value: isinstance(value,str) },
+                                        'Validator'   : lambda value: isinstance(value,(str,dict)) },
  
         'ylabel'                    : { 'Default'     : 'Price', # y-axis label
                                         'Validator'   : lambda value: isinstance(value,str) },
@@ -699,11 +699,9 @@ def plot( data, **kwargs ):
             # IMPORTANT: `y=0.89` is based on the top of the top panel
             #            being at 0.18+0.7 = 0.88.  See _panels.py
             # If the value changes there, then it needs to change here.
-            title_kwargs = dict(size='x-large',weight='semibold', va='bottom', y=0.89)
+            title_kwargs = dict(va='bottom', y=0.89)
         else:
-            title_kwargs = dict(size='x-large',weight='semibold', va='center')
-        #if config['fontscale'] is not None and 'size' in title_kwargs:
-        #    del title_kwargs['size']
+            title_kwargs = dict(va='center')
         if isinstance(config['title'],dict):
             title_dict = config['title']
             if 'title' not in title_dict:

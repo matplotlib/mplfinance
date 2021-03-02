@@ -15,7 +15,9 @@ style = dict(style_name    = 'nightclouds',
              gridcolor     = '#999999',
              gridstyle     = '--',
              rc            = [('patch.linewidth' ,  1.0      ),
-                              ('lines.linewidth' ,  1.0      )
+                              ('lines.linewidth' ,  1.0      ),
+                              ('figure.titlesize', 'x-large' ),
+                              ('figure.titleweight','semibold'),
                              ],
              base_mpf_style='nightclouds', 
             )

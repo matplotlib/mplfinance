@@ -31,6 +31,8 @@ style = dict(style_name    = 'ibd',
                                     ('grid.color'      , '#b0b0b0' ),
                                     ('grid.linestyle'  , 'solid'      ),
                                     ('grid.linewidth'  ,  0.8      ),
+                                    ('figure.titlesize', 'x-large' ),
+                                    ('figure.titleweight','semibold'),
                               ],
              base_mpf_style= 'ibd'
             )

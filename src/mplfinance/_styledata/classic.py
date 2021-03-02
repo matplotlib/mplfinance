@@ -19,9 +19,10 @@ style = dict(style_name    = 'classic',
                                ('axes.labelsize'  , 'large'   ),
                                ('axes.labelweight', 'semibold'),
                                ('lines.linewidth' ,  2.0      ),
-                              #('patch.force_edgecolor', True ),
                                ('font.weight'     , 'medium'  ),
                                ('font.size'       ,  12.0     ),
+                               ('figure.titlesize', 'x-large' ),
+                               ('figure.titleweight','semibold'),
                              ],
              base_mpf_style= 'classic'
             )
