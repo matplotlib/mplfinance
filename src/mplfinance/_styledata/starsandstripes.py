@@ -16,7 +16,9 @@ style = {'base_mpl_style': 'fast',
                 'axes.grid'     :  True,
                 'axes.grid.axis': 'y',
                 'grid.color'    : '#082865',
-                'grid.linestyle': '--'
+                'grid.linestyle': '--',
+                'figure.titlesize'  :'x-large',
+                'figure.titleweight':'semibold',
                },
          'base_mpf_style': 'starsandstripes'
         }

@@ -96,6 +96,9 @@ def _valid_make_mpf_style_kwargs():
         'rc'            : { 'Default'     : None,
                             'Validator'   : lambda value: isinstance(value,dict) },
 
+        'legacy_rc'     : { 'Default'     : None,  # Just in case someone depended upon old behavior
+                            'Validator'   : lambda value: isinstance(value,dict) },
+
         'style_name'    : { 'Default'     : None,
                             'Validator'   : lambda value: isinstance(value,str) },
 
@@ -108,9 +111,36 @@ def available_styles():
        
 def make_mpf_style( **kwargs ):
     config = _process_kwargs(kwargs, _valid_make_mpf_style_kwargs())
+    if config['rc'] is not None and config['legacy_rc'] is not None:
+        raise ValueError('kwargs `rc` and `legacy_rc` may NOT be used together!')
+
+    # -----------
+    # March 2021: Found bug that if caller used `base_mpf_style` and `rc` at
+    #   the same time, then the caller's `rc` will completely replace the `rc` 
+    #   of `base_mpf_style`.  That was never the intention!  Rather it should be
+    #   that the caller's `rc` merely adds to and/or modifies the `rc` of the
+    #   `base_mpf_style`.  In order to provide a path to "backwards compatibility"
+    #   for users who may have depended on the bug behavior (callers `rc` replaces
+    #   `rc` of `base_mpf_style`) we provide a new kwarg `legacy_rc` which will
+    #   now behave the way that `rc` used to behave.
+    # -----------
 
     if config['base_mpf_style'] is not None:
         style  = _get_mpfstyle(config['base_mpf_style'])
+        # Have to handle 'rc' separately, so we don't wipe 
+        # out the 'rc' params in the `base_mpf_style` that
+        # are not specified in the `make_mpf_style` config:
+        if config['rc'] is not None:
+            rc = config['rc']
+            del config['rc']
+            if isinstance(style['rc'],list):
+                style['rc'] = dict(style['rc'])
+            if style['rc'] is None:
+                style['rc'] = {}
+            style['rc'].update(rc)
+        elif config['legacy_rc'] is not None:
+            config['rc'] = config['legacy_rc']
+            del config['legacy_rc']
         update = [ (k,v) for k,v in config.items() if v is not None ]
         style.update(update)
     else:
