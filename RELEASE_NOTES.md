@@ -15,7 +15,7 @@
     - See https://travis-ci.community/t/pandas-version-advanced-starting-in-jan-2021-numpy-is-now-incompatible/11214
 
 - <a name="v0.12.7a8"></a>v0.12.7a8 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; merged 2021-02-23
-  - support `yscale` kwarg.  (See also [**`yscale.ipynb`**](https://github.com/matplotlib/mplfinance/blob/yscaleIss21/examples/yscale.ipynb), and [issue 21](https://github.com/matplotlib/mplfinance/issues/21)).
+  - support `yscale` kwarg.  (See also [**`yscale.ipynb`**](https://github.com/matplotlib/mplfinance/blob/master/examples/yscale.ipynb), and [issue 21](https://github.com/matplotlib/mplfinance/issues/21)).
 
 ---
 
