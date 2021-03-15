@@ -1,7 +1,18 @@
 ####
 ---
 
-### <a name="v0.12.7aN"></a>v0.12.7aN &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; TO BE released 2021-MM-DD
+### <a name="v0.12.7a10"></a>v0.12.7a10 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; released 2021-03-15
+
+- <a name="v0.12.7a10"></a>v0.12.7a10 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; merged 2021-03-15
+  - Add warning when user tries to plot "too much data" which includes reference to documentation
+  - Add [**documentation on "Too Much Data"**](https://github.com/matplotlib/mplfinance/wiki/Plotting-Too-Much-Data).
+- <a name="v0.12.7a9"></a>v0.12.7a9 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; merged 2021-03-01
+  - new kwarg **`fontscale`** to scale font sizes on plot.
+  - fix bug in `mpf.make_mpf_style()`
+    - was only an issue when kwargs `base_mpf_style` and `rc` are used at the same time; see comments in code for more detail.
+- <a name="v0.12.7a9"></a>v0.12.7a9 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; merged 2021-02-27
+  - fix `check_version.sh` to always fetch latest version of `pip`.
+    - See https://travis-ci.community/t/pandas-version-advanced-starting-in-jan-2021-numpy-is-now-incompatible/11214
 
 - <a name="v0.12.7a8"></a>v0.12.7a8 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; merged 2021-02-23
   - support `yscale` kwarg.  (See also [**`yscale.ipynb`**](https://github.com/matplotlib/mplfinance/blob/yscaleIss21/examples/yscale.ipynb), and [issue 21](https://github.com/matplotlib/mplfinance/issues/21)).

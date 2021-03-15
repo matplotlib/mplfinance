@@ -268,6 +268,9 @@ def _valid_plot_kwargs():
 
         'volume_yscale'             : { 'Default'     : None,
                                         'Validator'   : lambda value: _yscale_validator(value) },
+
+        'warn_too_much_data'        : { 'Default'     : 599,
+                                        'Validator'   : lambda value: isinstance(value,int) },
     }
 
     _validate_vkwargs_dict(vkwargs)

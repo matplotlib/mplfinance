@@ -4,6 +4,7 @@ import numpy    as np
 import datetime
 from   mplfinance._helpers import _list_of_dict
 import matplotlib as mpl
+import warnings
 
 def _check_and_prepare_data(data, config):
     '''
@@ -27,6 +28,21 @@ def _check_and_prepare_data(data, config):
 
     if not isinstance(data.index,pd.core.indexes.datetimes.DatetimeIndex):
         raise TypeError('Expect data.index as DatetimeIndex')
+
+    if (len(data.index) > config['warn_too_much_data'] and
+        (config['type']=='candle' or config['type']=='ohlc' or config['type']=='hollow_and_filled')
+       ):
+        warnings.warn('\n\n ================================================================= '+
+                      '\n\n   WARNING: YOU ARE PLOTTING SO MUCH DATA THAT IT MAY NOT BE'+
+                        '\n            POSSIBLE TO SEE DETAILS (Candles, Ohlc-Bars, Etc.)'+
+                        '\n   For more information see:'+
+                        '\n   - https://github.com/matplotlib/mplfinance/wiki/Plotting-Too-Much-Data'+
+                        '\n   '+
+                        '\n   TO SILENCE THIS WARNING, set `type=\'line\'` in `mpf.plot()`'+
+                        '\n   OR set kwarg `warn_too_much_data=N` where N is an integer '+
+                        '\n   LARGER than the number of data points you want to plot.'+
+                      '\n\n ================================================================ ',
+                  category=UserWarning)
 
     # We will not be fully case-insensitive (since Pandas columns as NOT case-insensitive)
     # but because so many people have requested it, for the default column names we will

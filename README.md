@@ -11,9 +11,7 @@ pip install --upgrade mplfinance
 
 ---
 
-## <a name="announcements"></a>Announcing Version 0.12.7
-[External Axes Mode and Animation Support.](https://github.com/matplotlib/mplfinance/blob/master/RELEASE_NOTES.md)
-
+## <a name="announcements"></a>**&roarr; [Latest Release Information](https://github.com/matplotlib/mplfinance/blob/master/RELEASE_NOTES.md) &loarr;**
 ---
 
 ## <a name="tutorials"></a>Contents and Tutorials
