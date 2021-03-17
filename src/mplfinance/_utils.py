@@ -194,6 +194,26 @@ def _date_to_iloc(dtseries,date):
     if isinstance(loc2,slice): loc2 = loc2.stop - 1
     return (loc1+loc2)/2.0
 
+def _date_to_iloc_extrapolate(dtseries,date):
+    d1s = dtseries.loc[date:]
+    if len(d1s) < 1:
+        # xtrapolate forward:
+        pass
+    d1 = d1s.index[0]
+    d2s = dtseries.loc[:date]
+    if len(d2s) < 1:
+        # extrapolate backward:
+        pass
+    d2 = dtseries.loc[:date].index[-1]
+    # If there are duplicate dates in the series, for example in a renko plot
+    # then .get_loc(date) will return a slice containing all the dups, so:
+    loc1 = dtseries.index.get_loc(d1)
+    if isinstance(loc1,slice): loc1 = loc1.start
+    loc2 = dtseries.index.get_loc(d2)
+    if isinstance(loc2,slice): loc2 = loc2.stop - 1
+    return (loc1+loc2)/2.0
+
+
 def _date_to_mdate(date):
     if isinstance(date,str):
         pydt = pd.to_datetime(date).to_pydatetime()

@@ -37,6 +37,7 @@ from mplfinance._arg_validators import _hlines_validator, _vlines_validator
 from mplfinance._arg_validators import _alines_validator, _tlines_validator
 from mplfinance._arg_validators import _scale_padding_validator, _yscale_validator
 from mplfinance._arg_validators import _valid_panel_id, _check_for_external_axes
+from mplfinance._arg_validators import _xlim_validator
 
 from mplfinance._panels import _build_panels
 from mplfinance._panels import _set_ticks_on_bottom_panel_only
@@ -185,8 +186,7 @@ def _valid_plot_kwargs():
                                                                       and all([isinstance(v,(int,float)) for v in value])},
  
         'xlim'                      : {'Default'      : None,
-                                       'Validator'    : lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
-                                                                      and all([isinstance(v,(int,float)) for v in value])},
+                                       'Validator'    : lambda value: _xlim_validator(value) },
  
         'set_ylim_panelB'           : {'Default'      : None,
                                        'Validator'    : lambda value: _warn_set_ylim_deprecated(value) },
@@ -295,6 +295,8 @@ def plot( data, **kwargs ):
     
     dates,opens,highs,lows,closes,volumes = _check_and_prepare_data(data, config)
 
+    config['xlim'] = _check_and_convert_xlim_configuration(data, config)
+
     if config['type'] in VALID_PMOVE_TYPES and config['addplot'] is not None:
         err = "`addplot` is not supported for `type='" + config['type'] +"'`"
         raise ValueError(err)
@@ -363,7 +365,7 @@ def plot( data, **kwargs ):
         panels = _build_panels(fig, config)
         volumeAxes = panels.at[config['volume_panel'],'axes'][0] if config['volume'] is True else None
 
-    fmtstring = _determine_format_string( dates, config['datetime_format'] )
+    fmtstring = _determine_format_string(dates, config['datetime_format'])
 
     ptype = config['type'] 
 

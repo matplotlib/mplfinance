@@ -5,6 +5,8 @@ import datetime
 from   mplfinance._helpers import _list_of_dict
 import matplotlib as mpl
 import warnings
+from   mplfinance._utils import _date_to_mdate
+from   mplfinance._utils import _date_to_iloc_extrapolate
 
 def _check_and_prepare_data(data, config):
     '''
@@ -76,6 +78,28 @@ def _check_and_prepare_data(data, config):
 
     return dates, opens, highs, lows, closes, volumes
 
+def _check_and_convert_xlim_configuration(data, config):
+    '''
+    Check, if user entered `xlim` kwarg, if user entered dates
+    then we may need to convert them to iloc or matplotlib dates.
+    '''
+    if config['xlim'] is None:
+        return None
+
+    xlim = config['xlim']
+
+    if not _xlim_validator(xlim):
+        raise ValueError('Bad xlim configuration #1')
+
+    if all([_is_date_like(dt) for dt in xlim]):
+        if config['show_nontrading']:
+            xlim = [ _date_to_mdate(dt) for dt in xlim]
+        else
+            xlim = [ _date_to_iloc_extrapolate(data.index.to_series(),dt) for dt in xlim]
+        
+    return xlim
+
+
 def _get_valid_plot_types(plottype=None):
 
     _alias_types = {
@@ -139,6 +163,11 @@ def _is_datelike(value):
         except:
             return False
     return False
+
+def _xlim_validator(value):
+    return (isinstance(value, (list,tuple)) and len(value) == 2
+            and (all([isinstance(v,(int,float)) for v in value])
+                 or all([_is_date_like(v) for v in value])))
 
 def _vlines_validator(value):
     '''Validate `vlines` kwarg value:  must be "datelike" or sequence of "datelike"
