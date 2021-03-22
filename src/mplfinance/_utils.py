@@ -62,6 +62,28 @@ def _check_input(opens, closes, highs, lows):
     if not same_missing:
         raise ValueError('O,H,L,C must have the same missing data!')
 
+def _check_and_convert_xlim_configuration(data, config):
+    '''
+    Check, if user entered `xlim` kwarg, if user entered dates
+    then we may need to convert them to iloc or matplotlib dates.
+    '''
+    if config['xlim'] is None:
+        return None
+
+    xlim = config['xlim']
+
+    if not _xlim_validator(xlim):
+        raise ValueError('Bad xlim configuration #1')
+
+    if all([_is_date_like(dt) for dt in xlim]):
+        if config['show_nontrading']:
+            xlim = [ _date_to_mdate(dt) for dt in xlim]
+        else:
+            xlim = [ _date_to_iloc_extrapolate(data.index.to_series(),dt) for dt in xlim]
+        
+    return xlim
+
+
 def _construct_mpf_collections(ptype,dates,xdates,opens,highs,lows,closes,volumes,config,style):
     collections = None
     if ptype == 'candle' or ptype == 'candlestick':
@@ -194,16 +216,42 @@ def _date_to_iloc(dtseries,date):
     if isinstance(loc2,slice): loc2 = loc2.stop - 1
     return (loc1+loc2)/2.0
 
+def _date_to_iloc_linear(dtseries,date,trace=False):
+    '''Find the slope and yintercept for the line:
+       iloc = (slope)*(date) + (yintercept)
+    '''
+    d1 = _date_to_mdate(dtseries.index[0])
+    d2 = _date_to_mdate(dtseries.index[-1])
+
+    if trace: print('d1,d2=',d1,d2)
+    i1 = 0.0
+    i2 = len(dtseries) - 1.0
+    if trace: print('i1,i2=',i1,i2)
+    
+    slope   = (i2 - i1) / (d2 - d1)
+    yitrcpt1 = i1 - (slope*d1)
+    if trace: print('slope,yitrcpt=',slope,yitrcpt1)
+    yitrcpt2 = i2 - (slope*d2)
+    if trace: print('slope,yitrcpt=',slope,yitrcpt2)
+    if yitrcpt1 != yitrcpt2:
+        print('WARNING: yintercepts NOT equal!!!')
+    return (slope,(yitrcpt1+yitrcpt2)/2.0)
+
 def _date_to_iloc_extrapolate(dtseries,date):
     d1s = dtseries.loc[date:]
     if len(d1s) < 1:
         # xtrapolate forward:
-        pass
+        m,b = _date_to_iloc_linear(dtseries,date)
+        iloc = m*_date_to_mdate(date) + b
+        return iloc
     d1 = d1s.index[0]
     d2s = dtseries.loc[:date]
     if len(d2s) < 1:
         # extrapolate backward:
-        pass
+        m,b = _date_to_iloc_linear(dtseries,date)
+        iloc = m*_date_to_mdate(date) + b
+        return iloc
+    # Below here we *interpolate* (not extrapolate)
     d2 = dtseries.loc[:date].index[-1]
     # If there are duplicate dates in the series, for example in a renko plot
     # then .get_loc(date) will return a slice containing all the dups, so:

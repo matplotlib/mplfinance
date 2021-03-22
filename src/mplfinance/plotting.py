@@ -26,6 +26,7 @@ from mplfinance._widths import _determine_width_config
 from mplfinance._utils import _updown_colors
 from mplfinance._utils import IntegerIndexDateTimeFormatter
 from mplfinance._utils import _mscatter
+from mplfinance._utils import _check_and_convert_xlim_configuration
 
 from mplfinance import _styles
 
