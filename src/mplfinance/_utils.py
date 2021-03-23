@@ -253,29 +253,48 @@ def _date_to_iloc_extrapolate(dtseries,date):
        If `date` does not exactly match a date in the series then interpolate between two dates.
        If `date` is outside the range of dates in the series, then extrapolate:
        Extrapolation results in increased error as the distance of the extrapolation increases.
-       We have two methods to extrapolate: (1) Determine a linear equation based on the data
-       provided in `dtseries`, and use that equation to calculate the location for the date.
-       (2) multiply by 5/7 the number of days between the edge date of dtseries and the 
-       date for which we are requesting a location.  This assumes a 5 day trading week.
-       Empirical observation (scratch_pad/date_to_iloc_extrapolation.ipynb) shows that the
-       systematic error of these two methods tends to be in opposite directions:
-       taking the average of the two methods reduces systematic error.
+       We have two methods to extrapolate:
+       (1) Determine a linear equation based on the data provided in `dtseries`,
+           and use that equation to calculate the location for the date.
+       (2) Multiply by 5/7 the number of days between the edge date of dtseries and the 
+           date for which we are requesting a location.
+           THIS ASSUMES DAILY data AND a 5 DAY TRADING WEEK.
+       Empirical observation (scratch_pad/date_to_iloc_extrapolation.ipynb) shows that
+       the systematic error of these two methods tends to be in opposite directions:
+       taking the average of the two methods reduces systematic errorr: However,
+       since method (2) applies only to DAILY data, we take the average of the two
+       methods only for daily data.  For intraday data we use only method (1).
     '''
+
     d1s = dtseries.loc[date:]
     if len(d1s) < 1:
         # xtrapolate forward:
         loc_linear  = _date_to_iloc_linear(dtseries,date)
-        delta       = _date_to_mdate(date) - _date_to_mdate(dtseries.index[-1])
-        loc_5_7ths  = len(dtseries) - 1 + (5/7.)*delta
-        return (loc_linear + loc_5_7ths)/2.0
+        first = _date_to_mdate(dtseries.index[0])
+        last  = _date_to_mdate(dtseries.index[-1])
+        avg_days_between_points = (last - first)/float(len(dtseries))
+        if avg_days_between_points > 0.33:  # daily (not intraday)
+            delta       = _date_to_mdate(date) - _date_to_mdate(dtseries.index[-1])
+            loc_5_7ths  = len(dtseries) - 1 + (5/7.)*delta
+            loc         = (loc_linear + loc_5_7ths)/2.0
+        else:
+            loc = loc_linear
+        return loc
     d1 = d1s.index[0]
     d2s = dtseries.loc[:date]
     if len(d2s) < 1:
         # extrapolate backward:
         loc_linear = _date_to_iloc_linear(dtseries,date)
-        delta      = _date_to_mdate(dtseries.index[0]) - _date_to_mdate(date)
-        loc_5_7ths = - (5./7.)*delta
-        return (loc_linear + loc_5_7ths)/2.0
+        first = _date_to_mdate(dtseries.index[0])
+        last  = _date_to_mdate(dtseries.index[-1])
+        avg_days_between_points = (last - first)/float(len(dtseries))
+        if avg_days_between_points > 0.33:  # daily (not intraday)
+            delta      = _date_to_mdate(dtseries.index[0]) - _date_to_mdate(date)
+            loc_5_7ths = - (5./7.)*delta
+            loc = (loc_linear + loc_5_7ths)/2.0
+        else:
+            loc = loc_linear
+        return loc
     # Below here we *interpolate* (not extrapolate)
     d2 = dtseries.loc[:date].index[-1]
     # If there are duplicate dates in the series, for example in a renko plot
