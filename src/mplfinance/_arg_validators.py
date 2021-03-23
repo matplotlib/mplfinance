@@ -143,7 +143,7 @@ def _is_datelike(value):
 def _xlim_validator(value):
     return (isinstance(value, (list,tuple)) and len(value) == 2
             and (all([isinstance(v,(int,float)) for v in value])
-                 or all([_is_date_like(v) for v in value])))
+                 or all([_is_datelike(v) for v in value])))
 
 def _vlines_validator(value):
     '''Validate `vlines` kwarg value:  must be "datelike" or sequence of "datelike"

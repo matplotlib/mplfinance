@@ -15,6 +15,7 @@ from matplotlib.collections import LineCollection, PolyCollection, PatchCollecti
 
 from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 from mplfinance._arg_validators import _alines_validator, _bypass_kwarg_validation
+from mplfinance._arg_validators import _xlim_validator, _is_datelike
 from mplfinance._styles         import _get_mpfstyle
 
 from six.moves import zip
@@ -75,7 +76,7 @@ def _check_and_convert_xlim_configuration(data, config):
     if not _xlim_validator(xlim):
         raise ValueError('Bad xlim configuration #1')
 
-    if all([_is_date_like(dt) for dt in xlim]):
+    if all([_is_datelike(dt) for dt in xlim]):
         if config['show_nontrading']:
             xlim = [ _date_to_mdate(dt) for dt in xlim]
         else:
@@ -222,8 +223,10 @@ def _date_to_iloc(dtseries,date):
     return (loc1+loc2)/2.0
 
 def _date_to_iloc_linear(dtseries,date,trace=False):
-    '''Find the slope and yintercept for the line:
-       iloc = (slope)*(date) + (yintercept)
+    '''Find the location of a date using linear extrapolation.
+       Use the endpoints of `dtseriews` to the slope and yintercept
+       for the line: iloc = (slope)*(dtseries) + (yintercept)
+       The use them to calculate the location of `date`
     '''
     d1 = _date_to_mdate(dtseries.index[0])
     d2 = _date_to_mdate(dtseries.index[-1])
