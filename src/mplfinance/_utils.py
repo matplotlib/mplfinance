@@ -224,9 +224,10 @@ def _date_to_iloc(dtseries,date):
 
 def _date_to_iloc_linear(dtseries,date,trace=False):
     '''Find the location of a date using linear extrapolation.
-       Use the endpoints of `dtseriews` to the slope and yintercept
-       for the line: iloc = (slope)*(dtseries) + (yintercept)
-       The use them to calculate the location of `date`
+       Use the endpoints of `dtseries` to calculate the slope
+       and yintercept for the line:
+           iloc = (slope)*(dtseries) + (yintercept)
+       Then use them to calculate the location of `date`
     '''
     d1 = _date_to_mdate(dtseries.index[0])
     d2 = _date_to_mdate(dtseries.index[-1])
