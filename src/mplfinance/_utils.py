@@ -249,6 +249,22 @@ def _date_to_iloc_linear(dtseries,date,trace=False):
         yitrcpt = yitrcpt1 
     return (slope * _date_to_mdate(date)) + yitrcpt
 
+def _date_to_iloc_5_7ths(dtseries,date,direction,trace=False):
+        first = _date_to_mdate(dtseries.index[0])
+        last  = _date_to_mdate(dtseries.index[-1])
+        avg_days_between_points = (last - first)/float(len(dtseries))
+        if avg_days_between_points < 0.33:  # intraday (not daily)
+            return None
+        if direction == 'forward':
+            delta       = _date_to_mdate(date) - _date_to_mdate(dtseries.index[-1])
+            loc_5_7ths  = len(dtseries) - 1 + (5/7.)*delta
+        elif direction == 'backward':
+            delta      = _date_to_mdate(dtseries.index[0]) - _date_to_mdate(date)
+            loc_5_7ths = - (5./7.)*delta
+        else:
+            raise ValueError('_date_to_iloc_5_7ths got BAD direction value='+str(direction))
+        return loc_5_7ths
+
 def _date_to_iloc_extrapolate(dtseries,date):
     '''Convert a `date` to a location, given a date series w/a datetime index. 
        If `date` does not exactly match a date in the series then interpolate between two dates.
@@ -269,33 +285,23 @@ def _date_to_iloc_extrapolate(dtseries,date):
 
     d1s = dtseries.loc[date:]
     if len(d1s) < 1:
-        # xtrapolate forward:
+        # extrapolate forward:
         loc_linear  = _date_to_iloc_linear(dtseries,date)
-        first = _date_to_mdate(dtseries.index[0])
-        last  = _date_to_mdate(dtseries.index[-1])
-        avg_days_between_points = (last - first)/float(len(dtseries))
-        if avg_days_between_points > 0.33:  # daily (not intraday)
-            delta       = _date_to_mdate(date) - _date_to_mdate(dtseries.index[-1])
-            loc_5_7ths  = len(dtseries) - 1 + (5/7.)*delta
-            loc         = (loc_linear + loc_5_7ths)/2.0
+        loc_5_7ths  = _date_to_iloc_5_7ths(dtseries,date,'forward')
+        if loc_5_7ths is not None:
+            return (loc_linear + loc_5_7ths)/2.0
         else:
-            loc = loc_linear
-        return loc
+            return loc_linear
     d1 = d1s.index[0]
     d2s = dtseries.loc[:date]
     if len(d2s) < 1:
         # extrapolate backward:
         loc_linear = _date_to_iloc_linear(dtseries,date)
-        first = _date_to_mdate(dtseries.index[0])
-        last  = _date_to_mdate(dtseries.index[-1])
-        avg_days_between_points = (last - first)/float(len(dtseries))
-        if avg_days_between_points > 0.33:  # daily (not intraday)
-            delta      = _date_to_mdate(dtseries.index[0]) - _date_to_mdate(date)
-            loc_5_7ths = - (5./7.)*delta
-            loc = (loc_linear + loc_5_7ths)/2.0
+        loc_5_7ths = _date_to_iloc_5_7ths(dtseries,date,'backward')
+        if loc_5_7ths is not None:
+            return (loc_linear + loc_5_7ths)/2.0
         else:
-            loc = loc_linear
-        return loc
+            return loc_linear
     # Below here we *interpolate* (not extrapolate)
     d2 = dtseries.loc[:date].index[-1]
     # If there are duplicate dates in the series, for example in a renko plot
