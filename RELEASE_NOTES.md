@@ -1,6 +1,18 @@
 ####
 ---
 
+### <a name="v0.12.7a11"></a>v0.12.7a11 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; To Be released 2021-03-30
+
+- <a name="v0.12.7a11"></a>v0.12.7a11 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; merged 2021-03-26
+  - Prior to this version, **`xlim`** kwarg accepted only float or int:
+    - float as matplotlib date; (only when `show_nontrading=True`)
+    - int or float as dataframe row number; (only when `show_nontrading=False`)
+  - **`xlim`** kwarg now *also* accepts
+    - date or datetime **string**
+    - date or datetime **object** (`datetime.datetime` or `pandas.Timestamp`)
+
+---
+
 ### <a name="v0.12.7a10"></a>v0.12.7a10 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; released 2021-03-15
 
 - <a name="v0.12.7a10"></a>v0.12.7a10 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; merged 2021-03-15

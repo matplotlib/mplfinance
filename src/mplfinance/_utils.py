@@ -15,6 +15,7 @@ from matplotlib.collections import LineCollection, PolyCollection, PatchCollecti
 
 from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 from mplfinance._arg_validators import _alines_validator, _bypass_kwarg_validation
+from mplfinance._arg_validators import _xlim_validator, _is_datelike
 from mplfinance._styles         import _get_mpfstyle
 
 from six.moves import zip
@@ -61,6 +62,28 @@ def _check_input(opens, closes, highs, lows):
                    )
     if not same_missing:
         raise ValueError('O,H,L,C must have the same missing data!')
+
+def _check_and_convert_xlim_configuration(data, config):
+    '''
+    Check, if user entered `xlim` kwarg, if user entered dates
+    then we may need to convert them to iloc or matplotlib dates.
+    '''
+    if config['xlim'] is None:
+        return None
+
+    xlim = config['xlim']
+
+    if not _xlim_validator(xlim):
+        raise ValueError('Bad xlim configuration #1')
+
+    if all([_is_datelike(dt) for dt in xlim]):
+        if config['show_nontrading']:
+            xlim = [ _date_to_mdate(dt) for dt in xlim]
+        else:
+            xlim = [ _date_to_iloc_extrapolate(data.index.to_series(),dt) for dt in xlim]
+        
+    return xlim
+
 
 def _construct_mpf_collections(ptype,dates,xdates,opens,highs,lows,closes,volumes,config,style):
     collections = None
@@ -176,6 +199,11 @@ def _updownhollow_colors(upcolor,downcolor,hollowcolor,opens,closes):
 
 
 def _date_to_iloc(dtseries,date):
+    '''Convert a `date` to a location, given a date series w/a datetime index. 
+       If `date` does not exactly match a date in the series then interpolate between two dates.
+       If `date` is outside the range of dates in the series, then raise an exception
+      .
+    '''
     d1s = dtseries.loc[date:]
     if len(d1s) < 1:
         sdtrange = str(dtseries[0])+' to '+str(dtseries[-1])
@@ -193,6 +221,97 @@ def _date_to_iloc(dtseries,date):
     loc2 = dtseries.index.get_loc(d2)
     if isinstance(loc2,slice): loc2 = loc2.stop - 1
     return (loc1+loc2)/2.0
+
+def _date_to_iloc_linear(dtseries,date,trace=False):
+    '''Find the location of a date using linear extrapolation.
+       Use the endpoints of `dtseries` to calculate the slope
+       and yintercept for the line:
+           iloc = (slope)*(dtseries) + (yintercept)
+       Then use them to calculate the location of `date`
+    '''
+    d1 = _date_to_mdate(dtseries.index[0])
+    d2 = _date_to_mdate(dtseries.index[-1])
+
+    if trace: print('d1,d2=',d1,d2)
+    i1 = 0.0
+    i2 = len(dtseries) - 1.0
+    if trace: print('i1,i2=',i1,i2)
+    
+    slope   = (i2 - i1) / (d2 - d1)
+    yitrcpt1 = i1 - (slope*d1)
+    if trace: print('slope,yitrcpt=',slope,yitrcpt1)
+    yitrcpt2 = i2 - (slope*d2)
+    if trace: print('slope,yitrcpt=',slope,yitrcpt2)
+    if yitrcpt1 != yitrcpt2:
+        print('WARNING: yintercepts NOT equal!!!(',yitrcpt1,yitrcpt2,')')
+        yitrcpt = (yitrcpt1 + yitrcpt2) / 2.0
+    else:
+        yitrcpt = yitrcpt1 
+    return (slope * _date_to_mdate(date)) + yitrcpt
+
+def _date_to_iloc_5_7ths(dtseries,date,direction,trace=False):
+        first = _date_to_mdate(dtseries.index[0])
+        last  = _date_to_mdate(dtseries.index[-1])
+        avg_days_between_points = (last - first)/float(len(dtseries))
+        if avg_days_between_points < 0.33:  # intraday (not daily)
+            return None
+        if direction == 'forward':
+            delta       = _date_to_mdate(date) - _date_to_mdate(dtseries.index[-1])
+            loc_5_7ths  = len(dtseries) - 1 + (5/7.)*delta
+        elif direction == 'backward':
+            delta      = _date_to_mdate(dtseries.index[0]) - _date_to_mdate(date)
+            loc_5_7ths = - (5./7.)*delta
+        else:
+            raise ValueError('_date_to_iloc_5_7ths got BAD direction value='+str(direction))
+        return loc_5_7ths
+
+def _date_to_iloc_extrapolate(dtseries,date):
+    '''Convert a `date` to a location, given a date series w/a datetime index. 
+       If `date` does not exactly match a date in the series then interpolate between two dates.
+       If `date` is outside the range of dates in the series, then extrapolate:
+       Extrapolation results in increased error as the distance of the extrapolation increases.
+       We have two methods to extrapolate:
+       (1) Determine a linear equation based on the data provided in `dtseries`,
+           and use that equation to calculate the location for the date.
+       (2) Multiply by 5/7 the number of days between the edge date of dtseries and the 
+           date for which we are requesting a location.
+           THIS ASSUMES DAILY data AND a 5 DAY TRADING WEEK.
+       Empirical observation (scratch_pad/date_to_iloc_extrapolation.ipynb) shows that
+       the systematic error of these two methods tends to be in opposite directions:
+       taking the average of the two methods reduces systematic errorr: However,
+       since method (2) applies only to DAILY data, we take the average of the two
+       methods only for daily data.  For intraday data we use only method (1).
+    '''
+
+    d1s = dtseries.loc[date:]
+    if len(d1s) < 1:
+        # extrapolate forward:
+        loc_linear  = _date_to_iloc_linear(dtseries,date)
+        loc_5_7ths  = _date_to_iloc_5_7ths(dtseries,date,'forward')
+        if loc_5_7ths is not None:
+            return (loc_linear + loc_5_7ths)/2.0
+        else:
+            return loc_linear
+    d1 = d1s.index[0]
+    d2s = dtseries.loc[:date]
+    if len(d2s) < 1:
+        # extrapolate backward:
+        loc_linear = _date_to_iloc_linear(dtseries,date)
+        loc_5_7ths = _date_to_iloc_5_7ths(dtseries,date,'backward')
+        if loc_5_7ths is not None:
+            return (loc_linear + loc_5_7ths)/2.0
+        else:
+            return loc_linear
+    # Below here we *interpolate* (not extrapolate)
+    d2 = dtseries.loc[:date].index[-1]
+    # If there are duplicate dates in the series, for example in a renko plot
+    # then .get_loc(date) will return a slice containing all the dups, so:
+    loc1 = dtseries.index.get_loc(d1)
+    if isinstance(loc1,slice): loc1 = loc1.start
+    loc2 = dtseries.index.get_loc(d2)
+    if isinstance(loc2,slice): loc2 = loc2.stop - 1
+    return (loc1+loc2)/2.0
+
 
 def _date_to_mdate(date):
     if isinstance(date,str):
