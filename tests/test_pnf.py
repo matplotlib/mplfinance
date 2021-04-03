@@ -32,8 +32,7 @@ def test_pnf01(bolldata):
     tname = os.path.join(tdir,fname)
     rname = os.path.join(refd,fname)
 
-    fig_axis = mpf.plot(df,type='pnf',volume=True,savefig=tname,returnfig=True)
-    plt.close(fig_axis[0])
+    mpf.plot(df,type='pnf',volume=True,savefig=tname)
 
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')
@@ -55,8 +54,7 @@ def test_pnf02(bolldata):
     tname = os.path.join(tdir,fname)
     rname = os.path.join(refd,fname)
 
-    fig_axis = mpf.plot(df,type='pnf',pointnfig_params=dict(box_size=4),volume=True,savefig=tname,returnfig=True)
-    plt.close(fig_axis[0])
+    mpf.plot(df,type='pnf',pnf_params=dict(box_size=4),volume=True,savefig=tname)
 
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')
@@ -78,8 +76,7 @@ def test_pnf03(bolldata):
     tname = os.path.join(tdir,fname)
     rname = os.path.join(refd,fname)
 
-    fig_axis = mpf.plot(df,type='pnf',pointnfig_params=dict(box_size='atr',atr_length=2),volume=True,savefig=tname,returnfig=True)
-    plt.close(fig_axis[0])
+    mpf.plot(df,type='pnf',pnf_params=dict(box_size='atr',atr_length=2),volume=True,savefig=tname)
 
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')
@@ -100,8 +97,7 @@ def test_pnf04(bolldata):
     tname = os.path.join(tdir,fname)
     rname = os.path.join(refd,fname)
 
-    fig_axis = mpf.plot(df,type='pnf',pointnfig_params=dict(box_size='atr',atr_length='total'),mav=(4,6,8),volume=True,savefig=tname,returnfig=True)
-    plt.close(fig_axis[0])
+    mpf.plot(df,type='pnf',pnf_params=dict(box_size='atr',atr_length='total'),mav=(4,6,8),volume=True,savefig=tname)
 
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')

@@ -574,7 +574,7 @@ def candlestick2_ohlc(ax, opens, highs, lows, closes, width=4,
         sequence of low values
     closes : sequence
         sequence of closing values
-    width : int
+    width : float
         size of open and close ticks in points
     colorup : color
         the color of the lines where close >= open

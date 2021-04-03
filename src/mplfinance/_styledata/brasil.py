@@ -17,7 +17,9 @@ style = {'base_mpl_style': 'fast',
                 'grid.color'    : '#fedf00',
                 'grid.linestyle': '--',
                 'axes.facecolor': '#009b3a',
-                'axes.edgecolor': '#002776'
+                'axes.edgecolor': '#002776',
+                'figure.titlesize'  : 'x-large',
+                'figure.titleweight': 'semibold',
                },
          'base_mpf_style': 'brasil'
         }

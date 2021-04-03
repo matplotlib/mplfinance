@@ -1,30 +1,32 @@
 """
 A collection of utilities for analyzing and plotting financial data.
-
 """
 
-import numpy as np
+import numpy  as np
+import pandas as pd
 import matplotlib.dates as mdates
 import datetime
 
-from matplotlib import colors as mcolors
-from matplotlib.patches import Ellipse
+from itertools import cycle
+
+from matplotlib             import colors as mcolors
+from matplotlib.patches     import Ellipse
 from matplotlib.collections import LineCollection, PolyCollection, PatchCollection
+
 from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
+from mplfinance._arg_validators import _alines_validator, _bypass_kwarg_validation
+from mplfinance._arg_validators import _xlim_validator, _is_datelike
+from mplfinance._styles         import _get_mpfstyle
 
 from six.moves import zip
 
-from mplfinance._styles import _get_mpfstyle
-
-def _check_input(opens, closes, highs, lows, miss=-1):
+def _check_input(opens, closes, highs, lows):
     """Checks that *opens*, *highs*, *lows* and *closes* have the same length.
     NOTE: this code assumes if any value open, high, low, close is
     missing (*-1*) they all are missing
 
     Parameters
     ----------
-    ax : `Axes`
-        an Axes instance to plot to
     opens : sequence
         sequence of opening values
     highs : sequence
@@ -33,55 +35,81 @@ def _check_input(opens, closes, highs, lows, miss=-1):
         sequence of low values
     closes : sequence
         sequence of closing values
-    miss : int
-        identifier of the missing data
 
     Raises
     ------
     ValueError
         if the input sequences don't have the same length
+        if the input sequences don't have NaN is same locations
     """
-
-    def _missing(sequence, miss=-1):
-        """Returns the index in *sequence* of the missing data, identified by
-        *miss*
-
-        Parameters
-        ----------
-        sequence :
-            sequence to evaluate
-        miss :
-            identifier of the missing data
-
-        Returns
-        -------
-        where_miss: numpy.ndarray
-            indices of the missing data
-        """
-        return np.where(np.array(sequence) == miss)[0]
-
     same_length = len(opens) == len(highs) == len(lows) == len(closes)
-    _missopens = _missing(opens)
-    same_missing = ((_missopens == _missing(highs)).all() and
-                    (_missopens == _missing(lows)).all() and
-                    (_missopens == _missing(closes)).all())
+    if not same_length:
+        raise ValueError('O,H,L,C must have the same length!')
 
-    if not (same_length and same_missing):
-        msg = ("*opens*, *highs*, *lows* and *closes* must have the same"
-               " length. NOTE: this code assumes if any value open, high,"
-               " low, close is missing (*-1*) they all must be missing.")
-        raise ValueError(msg)
+    o = np.where(np.isnan(opens))[0]
+    h = np.where(np.isnan(highs))[0]
+    l = np.where(np.isnan(lows))[0]
+    c = np.where(np.isnan(closes))[0]
 
-def roundTime(dt=None, roundTo=60):
-   """Round a datetime object to any time lapse in seconds
-   dt : datetime.datetime object, default now.
-   roundTo : Closest number of seconds to round to, default 1 minute.
-   Author: Thierry Husson 2012 - Use it as you want but don't blame me.
-   """
-   if dt is None : dt = datetime.datetime.now()
-   seconds = (dt.replace(tzinfo=None) - dt.min).seconds
-   rounding = (seconds+roundTo/2) // roundTo * roundTo
-   return dt + datetime.timedelta(0,rounding-seconds,-dt.microsecond)
+    # First check that they have the same number of NaN:
+    same_numnans = len(o) == len(h) == len(l) == len(c)
+    if not same_numnans:
+        raise ValueError('O,H,L,C must have the same amount of missing data!')
+
+    same_missing = ((o == h).all() and
+                    (o == l).all() and
+                    (o == c).all()
+                   )
+    if not same_missing:
+        raise ValueError('O,H,L,C must have the same missing data!')
+
+def _check_and_convert_xlim_configuration(data, config):
+    '''
+    Check, if user entered `xlim` kwarg, if user entered dates
+    then we may need to convert them to iloc or matplotlib dates.
+    '''
+    if config['xlim'] is None:
+        return None
+
+    xlim = config['xlim']
+
+    if not _xlim_validator(xlim):
+        raise ValueError('Bad xlim configuration #1')
+
+    if all([_is_datelike(dt) for dt in xlim]):
+        if config['show_nontrading']:
+            xlim = [ _date_to_mdate(dt) for dt in xlim]
+        else:
+            xlim = [ _date_to_iloc_extrapolate(data.index.to_series(),dt) for dt in xlim]
+        
+    return xlim
+
+
+def _construct_mpf_collections(ptype,dates,xdates,opens,highs,lows,closes,volumes,config,style):
+    collections = None
+    if ptype == 'candle' or ptype == 'candlestick':
+        collections = _construct_candlestick_collections(xdates, opens, highs, lows, closes,
+                                                         marketcolors=style['marketcolors'],config=config )
+
+    elif ptype =='hollow_and_filled':
+            collections = _construct_hollow_candlestick_collections(xdates, opens, highs, lows, closes,
+                                                         marketcolors=style['marketcolors'],config=config )
+
+    elif ptype == 'ohlc' or ptype == 'bars' or ptype == 'ohlc_bars':
+        collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes,
+                                                  marketcolors=style['marketcolors'],config=config )
+    elif ptype == 'renko':
+        collections = _construct_renko_collections(
+            dates, highs, lows, volumes, config['renko_params'], closes, marketcolors=style['marketcolors'])
+
+    elif ptype == 'pnf':
+        collections = _construct_pointnfig_collections(
+            dates, highs, lows, volumes, config['pnf_params'], closes, marketcolors=style['marketcolors'])
+    else:
+        raise TypeError('Unknown ptype="',str(ptype),'"')
+     
+    return collections
+
 
 def _calculate_atr(atr_length, highs, lows, closes):
     """Calculate the average true range
@@ -159,6 +187,169 @@ def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False):
         _list = [ cmap[pre < cls] for cls,pre in zip(closes[1:], closes) ]
         return [first] + _list
 
+
+def _updownhollow_colors(upcolor,downcolor,hollowcolor,opens,closes):
+    if upcolor == downcolor:
+        return upcolor
+    umap = {True : hollowcolor, False : upcolor  }
+    dmap = {True : hollowcolor, False : downcolor}
+    first = umap[closes[0] > opens[0]]
+    _list = [ umap[cls > opn] if cls > cls0 else dmap[cls > opn] for cls0,opn,cls in zip(closes[0:-1],opens[1:],closes[1:]) ]
+    return [first] + _list
+
+
+def _date_to_iloc(dtseries,date):
+    '''Convert a `date` to a location, given a date series w/a datetime index. 
+       If `date` does not exactly match a date in the series then interpolate between two dates.
+       If `date` is outside the range of dates in the series, then raise an exception
+      .
+    '''
+    d1s = dtseries.loc[date:]
+    if len(d1s) < 1:
+        sdtrange = str(dtseries[0])+' to '+str(dtseries[-1])
+        raise ValueError('User specified line date "'+str(date)+'" is beyond (greater than) range of plotted data ('+sdtrange+').')
+    d1 = d1s.index[0]
+    d2s = dtseries.loc[:date]
+    if len(d2s) < 1:
+        sdtrange = str(dtseries[0])+' to '+str(dtseries[-1])
+        raise ValueError('User specified line date "'+str(date)+'" is before (less than) range of plotted data ('+sdtrange+').')
+    d2 = dtseries.loc[:date].index[-1]
+    # If there are duplicate dates in the series, for example in a renko plot
+    # then .get_loc(date) will return a slice containing all the dups, so:
+    loc1 = dtseries.index.get_loc(d1)
+    if isinstance(loc1,slice): loc1 = loc1.start
+    loc2 = dtseries.index.get_loc(d2)
+    if isinstance(loc2,slice): loc2 = loc2.stop - 1
+    return (loc1+loc2)/2.0
+
+def _date_to_iloc_linear(dtseries,date,trace=False):
+    '''Find the location of a date using linear extrapolation.
+       Use the endpoints of `dtseries` to calculate the slope
+       and yintercept for the line:
+           iloc = (slope)*(dtseries) + (yintercept)
+       Then use them to calculate the location of `date`
+    '''
+    d1 = _date_to_mdate(dtseries.index[0])
+    d2 = _date_to_mdate(dtseries.index[-1])
+
+    if trace: print('d1,d2=',d1,d2)
+    i1 = 0.0
+    i2 = len(dtseries) - 1.0
+    if trace: print('i1,i2=',i1,i2)
+    
+    slope   = (i2 - i1) / (d2 - d1)
+    yitrcpt1 = i1 - (slope*d1)
+    if trace: print('slope,yitrcpt=',slope,yitrcpt1)
+    yitrcpt2 = i2 - (slope*d2)
+    if trace: print('slope,yitrcpt=',slope,yitrcpt2)
+    if yitrcpt1 != yitrcpt2:
+        print('WARNING: yintercepts NOT equal!!!(',yitrcpt1,yitrcpt2,')')
+        yitrcpt = (yitrcpt1 + yitrcpt2) / 2.0
+    else:
+        yitrcpt = yitrcpt1 
+    return (slope * _date_to_mdate(date)) + yitrcpt
+
+def _date_to_iloc_5_7ths(dtseries,date,direction,trace=False):
+        first = _date_to_mdate(dtseries.index[0])
+        last  = _date_to_mdate(dtseries.index[-1])
+        avg_days_between_points = (last - first)/float(len(dtseries))
+        if avg_days_between_points < 0.33:  # intraday (not daily)
+            return None
+        if direction == 'forward':
+            delta       = _date_to_mdate(date) - _date_to_mdate(dtseries.index[-1])
+            loc_5_7ths  = len(dtseries) - 1 + (5/7.)*delta
+        elif direction == 'backward':
+            delta      = _date_to_mdate(dtseries.index[0]) - _date_to_mdate(date)
+            loc_5_7ths = - (5./7.)*delta
+        else:
+            raise ValueError('_date_to_iloc_5_7ths got BAD direction value='+str(direction))
+        return loc_5_7ths
+
+def _date_to_iloc_extrapolate(dtseries,date):
+    '''Convert a `date` to a location, given a date series w/a datetime index. 
+       If `date` does not exactly match a date in the series then interpolate between two dates.
+       If `date` is outside the range of dates in the series, then extrapolate:
+       Extrapolation results in increased error as the distance of the extrapolation increases.
+       We have two methods to extrapolate:
+       (1) Determine a linear equation based on the data provided in `dtseries`,
+           and use that equation to calculate the location for the date.
+       (2) Multiply by 5/7 the number of days between the edge date of dtseries and the 
+           date for which we are requesting a location.
+           THIS ASSUMES DAILY data AND a 5 DAY TRADING WEEK.
+       Empirical observation (scratch_pad/date_to_iloc_extrapolation.ipynb) shows that
+       the systematic error of these two methods tends to be in opposite directions:
+       taking the average of the two methods reduces systematic errorr: However,
+       since method (2) applies only to DAILY data, we take the average of the two
+       methods only for daily data.  For intraday data we use only method (1).
+    '''
+
+    d1s = dtseries.loc[date:]
+    if len(d1s) < 1:
+        # extrapolate forward:
+        loc_linear  = _date_to_iloc_linear(dtseries,date)
+        loc_5_7ths  = _date_to_iloc_5_7ths(dtseries,date,'forward')
+        if loc_5_7ths is not None:
+            return (loc_linear + loc_5_7ths)/2.0
+        else:
+            return loc_linear
+    d1 = d1s.index[0]
+    d2s = dtseries.loc[:date]
+    if len(d2s) < 1:
+        # extrapolate backward:
+        loc_linear = _date_to_iloc_linear(dtseries,date)
+        loc_5_7ths = _date_to_iloc_5_7ths(dtseries,date,'backward')
+        if loc_5_7ths is not None:
+            return (loc_linear + loc_5_7ths)/2.0
+        else:
+            return loc_linear
+    # Below here we *interpolate* (not extrapolate)
+    d2 = dtseries.loc[:date].index[-1]
+    # If there are duplicate dates in the series, for example in a renko plot
+    # then .get_loc(date) will return a slice containing all the dups, so:
+    loc1 = dtseries.index.get_loc(d1)
+    if isinstance(loc1,slice): loc1 = loc1.start
+    loc2 = dtseries.index.get_loc(d2)
+    if isinstance(loc2,slice): loc2 = loc2.stop - 1
+    return (loc1+loc2)/2.0
+
+
+def _date_to_mdate(date):
+    if isinstance(date,str):
+        pydt = pd.to_datetime(date).to_pydatetime()
+    elif isinstance(date,pd.Timestamp):
+        pydt = date.to_pydatetime()
+    elif isinstance(date,(datetime.datetime,datetime.date)):
+        pydt = date
+    else:
+        return None
+    return mdates.date2num(pydt)
+
+def _convert_segment_dates(segments,dtindex):
+    '''
+    Convert line segment dates to matplotlib dates 
+    Inputted segment dates may be: pandas-parseable date-time string, pandas timestamp,
+                                   or a python datetime or date, or (if dtindex is not None) integer index
+    A "segment" is a "sequence of lines",
+        see: https://matplotlib.org/api/collections_api.html#matplotlib.collections.LineCollection
+    '''
+    #import pdb
+    #pdb.set_trace()
+    if dtindex is not None:
+        dtseries = dtindex.to_series()
+    converted = []
+    for line in segments:
+        new_line = []
+        for dt,value in line:
+            if dtindex is not None:
+                date = _date_to_iloc(dtseries,dt)  
+            else:
+                date = _date_to_mdate(dt)
+            if date is None:
+                raise TypeError('NON-DATE in segment line='+str(line))
+            new_line.append((date,value))
+        converted.append(new_line)
+    return converted
+
 def _valid_renko_kwargs():
     '''
     Construct and return the "valid renko kwargs table" for the mplfinance.plot(type='renko') 
@@ -182,9 +373,9 @@ def _valid_renko_kwargs():
 
     return vkwargs
 
-def _valid_pointnfig_kwargs():
+def _valid_pnf_kwargs():
     '''
-    Construct and return the "valid pointnfig kwargs table" for the mplfinance.plot(type='pnf') 
+    Construct and return the "valid pnf kwargs table" for the mplfinance.plot(type='pnf') 
     function. A valid kwargs table is a `dict` of `dict`s. The keys of the outer dict are 
     the valid key-words for the function.  The value for each key is a dict containing 2 
     specific keys: "Default", and "Validator" with the following values:
@@ -205,7 +396,56 @@ def _valid_pointnfig_kwargs():
 
     return vkwargs
 
-def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=None):
+def _valid_lines_kwargs():
+    '''
+    Construct and return the "valid lines (hlines,vlines,alines,tlines) kwargs table" 
+    for the mplfinance.plot() `[h|v|a|t]lines=` kwarg functions.
+    A valid kwargs table is a `dict` of `dict`s. The keys of the outer dict are 
+    the valid key-words for the function.  The value for each key is a dict containing 2 
+    specific keys: "Default", and "Validator" with the following values:
+        "Default"      - The default value for the kwarg if none is specified.
+        "Validator"    - A function that takes the caller specified value for the kwarg,
+                         and validates that it is the correct type, and (for kwargs with 
+                         a limited set of allowed values) may also validate that the
+                         kwarg value is one of the allowed values.
+    '''
+    valid_linestyles = ['-','solid','--','dashed','-.','dashdot',':','dotted',None,' ','']
+    vkwargs = {
+        'hlines'    : { 'Default'     : None,
+                        'Validator'   : _bypass_kwarg_validation },
+        'vlines'    : { 'Default'     : None,
+                        'Validator'   : _bypass_kwarg_validation },
+        'alines'    : { 'Default'     : None,
+                        'Validator'   : _bypass_kwarg_validation },
+        'tlines'    : { 'Default'     : None,
+                        'Validator'   : _bypass_kwarg_validation },
+        'colors'    : { 'Default'     : None,
+                        'Validator'   : lambda value: value is None or
+                                            mcolors.is_color_like(value) or
+                                            ( isinstance(value,(list,tuple)) and
+                                              all([mcolors.is_color_like(v) for v in value]) ) },
+        'linestyle' : { 'Default'     : '-',
+                        'Validator'   : lambda value: value is None or value in valid_linestyles },
+        'linewidths': { 'Default'     : None,
+                        'Validator'   : lambda value: value is None or
+                                            isinstance(value,(float,int)) or 
+                                            all([isinstance(v,(float,int)) for v in value]) },
+        'alpha'     : { 'Default'     : 1.0,
+                        'Validator'   : lambda value: isinstance(value,(float,int)) },
+
+        'tline_use' : { 'Default'     : 'close', 
+                        'Validator'   : lambda value: isinstance(value,str) or (isinstance(value,(list,tuple)) and
+                                                                      all([isinstance(v,str) for v in value]) ) },
+        'tline_method': { 'Default'   : 'point-to-point',
+                          'Validator' : lambda value: value in ['point-to-point','least-squares'] }
+    }
+
+    _validate_vkwargs_dict(vkwargs)
+
+    return vkwargs
+
+
+def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=None, config=None):
     """Represent the time, open, high, low, close as a vertical line
     ranging from low to high.  The left tick is the open and the right
     tick is the close.
@@ -235,25 +475,25 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=
 
     if marketcolors is None:
         mktcolors = _get_mpfstyle('classic')['marketcolors']['ohlc']
-        print('default mktcolors=',mktcolors)
+        #print('default mktcolors=',mktcolors)
     else:
         mktcolors = marketcolors['ohlc']
 
-    rangeSegments = [((dt, low), (dt, high)) for dt, low, high in
-                     zip(dates, lows, highs) if low != -1]
+    rangeSegments = [((dt, low), (dt, high)) for dt, low, high in zip(dates, lows, highs)]
 
-    avg_dist_between_points = (dates[-1] - dates[0]) / float(len(dates))
+    datalen = len(dates)
 
-    ticksize = avg_dist_between_points / 2.5
+    avg_dist_between_points = (dates[-1] - dates[0]) / float(datalen)
+
+    ticksize = config['_width_config']['ohlc_ticksize']
 
     # the ticks will be from ticksize to 0 in points at the origin and
     # we'll translate these to the date, open location
-    openSegments = [((dt-ticksize, op), (dt, op)) for dt, op in zip(dates, opens) if op != -1]
-    
+    openSegments = [((dt-ticksize, op), (dt, op)) for dt, op in zip(dates, opens)]
 
     # the ticks will be from 0 to ticksize in points at the origin and
     # we'll translate these to the date, close location
-    closeSegments = [((dt, close), (dt+ticksize, close)) for dt, close in zip(dates, closes) if close != -1]
+    closeSegments = [((dt, close), (dt+ticksize, close)) for dt, close in zip(dates, closes)]
 
     if mktcolors['up'] == mktcolors['down']:
         colors = mktcolors['up']
@@ -261,34 +501,29 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=
         colorup = mcolors.to_rgba(mktcolors['up'])
         colordown = mcolors.to_rgba(mktcolors['down'])
         colord = {True: colorup, False: colordown}
-        colors = [colord[open < close] for open, close in
-                  zip(opens, closes) if open != -1 and close != -1]
+        colors = [colord[open < close] for open, close in zip(opens, closes)]
 
-    useAA = 0,    # use tuple here
-    lw    = 0.5,  # use tuple here
-    lw = None
+    lw = config['_width_config']['ohlc_linewidth']
+
     rangeCollection = LineCollection(rangeSegments,
                                      colors=colors,
                                      linewidths=lw,
-                                     antialiaseds=useAA
                                      )
 
     openCollection = LineCollection(openSegments,
                                     colors=colors,
                                     linewidths=lw,
-                                    antialiaseds=useAA
                                     )
 
     closeCollection = LineCollection(closeSegments,
                                      colors=colors,
-                                     antialiaseds=useAA,
                                      linewidths=lw
                                      )
 
-    return rangeCollection, openCollection, closeCollection
+    return [rangeCollection, openCollection, closeCollection]
 
 
-def _construct_candlestick_collections(dates, opens, highs, lows, closes, marketcolors=None):
+def _construct_candlestick_collections(dates, opens, highs, lows, closes, marketcolors=None, config=None):
     """Represent the open, close as a bar line and high low range as a
     vertical line.
 
@@ -312,7 +547,7 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
 
     Returns
     -------
-    ret : tuple
+    ret : list
         (lineCollection, barCollection)
     """
     
@@ -320,26 +555,25 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
 
     if marketcolors is None:
         marketcolors = _get_mpfstyle('classic')['marketcolors']
-        print('default market colors:',marketcolors)
+        #print('default market colors:',marketcolors)
 
-    avg_dist_between_points = (dates[-1] - dates[0]) / float(len(dates))
+    datalen = len(dates)
 
-    delta = avg_dist_between_points / 4.0
+    avg_dist_between_points = (dates[-1] - dates[0]) / float(datalen)
+
+    delta = config['_width_config']['candle_width'] / 2.0
 
     barVerts = [((date - delta, open),
                  (date - delta, close),
                  (date + delta, close),
                  (date + delta, open))
-                for date, open, close in zip(dates, opens, closes)
-                if open != -1 and close != -1]
+                for date, open, close in zip(dates, opens, closes)]
 
     rangeSegLow   = [((date, low), (date, min(open,close)))
-                     for date, low, open, close in zip(dates, lows, opens, closes)
-                     if low != -1]
+                     for date, low, open, close in zip(dates, lows, opens, closes)]
     
     rangeSegHigh  = [((date, high), (date, max(open,close)))
-                     for date, high, open, close in zip(dates, highs, opens, closes)
-                     if high != -1]
+                     for date, high, open, close in zip(dates, highs, opens, closes)]
                       
     rangeSegments = rangeSegLow + rangeSegHigh
 
@@ -357,23 +591,108 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
     dc     = mcolors.to_rgba(marketcolors['wick']['down'], 1.0)
     wickcolor = _updown_colors(uc, dc, opens, closes)
 
-    useAA = 0,    # use tuple here
-    lw    = 0.5,  # use tuple here
-    lw = None
+    lw = config['_width_config']['candle_linewidth']
+
     rangeCollection = LineCollection(rangeSegments,
                                      colors=wickcolor,
                                      linewidths=lw,
-                                     antialiaseds=useAA
                                      )
 
     barCollection = PolyCollection(barVerts,
                                    facecolors=colors,
                                    edgecolors=edgecolor,
-                                   antialiaseds=useAA,
                                    linewidths=lw
                                    )
 
-    return rangeCollection, barCollection
+    return [rangeCollection, barCollection]
+
+
+def _construct_hollow_candlestick_collections(dates, opens, highs, lows, closes, marketcolors=None, config=None):
+    """Represent today's open to close as a "bar" line (candle body)
+    and high low range as a vertical line (candle wick)
+     
+    If config['type']=='hollow_and_filled' (hollow and filled candles) then candle edge and
+    wick color depend on PREVIOUS close to today's close (up or down), and the center of the
+    candle body (hollow or filled) depends on the today's open to close (up or down).
+
+    NOTE: this code assumes if any value open, low, high, close is
+    missing they all are missing
+
+    Parameters
+    ----------
+    opens : sequence
+        sequence of opening values
+    highs : sequence
+        sequence of high values
+    lows : sequence
+        sequence of low values
+    closes : sequence
+        sequence of closing values
+    marketcolors : dict of colors: up, down, edge, wick, alpha
+    alpha : float
+        bar (candle body) transparency
+
+    Returns
+    -------
+    ret : list
+        (lineCollection, barCollection)
+    """
+    
+    _check_input(opens, highs, lows, closes)
+
+    if marketcolors is None:
+        marketcolors = _get_mpfstyle('classic')['marketcolors']
+        #print('default market colors:',marketcolors)
+
+    datalen = len(dates)
+
+    avg_dist_between_points = (dates[-1] - dates[0]) / float(datalen)
+
+    delta = config['_width_config']['candle_width'] / 2.0
+
+    barVerts = [((date - delta, open),
+                 (date - delta, close),
+                 (date + delta, close),
+                 (date + delta, open))
+                for date, open, close in zip(dates, opens, closes)]
+
+    rangeSegLow   = [((date, low), (date, min(open,close)))
+                     for date, low, open, close in zip(dates, lows, opens, closes)]
+    
+    rangeSegHigh  = [((date, high), (date, max(open,close)))
+                     for date, high, open, close in zip(dates, highs, opens, closes)]
+                      
+    rangeSegments = rangeSegLow + rangeSegHigh
+
+    alpha  = marketcolors['alpha']
+
+    uc     = mcolors.to_rgba(marketcolors['candle'][ 'up' ], alpha)
+    dc     = mcolors.to_rgba(marketcolors['candle']['down'], alpha)
+   
+    hc = mcolors.to_rgba(marketcolors['hollow']) if 'hollow' in marketcolors else (0,0,0,0)
+    
+    colors = _updownhollow_colors(uc, dc, hc, opens, closes)  # for candle body.
+
+    edgecolor = _updown_colors(uc, dc, opens, closes, use_prev_close=True)
+    
+    wickcolor = _updown_colors(uc, dc, opens, closes, use_prev_close=True)
+
+    # For hollow candles, we scale the candle linewidth up a little:
+    lw = 1.25 * config['_width_config']['candle_linewidth']
+
+    rangeCollection = LineCollection(rangeSegments,
+                                     colors=wickcolor,
+                                     linewidths=lw,
+                                     )
+
+    barCollection = PolyCollection(barVerts,
+                                   facecolors=colors,
+                                   edgecolors=edgecolor,
+                                   linewidths=lw
+                                   )
+
+    return [rangeCollection, barCollection]
+
 
 def _construct_renko_collections(dates, highs, lows, volumes, config_renko_params, closes, marketcolors=None):
     """Represent the price change with bricks
@@ -426,13 +745,13 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
 
     Returns
     -------
-    ret : tuple
+    ret : list
         rectCollection
     """
     renko_params = _process_kwargs(config_renko_params, _valid_renko_kwargs())
     if marketcolors is None:
         marketcolors = _get_mpfstyle('classic')['marketcolors']
-        print('default market colors:',marketcolors)
+        #print('default market colors:',marketcolors)
     
     brick_size = renko_params['brick_size']
     atr_length = renko_params['atr_length']
@@ -536,8 +855,8 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
                                     edgecolors=edge_colors,
                                     linewidths=lw
                                     )
-    
-    return (rectCollection, ), new_dates, new_volumes, brick_values, brick_size
+    return [rectCollection,], new_dates, new_volumes, brick_values, brick_size
+
 
 def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnfig_params, closes, marketcolors=None):
     """Represent the price change with Xs and Os
@@ -603,14 +922,13 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
     ret : tuple
         rectCollection
     """
-    pointnfig_params = _process_kwargs(config_pointnfig_params, _valid_pointnfig_kwargs())
+    pointnfig_params = _process_kwargs(config_pointnfig_params, _valid_pnf_kwargs())
     if marketcolors is None:
         marketcolors = _get_mpfstyle('classic')['marketcolors']
-        print('default market colors:',marketcolors)
+        #print('default market colors:',marketcolors)
     
     box_size = pointnfig_params['box_size']
     atr_length = pointnfig_params['atr_length']
-    
 
     if box_size == 'atr':
         if atr_length == 'total':
@@ -627,8 +945,8 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
 
     alpha  = marketcolors['alpha']
 
-    uc     = mcolors.to_rgba(marketcolors['candle'][ 'up' ], alpha)
-    dc     = mcolors.to_rgba(marketcolors['candle']['down'], alpha)
+    uc     = mcolors.to_rgba(marketcolors['ohlc'][ 'up' ], alpha)
+    dc     = mcolors.to_rgba(marketcolors['ohlc']['down'], alpha)
     tfc    = mcolors.to_rgba(marketcolors['edge']['down'], 0) # transparent face color
 
     boxes = [] # each element in an integer representing the number of boxes to be drawn on that indexes column (negative numbers -> Os, positive numbers -> Xs)
@@ -718,9 +1036,293 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
                                  linewidths=lw,
                                  antialiaseds=useAA
                                  )
-    
-    return (cirCollection, xCollection), new_dates, new_volumes, box_values, box_size
+    return [cirCollection, xCollection], new_dates, new_volumes, box_values, box_size
 
+
+def _construct_aline_collections(alines, dtix=None):
+    """construct arbitrary line collections
+
+    Parameters
+    ----------
+    alines : sequence
+        sequences of segments, which are sequences of lines,
+        which are sequences of two or more points ( date[time], price ) or (x,y) 
+
+        date[time] may be (a) pandas.to_datetime parseable string,
+                          (b) pandas Timestamp, or
+                          (c) python datetime.datetime or datetime.date
+
+    alines may also be a dict, containing
+    the following keys:
+
+        'alines'     : the same as defined above: sequence of price, or dates, or segments
+        'colors'     : colors for the above alines
+        'linestyle'  : line types for the above alines
+        'linewidths' : line types for the above alines
+
+    dtix:  date index for the x-axis, used for converting the dates when
+           x-values are 'evenly spaced integers' (as when skipping non-trading days)
+
+    Returns
+    -------
+    ret : list
+        lines collections
+    """
+    if alines is None:
+        return None
+
+    if isinstance(alines,dict):
+        aconfig = _process_kwargs(alines, _valid_lines_kwargs())
+        alines = aconfig['alines']
+    else:
+        aconfig = _process_kwargs({}, _valid_lines_kwargs())
+
+    #print('aconfig=',aconfig)
+    #print('alines=',alines)
+
+    alines = _alines_validator(alines, returnStandardizedValue=True)
+    if alines is None:
+        raise ValueError('Unable to standardize alines value: '+str(alines))
+
+    alines = _convert_segment_dates(alines,dtix)
+
+    lw = aconfig['linewidths']
+    co = aconfig['colors']
+    ls = aconfig['linestyle']
+    al = aconfig['alpha']
+    lcollection = LineCollection(alines,colors=co,linewidths=lw,linestyles=ls,antialiaseds=(0,),alpha=al)
+    return lcollection
+
+
+def _construct_hline_collections(hlines,minx,maxx):
+    """Construct horizontal lines collection
+
+    Parameters
+    ----------
+    hlines : sequence
+        sequence of [price] values at which to draw horizontal lines
+
+    hlines may also be a dict, containing
+    the following keys:
+
+        'hlines'     : the same as defined above: sequence of price, or dates, or segments
+        'colors'     : colors for the above hlines
+        'linestyle'  : line types for the above hlines
+        'linewidths' : line types for the above hlines
+
+    minx : the minimum value for x for the horizontal line, already converted to `xdates` format
+    maxx : the maximum value for x for the horizontal line, already converted to `xdates` format
+
+    Returns
+    -------
+    ret : list
+        lines collections
+    """
+
+    if hlines is None:
+        return None
+
+    #print('_construct_hline_collections() called:',
+    #      '\nhlines=',hlines,'\nminx,maxx=',minx,maxx)
+
+    # hlines do NOT require converting segment dates, because the dates
+    # are not user-specified, but are from already converted minxdt,maxxdt
+
+    if isinstance(hlines,dict):
+        hconfig = _process_kwargs(hlines, _valid_lines_kwargs())
+        hlines = hconfig['hlines']
+    else:
+        hconfig = _process_kwargs({}, _valid_lines_kwargs())
+
+    #print('hconfig=',hconfig)
+    #print('hlines=',hlines)
+    
+    lines = []
+    if not isinstance(hlines,(list,tuple)):
+        hlines = [hlines,] # may be a single price value
+
+    for val in hlines:
+        lines.append( [(minx,val),(maxx,val)] )
+
+    lw = hconfig['linewidths']
+    co = hconfig['colors']
+    ls = hconfig['linestyle']
+    al = hconfig['alpha']
+    lcollection = LineCollection(lines,colors=co,linewidths=lw,linestyles=ls,antialiaseds=(0,),alpha=al)
+    return lcollection
+
+
+def _construct_vline_collections(vlines,dtix,miny,maxy):
+    """Construct vertical lines collection
+    Parameters
+    ----------
+    vlines : sequence
+        sequence of dates or datetimes at which to draw vertical lines
+        dates/datetimes may be (a) pandas.to_datetime parseable string,
+                               (b) pandas Timestamp
+                               (c) python datetime.datetime or datetime.date
+
+    vlines may also be a dict, containing
+    the following keys:
+
+        'vlines'     : the same as defined above: sequence of dates/datetimes
+        'colors'     : colors for the above vlines
+        'linestyle'  : line types for the above vlines
+        'linewidths' : line types for the above vlines
+
+    dtix:  date index for the x-axis, used for converting the dates when
+           x-values are 'evenly spaced integers' (as when skipping non-trading days)
+
+    miny : minimum y-value for the vertical line
+
+    maxy : maximum y-value for the vertical line
+
+    Returns
+    -------
+    ret : list
+        lines collections
+    """
+
+    if vlines is None:
+        return None
+
+    #print('_construct_vline_collections() called:',
+    #      '\nvlines=',vlines,
+    #      '\ndtix=',dtix)
+    #print('miny,maxy=',miny,maxy)
+
+    if isinstance(vlines,dict):
+        vconfig = _process_kwargs(vlines, _valid_lines_kwargs())
+        vlines = vconfig['vlines']
+    else:
+        vconfig = _process_kwargs({}, _valid_lines_kwargs())
+
+    #print('vconfig=',vconfig)
+    #print('vlines=',vlines)
+    
+    if not isinstance(vlines,(list,tuple)):
+        vlines = [vlines,]
+
+    lines = []
+    for val in vlines:
+        lines.append( [(val,miny),(val,maxy)] )
+
+    lines = _convert_segment_dates(lines,dtix)
+
+    lw = vconfig['linewidths']
+    co = vconfig['colors']
+    ls = vconfig['linestyle']
+    al = vconfig['alpha']
+    lcollection = LineCollection(lines,colors=co,linewidths=lw,linestyles=ls,antialiaseds=(0,),alpha=al)
+    return lcollection
+
+def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes):
+    """construct trend line collections
+
+    Parameters
+    ----------
+    tlines : sequence
+        sequences of pairs of date[time]s
+
+        date[time] may be (a) pandas.to_datetime parseable string,
+                          (b) pandas Timestamp, or
+                          (c) python datetime.datetime or datetime.date
+
+    tlines may also be a dict, containing
+    the following keys:
+
+        'tlines'     : the same as defined above: sequence of pairs of date[time]s
+        'colors'     : colors for the above tlines
+        'linestyle'  : line types for the above tlines
+        'linewidths' : line types for the above tlines
+
+    dtix:  date index for the x-axis, used for converting the dates when
+           x-values are 'evenly spaced integers' (as when skipping non-trading days)
+
+    Returns
+    -------
+    ret : list
+        lines collections
+    """
+    if tlines is None:
+        return None
+
+    if isinstance(tlines,dict):
+        tconfig = _process_kwargs(tlines, _valid_lines_kwargs())
+        tlines  = tconfig['tlines']
+    else:
+        tconfig = _process_kwargs({}, _valid_lines_kwargs())
+
+    tline_use    = tconfig['tline_use']
+    tline_method = tconfig['tline_method']
+
+    #print('tconfig=',tconfig)
+    #print('tlines=',tlines)
+
+    # reconstruct the data frame:
+    df = pd.DataFrame({'open':opens,'high':highs,'low':lows,'close':closes},
+                      index=pd.DatetimeIndex(mdates.num2date(dates))   )
+
+    # possible `tvalue`s : close,open,high,low,oc_avg,hl_avg,ohlc_avg,hilo
+    #          'hilo' means high on the up trend, low on the down trend.
+    # possible `tmethod`s: point-to-point, leastsquares
+
+    def _tline_point_to_point(dfslice,tline_use):
+        p1 = dfslice.iloc[ 0]
+        p2 = dfslice.iloc[-1]
+        x1 = p1.name
+        y1 = p1[tline_use].mean()
+        x2 = p2.name
+        y2 = p2[tline_use].mean()
+        return ((x1,y1),(x2,y2))
+
+    def _tline_lsq(dfslice,tline_use):
+        '''
+        This closed-form linear least squares algorithm was taken from:
+        https://mmas.github.io/least-squares-fitting-numpy-scipy
+        '''
+        si = dfslice[tline_use].mean(axis=1)
+        s  = si.dropna() 
+        if len(s) < 2:
+            err = 'NOT enough data for Least Squares'
+            if (len(si) > 2):
+                err += ', due to presence of NaNs'
+            raise ValueError(err)
+        xs = mdates.date2num(s.index.to_pydatetime())
+        ys = s.values
+        a  = np.vstack([xs, np.ones(len(xs))]).T
+        m, b  = np.dot(np.linalg.inv(np.dot(a.T,a)), np.dot(a.T,ys))
+        x1, x2 = xs[0], xs[-1]
+        y1 = m*x1 + b
+        y2 = m*x2 + b
+        x1, x2 = mdates.num2date(x1), mdates.num2date(x2)
+        return ((x1,y1),(x2,y2))
+
+    if isinstance(tline_use,str):
+        tline_use = [tline_use,]
+    tline_use = [ u.lower() for u in tline_use ]
+
+    alines = []
+    for d1,d2 in tlines:
+        dfslice = df.loc[d1:d2]
+        if len(dfslice) < 2:
+            dfdr = '\ndf date range: ['+str(df.index[0])+' , '+str(df.index[-1])+']'
+            raise ValueError('\ntlines date pair ('+str(d1)+','+str(d2)+
+                             ') too close, or wrong order, or out of range!'+dfdr)
+        if tline_method == 'least squares' or tline_method == 'least-squares':
+            p1,p2 = _tline_lsq(dfslice,tline_use)
+        elif tline_method == 'point-to-point':
+            p1,p2 = _tline_point_to_point(dfslice,tline_use)
+        else:
+            raise ValueError('\nUnrecognized value for `tline_method` = "'+str(tline_method)+'"')
+
+        alines.append((p1,p2))
+
+    del tconfig['alines']
+    alines = dict(alines=alines,**tconfig) 
+    alines['tlines'] = None
+
+    return _construct_aline_collections(alines, dtix)
 
 
 from matplotlib.ticker import Formatter
@@ -759,3 +1361,19 @@ class IntegerIndexDateTimeFormatter(Formatter):
         #print('x=',x,'pos=',pos,'dates[',ix,']=',date,'dateformat=',dateformat)
         return dateformat
 
+def _mscatter(x,y,ax=None, m=None, **kw):
+    import matplotlib.markers as mmarkers
+    if not ax: ax=plt.gca()
+    sc = ax.scatter(x,y,**kw)
+    if (m is not None) and (len(m)==len(x)):
+        paths = []
+        for marker in m:
+            if isinstance(marker, mmarkers.MarkerStyle):
+                marker_obj = marker
+            else:
+                marker_obj = mmarkers.MarkerStyle(marker)
+            path = marker_obj.get_path().transformed(
+                        marker_obj.get_transform())
+            paths.append(path)
+        sc.set_paths(paths)
+    return sc

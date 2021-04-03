@@ -29,6 +29,8 @@ style = dict(style_name    = 'mike',
                                ('lines.linewidth' ,  1.0      ),
                                ('font.weight'     , 'medium'  ),
                                ('font.size'       ,  10.0     ),
+                               ('figure.titlesize', 'x-large' ),
+                               ('figure.titleweight','semibold'),
                              ],
              base_mpf_style= 'mike'
             )

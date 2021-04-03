@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import copy
+import pprint
+import os.path as path
 
 from   mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 from   mplfinance._styledata      import _styles
@@ -16,6 +18,8 @@ def _get_mpfstyle(style):
 
 def _apply_mpfstyle(style):
 
+    plt.style.use('default')
+
     if style['base_mpl_style'] is not None:
         plt.style.use(style['base_mpl_style']) 
 
@@ -30,6 +34,7 @@ def _apply_mpfstyle(style):
 
     if 'figcolor' in style and style['figcolor'] is not None:
         plt.rcParams.update({'figure.facecolor' : style['figcolor'] })
+        plt.rcParams.update({'savefig.facecolor': style['figcolor'] })
 
     explicit_grid = False
     if style['gridcolor'] is not None:
@@ -91,6 +96,12 @@ def _valid_make_mpf_style_kwargs():
         'rc'            : { 'Default'     : None,
                             'Validator'   : lambda value: isinstance(value,dict) },
 
+        'legacy_rc'     : { 'Default'     : None,  # Just in case someone depended upon old behavior
+                            'Validator'   : lambda value: isinstance(value,dict) },
+
+        'style_name'    : { 'Default'     : None,
+                            'Validator'   : lambda value: isinstance(value,str) },
+
     }
     _validate_vkwargs_dict(vkwargs)
     return vkwargs
@@ -100,9 +111,36 @@ def available_styles():
        
 def make_mpf_style( **kwargs ):
     config = _process_kwargs(kwargs, _valid_make_mpf_style_kwargs())
+    if config['rc'] is not None and config['legacy_rc'] is not None:
+        raise ValueError('kwargs `rc` and `legacy_rc` may NOT be used together!')
+
+    # -----------
+    # March 2021: Found bug that if caller used `base_mpf_style` and `rc` at
+    #   the same time, then the caller's `rc` will completely replace the `rc` 
+    #   of `base_mpf_style`.  That was never the intention!  Rather it should be
+    #   that the caller's `rc` merely adds to and/or modifies the `rc` of the
+    #   `base_mpf_style`.  In order to provide a path to "backwards compatibility"
+    #   for users who may have depended on the bug behavior (callers `rc` replaces
+    #   `rc` of `base_mpf_style`) we provide a new kwarg `legacy_rc` which will
+    #   now behave the way that `rc` used to behave.
+    # -----------
 
     if config['base_mpf_style'] is not None:
         style  = _get_mpfstyle(config['base_mpf_style'])
+        # Have to handle 'rc' separately, so we don't wipe 
+        # out the 'rc' params in the `base_mpf_style` that
+        # are not specified in the `make_mpf_style` config:
+        if config['rc'] is not None:
+            rc = config['rc']
+            del config['rc']
+            if isinstance(style['rc'],list):
+                style['rc'] = dict(style['rc'])
+            if style['rc'] is None:
+                style['rc'] = {}
+            style['rc'].update(rc)
+        elif config['legacy_rc'] is not None:
+            config['rc'] = config['legacy_rc']
+            del config['legacy_rc']
         update = [ (k,v) for k,v in config.items() if v is not None ]
         style.update(update)
     else:
@@ -122,6 +160,33 @@ def _valid_mpf_color_spec(value):
              )
            )
 
+def _valid_mpf_style(value):
+    if value in available_styles():
+        return True
+    if not isinstance(value,dict):
+        return False
+    if 'marketcolors' not in value:
+        return False
+    if not isinstance(value['marketcolors'],dict):
+        return False
+    # {'candle': {'up': 'b', 'down': 'g'},
+    #  'edge': {'up': 'k', 'down': 'k'},
+    #  'wick': {'up': 'k', 'down': 'k'},
+    #  'ohlc': {'up': 'k', 'down': 'k'},
+    #  'volume': {'up': '#1f77b4', 'down': '#1f77b4'},
+    #  'vcedge': {'up': '#1f77b4', 'down': '#1f77b4'},
+    #  'vcdopcod': False,
+    #  'alpha': 0.9}
+    for item in ('candle','edge','wick','ohlc','volume'):
+        if item not in value['marketcolors']:
+            return False
+        itemcolors = value['marketcolors'][item]
+        if not isinstance(itemcolors,dict):
+            return False
+        if 'up' not in itemcolors or 'down' not in itemcolors:
+            return False
+    return True
+
 def _valid_make_marketcolors_kwargs():
     vkwargs = {
         'up'         : { 'Default'     : None,
@@ -130,7 +195,10 @@ def _valid_make_marketcolors_kwargs():
         'down'       : { 'Default'     : None,
                          'Validator'   : lambda value: mcolors.is_color_like(value) },
 
-        'alpha'       : { 'Default'     : None,
+        'hollow'     : { 'Default'     : None,
+                         'Validator'   : lambda value: mcolors.is_color_like(value) },
+
+        'alpha'      : { 'Default'     : None,
                          'Validator'   : lambda value: ( isinstance(value,float) and
                                                          0.0 <= value and 1.0 >= value ) },
 
@@ -151,6 +219,9 @@ def _valid_make_marketcolors_kwargs():
                          'Validator'   : lambda value: isinstance(value,dict)
                                                        or isinstance(value,str) 
                                                        or mcolors.is_color_like(value) },
+
+        'vcdopcod'   : { 'Default'     : False,
+                         'Validator'   : lambda value: isinstance(value,bool) },
 
         'inherit'    : { 'Default'     : False,
                          'Validator'   : lambda value: isinstance(value,bool) },
@@ -228,7 +299,44 @@ def make_marketcolors(**kwargs):
             c   = _check_and_set_mktcolor(candle,**kwa)
             marketcolors.update([(kw,c)])
 
+    if config['hollow'] is not None:
+        marketcolors.update({'hollow':config['hollow']})
+
     if config['alpha'] is not None:
         marketcolors.update({'alpha':config['alpha']})
 
+    if config['vcdopcod'] is not None:
+        marketcolors.update({'vcdopcod':config['vcdopcod']})
+
     return marketcolors
+
+def write_style_file(style,filename):
+    pp   = pprint.PrettyPrinter(indent=4,sort_dicts=False,compact=True)
+    strl = pp.pformat(style).splitlines()
+
+    if not isinstance(style,dict):
+        raise TypeError('Specified style must be in `dict` format')
+
+    if path.exists(filename):
+        print('"'+filename+'" exists.') 
+        answer = input(' Overwrite(Y/N)? ')
+        a = answer.lower()
+        if a != 'y' and a != 'yes':
+            raise FileExistsError
+
+    f = open(filename,'w')
+    f.write('style = '+strl[0].replace('{','dict(',1).replace("'","",2).replace(':',' =',1)+'\n')
+    for line in strl[1:-1]:
+        if "'" in line[0:5]:
+            f.write('            '+line.replace("'","",2).replace(':',' =',1)+'\n')
+        else:
+            f.write('            '+line+'\n')
+    line = strl[-1]
+    if "'" in line[0:5]:
+        line = line.replace("'","",2).replace(':',' =',1)[::-1]
+    else:
+        line = line[::-1]
+    f.write('            '+line.replace('}',')',1)[::-1]+'\n')
+    f.close()
+    print('Wrote style file "'+filename+'"')
+    return

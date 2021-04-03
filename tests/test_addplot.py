@@ -32,8 +32,7 @@ def test_addplot01(bolldata):
     tname = os.path.join(tdir,fname)
     rname = os.path.join(refd,fname)
 
-    fig_axis = mpf.plot(df,volume=True,savefig=tname,returnfig=True)
-    plt.close(fig_axis[0])
+    mpf.plot(df,volume=True,savefig=tname)
 
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')
@@ -54,8 +53,7 @@ def test_addplot02(bolldata):
     rname = os.path.join(refd,fname)
 
     apdict = mpf.make_addplot(df['LowerB'])
-    fig_axis = mpf.plot(df,volume=True,addplot=apdict,savefig=tname,returnfig=True)
-    plt.close(fig_axis[0])
+    mpf.plot(df,volume=True,addplot=apdict,savefig=tname)
 
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')
@@ -110,8 +108,7 @@ def test_addplot03(bolldata):
              mpf.make_addplot((df['PercentB']),panel='lower',color='g')
            ]
 
-    fig_axis = mpf.plot(df,addplot=apds,figscale=1.3,volume=True,savefig=tname,returnfig=True)
-    plt.close(fig_axis[0])
+    mpf.plot(df,addplot=apds,figscale=1.3,volume=True,savefig=tname)
 
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')
@@ -142,9 +139,8 @@ def test_addplot04(bolldata):
              mpf.make_addplot((df['PercentB']),panel='lower',color='g',linestyle='dotted')
            ]
 
-    fig_axis = mpf.plot(df,addplot=apds,figscale=1.5,volume=True,
-             style='starsandstripes',savefig=tname,returnfig=True)
-    plt.close(fig_axis[0])
+    mpf.plot(df,addplot=apds,figscale=1.5,volume=True,
+             style='starsandstripes',savefig=tname)
 
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')
@@ -156,3 +152,180 @@ def test_addplot04(bolldata):
     if result is not None:
        print('result=',result)
     assert result is None
+
+def test_addplot05(bolldata):
+    df = bolldata
+
+    fname = base+'05.png'
+    tname = os.path.join(tdir,fname)
+    rname = os.path.join(refd,fname)
+
+    tcdf = df[['LowerB','UpperB']]  # DataFrame with two columns
+
+    low_signal  = percentB_belowzero(df['PercentB'], df['Close']) 
+    high_signal = percentB_aboveone(df['PercentB'], df['Close'])
+
+    import math
+    new_low_signal = [x*20.*math.sin(x) for x in low_signal]
+
+    apds = [ mpf.make_addplot(tcdf,linestyle='dashdot'),
+             mpf.make_addplot(new_low_signal,scatter=True,markersize=200,marker='^'),
+             mpf.make_addplot(high_signal,scatter=True,markersize=200,marker='v'),
+             mpf.make_addplot((df['PercentB']),panel='lower',color='g',linestyle='dotted')
+           ]
+
+    mpf.plot(df,addplot=apds,figscale=1.5,volume=True,
+                        style='sas',savefig=tname)   
+
+    tsize = os.path.getsize(tname)
+    print(glob.glob(tname),'[',tsize,'bytes',']')
+
+    rsize = os.path.getsize(rname)
+    print(glob.glob(rname),'[',rsize,'bytes',']')
+
+    result = compare_images(rname,tname,tol=IMGCOMP_TOLERANCE)
+    if result is not None:
+       print('result=',result)
+    assert result is None
+
+def test_addplot06(bolldata):
+    df = bolldata
+
+    fname = base+'06.png'
+    tname = os.path.join(tdir,fname)
+    rname = os.path.join(refd,fname)
+
+    tcdf = df[['LowerB','UpperB']]  # DataFrame with two columns
+
+    low_signal  = percentB_belowzero(df['PercentB'], df['Close']) 
+    high_signal = percentB_aboveone(df['PercentB'], df['Close'])
+
+    import math
+    new_low_signal = [x*20.*math.sin(x) for x in low_signal]
+
+    apds = [ mpf.make_addplot(tcdf,linestyle='dashdot'),
+             mpf.make_addplot(new_low_signal,scatter=True,markersize=200,marker='^'),
+             mpf.make_addplot(high_signal,scatter=True,markersize=200,marker='v'),
+             mpf.make_addplot((df['PercentB']),panel='lower',color='g',linestyle='dotted')
+           ]
+
+    mpf.plot(df,addplot=apds,figscale=1.5,volume=True,
+                        style='default',savefig=tname)   
+
+    tsize = os.path.getsize(tname)
+    print(glob.glob(tname),'[',tsize,'bytes',']')
+
+    rsize = os.path.getsize(rname)
+    print(glob.glob(rname),'[',rsize,'bytes',']')
+
+    result = compare_images(rname,tname,tol=IMGCOMP_TOLERANCE)
+    if result is not None:
+       print('result=',result)
+    assert result is None
+
+def test_addplot07(bolldata):
+
+    df = bolldata
+
+    fname = base+'07.png'
+    tname = os.path.join(tdir,fname)
+    rname = os.path.join(refd,fname)
+
+    mpf.plot(df,volume=True,savefig=tname,mav=(20,40,60))
+
+    tsize = os.path.getsize(tname)
+    print(glob.glob(tname),'[',tsize,'bytes',']')
+
+    rsize = os.path.getsize(rname)
+    print(glob.glob(rname),'[',rsize,'bytes',']')
+
+    result = compare_images(rname,tname,tol=IMGCOMP_TOLERANCE)
+    if result is not None:
+       print('result=',result)
+    assert result is None
+
+def test_addplot08(bolldata):
+    df = bolldata
+
+    fname = base+'08.png'
+    tname = os.path.join(tdir,fname)
+    rname = os.path.join(refd,fname)
+
+    tcdf = df[['LowerB','UpperB']]  # DataFrame with two columns
+
+    low_signal  = percentB_belowzero(df['PercentB'], df['Close']) 
+    high_signal = percentB_aboveone(df['PercentB'], df['Close'])
+
+    import math
+    new_low_signal = [x*20.*math.sin(x) for x in low_signal]
+
+    apds = [ mpf.make_addplot(tcdf,linestyle='dashdot'),
+             mpf.make_addplot(new_low_signal,scatter=True,markersize=200,marker='^'),
+             mpf.make_addplot(high_signal,scatter=True,markersize=200,marker='v'),
+             mpf.make_addplot((df['PercentB']),panel='lower',color='g',linestyle='dotted')
+           ]
+
+    mpf.plot(df,addplot=apds,figscale=1.5,volume=True,
+             mav=(15,30,45),style='default',savefig=tname)   
+
+    tsize = os.path.getsize(tname)
+    print(glob.glob(tname),'[',tsize,'bytes',']')
+
+    rsize = os.path.getsize(rname)
+    print(glob.glob(rname),'[',rsize,'bytes',']')
+
+    result = compare_images(rname,tname,tol=IMGCOMP_TOLERANCE)
+    if result is not None:
+       print('result=',result)
+    assert result is None
+
+def test_addplot09(bolldata):
+
+    sdf = bolldata[50:130]
+
+    fname = base+'09.png'
+    tname = os.path.join(tdir,fname)
+    rname = os.path.join(refd,fname)
+
+    ap = mpf.make_addplot((sdf['PercentB'])-0.45,panel=1,color='g',type='bar', width=0.75, mav=(7,10,15))
+    mpf.plot(sdf,addplot=ap,panel_ratios=(1,1),figratio=(1,1),figscale=1.5,savefig=tname)
+
+    tsize = os.path.getsize(tname)
+    print(glob.glob(tname),'[',tsize,'bytes',']')
+
+    rsize = os.path.getsize(rname)
+    print(glob.glob(rname),'[',rsize,'bytes',']')
+
+    # Using 0.9*IMGCOMP_TOLERANCE here because discovered that if 
+    # the only difference is the presence or absence of mav lines,
+    # then the default IMGCOMP_TOLERANCE is too linient:
+    result = compare_images(rname,tname,tol=0.9*IMGCOMP_TOLERANCE)
+    if result is not None:
+       print('result=',result)
+    assert result is None
+
+def test_addplot10(bolldata):
+
+    sdf = bolldata[50:130]
+
+    fname = base+'10.png'
+    tname = os.path.join(tdir,fname)
+    rname = os.path.join(refd,fname)
+
+    ap = mpf.make_addplot(sdf,panel=1,type='candle',ylabel='Candle',mav=12)
+    mpf.plot(sdf,mav=10,ylabel='OHLC',addplot=ap,panel_ratios=(1,1),figratio=(1,1),figscale=1.5,savefig=tname)
+
+    tsize = os.path.getsize(tname)
+    print(glob.glob(tname),'[',tsize,'bytes',']')
+
+    rsize = os.path.getsize(rname)
+    print(glob.glob(rname),'[',rsize,'bytes',']')
+
+    # Using 0.9*IMGCOMP_TOLERANCE here because discovered that if 
+    # the only difference is the presence or absence of mav lines,
+    # then the default IMGCOMP_TOLERANCE is too linient:
+    result = compare_images(rname,tname,tol=0.9*IMGCOMP_TOLERANCE)
+    if result is not None:
+       print('result=',result)
+    assert result is None
+
