@@ -389,7 +389,9 @@ def _valid_pnf_kwargs():
         'box_size'    : { 'Default'     : 'atr',
                           'Validator'   : lambda value: isinstance(value,(float,int)) or value == 'atr' },
         'atr_length'  : { 'Default'     : 14,
-                          'Validator'   : lambda value: isinstance(value,int) or value == 'total' },               
+                          'Validator'   : lambda value: isinstance(value,int) or value == 'total' },
+        'reversal'    : { 'Default'     : 2,
+                          'Validator'   : lambda value: isinstance(value,int) }               
     }
 
     _validate_vkwargs_dict(vkwargs)
@@ -882,10 +884,11 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
     first to ensure every time there is a trend change (ex. previous box is
     an X, current brick is a O) we draw one less box to account for the price 
     having to move the previous box's amount before creating a box in the 
-    opposite direction. Next we adjust volume and dates to combine volume into 
-    non 0 box indexes and to only use dates from non 0 box indexes. We then
-    remove all 0s from the boxes array and once again combine adjacent similarly
-    signed differences in boxes.
+    opposite direction. During this same step we also combine like signed elements 
+    and associated volume/date data ignoring any zero values that are created by 
+    subtracting 1 from the box value. Next we recreate the box array utilizing a 
+    rolling_change and volume_cache to store and sum the changes that don't break 
+    the reversal threshold.
 
     Lastly, we enumerate through the boxes to populate the line_seg and circle_patches
     arrays. line_seg holds the / and \ line segments that make up an X and 
@@ -929,6 +932,10 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
     
     box_size = pointnfig_params['box_size']
     atr_length = pointnfig_params['atr_length']
+    reversal = pointnfig_params['reversal']
+
+    # box_size upper limit (also used for calculating upper limit of reversal)
+    upper_limit = (max(closes) - min(closes)) / 2
 
     if box_size == 'atr':
         if atr_length == 'total':
@@ -936,13 +943,17 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
         else:
             box_size = _calculate_atr(atr_length, highs, lows, closes)
     else: # is an integer or float
-        upper_limit = (max(closes) - min(closes)) / 2
         lower_limit = 0.01 * _calculate_atr(len(closes)-1, highs, lows, closes)
         if box_size > upper_limit:
             raise ValueError("Specified box_size may not be larger than (50% of the close price range of the dataset) which has value: "+ str(upper_limit))
         elif box_size < lower_limit:
             raise ValueError("Specified box_size may not be smaller than (0.01* the Average True Value of the dataset) which has value: "+ str(lower_limit))
 
+    if reversal < 2:
+        raise ValueError("Specified reversal may not be smaller than 2")
+    elif reversal*box_size > upper_limit*0.6:
+        raise ValueError("Product of specified box_size and reversal which has value: "+ str(reversal*box_size) + " may not exceed (30% of the close price range of the dataset) which has value: "+ str(upper_limit*0.6))
+    
     alpha  = marketcolors['alpha']
 
     uc     = mcolors.to_rgba(marketcolors['ohlc'][ 'up' ], alpha)
@@ -972,27 +983,70 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
     boxes, indexes = combine_adjacent(boxes)
     new_volumes, new_dates = coalesce_volume_dates(temp_volumes, temp_dates, indexes)
     
-    #subtract 1 from the abs of each diff except the first to account for the first box using the last box in the opposite direction
-    first_elem = boxes[0]
-    boxes = [boxes[i]- int((boxes[i]/abs(boxes[i]))) for i in range(1, len(boxes))]
-    boxes.insert(0, first_elem)
+    adjusted_boxes = [boxes[0]]
+    temp_volumes, temp_dates = [new_volumes[0]], [new_dates[0]]
+    volume_cache = 0
 
-    # adjust volume and dates to make sure volume is combined into non 0 box indexes and only use dates from non 0 box indexes
-    temp_volumes, temp_dates = [], []
-    for i in range(len(boxes)):
-        if boxes[i] == 0:
-            volume_cache += new_volumes[i]
-        else:
+    # Clean data to subtract 1 from all box # not including the first boxes element and combine like signed adjacent values (after ignoring zeros)
+    for i in range(1, len(boxes)):
+        adjusted_value = boxes[i]- int((boxes[i]/abs(boxes[i])))
+
+        # not equal to 0 and different signs
+        if adjusted_value != 0 and adjusted_boxes[-1]*adjusted_value < 0:
+
+            # Append adjusted_value, volumes, and date to associated lists
+            adjusted_boxes.append(adjusted_value)
             temp_volumes.append(new_volumes[i] + volume_cache)
-            volume_cache = 0
             temp_dates.append(new_dates[i])
-    
-    #remove 0s from boxes
-    boxes = list(filter(lambda diff: diff != 0, boxes))
 
-    # combine adjacent similarly signed differences again after 0s removed
-    boxes, indexes = combine_adjacent(boxes)
-    new_volumes, new_dates = coalesce_volume_dates(temp_volumes, temp_dates, indexes)
+            # reset volume_cache once we use it
+            volume_cache = 0
+
+        # not equal to 0 and same signs
+        elif adjusted_value != 0 and adjusted_boxes[-1]*adjusted_value > 0:
+
+            # Add adjusted_value and volume values to last added elements
+            adjusted_boxes[-1] += adjusted_value
+            temp_volumes[-1] += new_volumes[i] + volume_cache
+
+            # reset volume_cache once we use it
+            volume_cache = 0
+
+        else: # adjusted_value == 0
+            volume_cache += new_volumes[i]
+
+    boxes = [adjusted_boxes[0]]
+    new_volumes = [temp_volumes[0]]
+    new_dates = [temp_dates[0]]
+    
+    rolling_change = 0
+    volume_cache = 0
+
+    #Clean data to account for reversal size (added to allow overriding the default reversal of 2)
+    for i in range(1, len(adjusted_boxes)):
+
+        # Add to rolling_change and volume_cache which stores the box and volume values 
+        rolling_change += adjusted_boxes[i]
+        volume_cache += temp_volumes[i]
+
+        # Add to new list if the rolling change is >= the reversal - 1
+        # The -1 is because we have already subtracted 1 from the box values in the previous loop
+        if abs(rolling_change) >= reversal-1:
+
+            # if rolling_change is the same sign as the previous # of boxes then combine
+            if rolling_change*boxes[-1] > 0:
+                boxes[-1] += rolling_change
+                new_volumes[-1] += volume_cache
+
+            # otherwise add new box
+            else: # < 0 (== 0 can't happen since neither rolling_change or boxes[-1] can be 0)
+                boxes.append(rolling_change)
+                new_volumes.append(volume_cache)
+                new_dates.append(temp_dates[i])
+            
+            # reset rolling_change and volume_cache once we've used them
+            rolling_change = 0
+            volume_cache = 0    
 
     curr_price = closes[0]
     box_values = [] # y values for the boxes
