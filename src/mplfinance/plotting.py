@@ -910,12 +910,12 @@ def _addplot_columns(panid,panels,ydata,apdict,xdates,config):
         alpha  = apdict['alpha']
         ax.plot(xdates,ydata,linestyle=ls,color=color,linewidth=width,alpha=alpha)
     elif aptype == 'step':
-        where = apdict['where']
+        stepwhere = apdict['stepwhere']
         ls = apdict['linestyle']
         color  = apdict['color']
         width  = apdict['width'] if apdict['width'] is not None else 1.6*config['_width_config']['line_width']
         alpha  = apdict['alpha']
-        ax.step(range(len(xdates)),ydata,where = where,linestyle=ls,color=color,linewidth=width,alpha=alpha)
+        ax.step(xdates,ydata,where = stepwhere,linestyle=ls,color=color,linewidth=width,alpha=alpha)
     else:
         raise ValueError('addplot type "'+str(aptype)+'" NOT yet supported.')
 
@@ -1003,7 +1003,7 @@ def _valid_addplot_kwargs():
 
     valid_linestyles = ('-','solid','--','dashed','-.','dashdot','.','dotted',None,' ','')
     valid_types = ('line','scatter','bar', 'ohlc', 'candle','step')
-    valid_wheres = ('pre','post','mid')
+    valid_stepwheres = ('pre','post','mid')
 
     vkwargs = {
         'scatter'     : { 'Default'     : False,
@@ -1064,8 +1064,8 @@ def _valid_addplot_kwargs():
         'yscale'      : { 'Default'     : None,
                           'Validator'   : lambda value: _yscale_validator(value) },
 
-        'where'      : { 'Default'     : 'pre',
-                          'Validator'   : lambda value : value in valid_wheres },                  
+        'stepwhere'      : { 'Default'     : 'pre',
+                          'Validator'   : lambda value : value in valid_stepwheres },                  
     }
 
     _validate_vkwargs_dict(vkwargs)
