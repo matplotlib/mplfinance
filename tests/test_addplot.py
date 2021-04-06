@@ -331,13 +331,13 @@ def test_addplot10(bolldata):
 
 def test_addplot11(bolldata):
 
-    df = bolldata.iloc[50:130,]
+    df = bolldata[50:130].copy()
 
     fname = base+'11.png'
     tname = os.path.join(tdir,fname)
     rname = os.path.join(refd,fname)
     
-    df['trend'] = 0
+    df.loc[:,'trend'] = 0
     df.loc[df['Close'] < df['Open'], 'trend'] = - 1
     df.loc[df['Close'] > df['Open'], 'trend'] = 1
     ap = mpf.make_addplot(df['trend'],panel=1,type='step',ylabel='simple trend')
