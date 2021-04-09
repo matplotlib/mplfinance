@@ -476,6 +476,7 @@ def plot( data, **kwargs ):
             retdict['pnf_dates'    ] = mdates.num2date(pmove_dates)
             retdict['pnf_counts'   ] = pmove_counts
             retdict['pnf_values'   ] = pmove_values
+            retdict['pnf_avgvals'  ] = pmove_avgvals
             retdict['pnf_size'     ] = pmove_size
             retdict['pnf_volumes'  ] = volumes if config['volume'] else None
         if config['mav'] is not None:
