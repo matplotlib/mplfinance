@@ -855,7 +855,9 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
                                     edgecolors=edge_colors,
                                     linewidths=lw
                                     )
-    return [rectCollection,], new_dates, new_volumes, brick_values, brick_size
+    calculated_values = dict(dates=new_dates,volumes=new_volumes,
+                             values=brick_values,size=brick_size)
+    return [rectCollection,], calculated_values
 
 
 def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnfig_params, closes, marketcolors=None):
@@ -998,7 +1000,7 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
     box_values = [] # y values for the boxes
     circle_patches = [] # list of circle patches to be used to create the cirCollection
     line_seg = [] # line segments that make up the Xs
-    
+
     for index, difference in enumerate(boxes):
         diff = abs(difference)
 
@@ -1007,9 +1009,9 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
         
         x = [index] * (diff)
         y = [curr_price + (i * box_size * sign) for i in range(start_iteration, diff+start_iteration)]
-        
+
         curr_price += (box_size * sign * (diff))
-        box_values.append(sum(y) / len(y))
+        box_values.append( y )
         
         for i in range(len(x)): # x and y have the same length
             height = box_size * 0.85
@@ -1036,7 +1038,9 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
                                  linewidths=lw,
                                  antialiaseds=useAA
                                  )
-    return [cirCollection, xCollection], new_dates, new_volumes, box_values, box_size
+    calculated_values = dict(dates=new_dates,counts=boxes,values=box_values,
+                             volumes=new_volumes,size=box_size)
+    return [cirCollection, xCollection], calculated_values
 
 
 def _construct_aline_collections(alines, dtix=None):
