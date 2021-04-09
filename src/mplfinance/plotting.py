@@ -468,16 +468,16 @@ def plot( data, **kwargs ):
     if config['return_calculated_values'] is not None:
         retdict = config['return_calculated_values']
         if ptype == 'renko':
-            retdict['brick_values' ] = pmove_values
-            retdict['brick_dates'  ] = mdates.num2date(pmove_dates)
-            retdict['brick_size'   ] = pmove_size
-            retdict['brick_volumes'] = volumes if config['volume'] else None
+            retdict['renko_bricks' ] = pmove_values
+            retdict['renko_dates'  ] = mdates.num2date(pmove_dates)
+            retdict['renko_size'   ] = pmove_size
+            retdict['renko_volumes'] = volumes if config['volume'] else None
         elif ptype == 'pnf':
-            retdict['box_dates'    ] = mdates.num2date(pmove_dates)
-            retdict['box_counts'   ] = pmove_counts
-            retdict['box_values'   ] = pmove_values
-            retdict['box_size'     ] = pmove_size
-            retdict['box_volumes'  ] = volumes if config['volume'] else None
+            retdict['pnf_dates'    ] = mdates.num2date(pmove_dates)
+            retdict['pnf_counts'   ] = pmove_counts
+            retdict['pnf_values'   ] = pmove_values
+            retdict['pnf_size'     ] = pmove_size
+            retdict['pnf_volumes'  ] = volumes if config['volume'] else None
         if config['mav'] is not None:
             mav = config['mav']
             if len(mav) != len(mavprices):
