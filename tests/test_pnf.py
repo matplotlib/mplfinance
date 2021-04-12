@@ -117,7 +117,7 @@ def test_pnf05(bolldata):
     tname = os.path.join(tdir,fname)
     rname = os.path.join(refd,fname)
 
-    mpf.plot(df,type='pnf',pnf_params=dict(box_size='atr',atr_length='total', reversal=3),mav=(4,6,8),volume=True,savefig=tname)
+    mpf.plot(df,type='pnf',pnf_params=dict(box_size='atr',atr_length='total', reversal=2),mav=(4,6,8),volume=True,savefig=tname)
 
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')
