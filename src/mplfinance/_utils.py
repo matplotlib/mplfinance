@@ -390,7 +390,7 @@ def _valid_pnf_kwargs():
                           'Validator'   : lambda value: isinstance(value,(float,int)) or value == 'atr' },
         'atr_length'  : { 'Default'     : 14,
                           'Validator'   : lambda value: isinstance(value,int) or value == 'total' },
-        'reversal'    : { 'Default'     : 2,
+        'reversal'    : { 'Default'     : 1,
                           'Validator'   : lambda value: isinstance(value,int) }               
     }
 
@@ -936,25 +936,21 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
     atr_length = pointnfig_params['atr_length']
     reversal = pointnfig_params['reversal']
 
-    # box_size upper limit (also used for calculating upper limit of reversal)
-    upper_limit = (max(closes) - min(closes)) / 2
-
     if box_size == 'atr':
         if atr_length == 'total':
             box_size = _calculate_atr(len(closes)-1, highs, lows, closes)
         else:
             box_size = _calculate_atr(atr_length, highs, lows, closes)
     else: # is an integer or float
+        upper_limit = (max(closes) - min(closes)) / 2
         lower_limit = 0.01 * _calculate_atr(len(closes)-1, highs, lows, closes)
         if box_size > upper_limit:
             raise ValueError("Specified box_size may not be larger than (50% of the close price range of the dataset) which has value: "+ str(upper_limit))
         elif box_size < lower_limit:
             raise ValueError("Specified box_size may not be smaller than (0.01* the Average True Value of the dataset) which has value: "+ str(lower_limit))
 
-    if reversal < 2:
-        raise ValueError("Specified reversal may not be smaller than 2")
-    elif reversal*box_size > upper_limit*0.6:
-        raise ValueError("Product of specified box_size and reversal which has value: "+ str(reversal*box_size) + " may not exceed (30% of the close price range of the dataset) which has value: "+ str(upper_limit*0.6))
+    if reversal < 1 or reversal > 9:
+        raise ValueError("Specified reversal must be an integer in the range [1,9]")
     
     alpha  = marketcolors['alpha']
 
@@ -1024,16 +1020,16 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
     rolling_change = 0
     volume_cache = 0
 
-    #Clean data to account for reversal size (added to allow overriding the default reversal of 2)
+    #Clean data to account for reversal size (added to allow overriding the default reversal of 1)
     for i in range(1, len(adjusted_boxes)):
 
         # Add to rolling_change and volume_cache which stores the box and volume values 
         rolling_change += adjusted_boxes[i]
         volume_cache += temp_volumes[i]
 
-        # Add to new list if the rolling change is >= the reversal - 1
+        # Add to new list if the rolling change is >= the reversal
         # The -1 is because we have already subtracted 1 from the box values in the previous loop
-        if abs(rolling_change) >= reversal-1:
+        if abs(rolling_change) >= reversal:
 
             # if rolling_change is the same sign as the previous # of boxes then combine
             if rolling_change*boxes[-1] > 0:
