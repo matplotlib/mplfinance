@@ -400,16 +400,25 @@ def plot( data, **kwargs ):
         collections =_construct_mpf_collections(ptype,dates,xdates,opens,highs,lows,closes,volumes,config,style)
 
     if ptype in VALID_PMOVE_TYPES:
-        collections, new_dates, volumes, brick_values, size = collections
-        formatter = IntegerIndexDateTimeFormatter(new_dates, fmtstring)
-        xdates = np.arange(len(new_dates))
+        collections, calculated_values = collections
+        volumes       = calculated_values['volumes']
+        pmove_dates   = calculated_values['dates']
+        pmove_values  = calculated_values['values']
+        if all([isinstance(v,(list,tuple)) for v in pmove_values]):
+            pmove_avgvals = [sum(v)/len(v) for v in pmove_values]
+        else:
+            pmove_avgvals = pmove_values
+        pmove_size    = calculated_values['size']
+        pmove_counts  = calculated_values['counts'] if 'counts' in calculated_values else None
+        formatter = IntegerIndexDateTimeFormatter(pmove_dates, fmtstring)
+        xdates = np.arange(len(pmove_dates))
 
     if collections is not None:
         for collection in collections:
             axA1.add_collection(collection)
 
     if ptype in VALID_PMOVE_TYPES:
-        mavprices = _plot_mav(axA1,config,xdates,brick_values)
+        mavprices = _plot_mav(axA1,config,xdates,pmove_avgvals)
     else:
         mavprices = _plot_mav(axA1,config,xdates,closes)
 
@@ -428,8 +437,8 @@ def plot( data, **kwargs ):
         _lows  = lows
         _highs = highs
     else:
-        _lows  = brick_values
-        _highs = [brick+size for brick in brick_values]
+        _lows  = pmove_avgvals
+        _highs = [value+pmove_size for value in pmove_avgvals]
 
     miny = np.nanmin(_lows)
     maxy = np.nanmax(_highs)
@@ -458,13 +467,18 @@ def plot( data, **kwargs ):
 
     if config['return_calculated_values'] is not None:
         retdict = config['return_calculated_values']
-        if ptype in VALID_PMOVE_TYPES:
-            prekey = ptype
-            retdict[prekey+'_bricks'] = brick_values
-            retdict[prekey+'_dates'] = mdates.num2date(new_dates)
-            retdict[prekey+'_size'] = size
-            if config['volume']:
-                retdict[prekey+'_volumes'] = volumes
+        if ptype == 'renko':
+            retdict['renko_bricks' ] = pmove_values
+            retdict['renko_dates'  ] = mdates.num2date(pmove_dates)
+            retdict['renko_size'   ] = pmove_size
+            retdict['renko_volumes'] = volumes if config['volume'] else None
+        elif ptype == 'pnf':
+            retdict['pnf_dates'    ] = mdates.num2date(pmove_dates)
+            retdict['pnf_counts'   ] = pmove_counts
+            retdict['pnf_values'   ] = pmove_values
+            retdict['pnf_avgvals'  ] = pmove_avgvals
+            retdict['pnf_size'     ] = pmove_size
+            retdict['pnf_volumes'  ] = volumes if config['volume'] else None
         if config['mav'] is not None:
             mav = config['mav']
             if len(mav) != len(mavprices):
@@ -480,7 +494,7 @@ def plot( data, **kwargs ):
     # Note: these are NOT mutually exclusive, so the order of this
     #       if/elif is important: VALID_PMOVE_TYPES must be first.
     if ptype in VALID_PMOVE_TYPES:
-        dtix = pd.DatetimeIndex([dt for dt in mdates.num2date(new_dates)])
+        dtix = pd.DatetimeIndex([dt for dt in mdates.num2date(pmove_dates)])
     elif not config['show_nontrading']:
         dtix = data.index
     else:
