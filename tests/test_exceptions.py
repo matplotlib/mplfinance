@@ -87,5 +87,5 @@ def test_reversal_box_size_bounds(bolldata):
     buf = io.BytesIO()
     mpf.plot(df,type='pnf',pnf_params=dict(box_size=3, reversal=3), volume=True, savefig=buf)
     with pytest.raises(ValueError) as ex:
-        mpf.plot(df,type='pnf',pnf_params=dict(box_size=3, reversal=4), volume=True, savefig=buf)
-    assert 'Product of specified box_size and reversal which has value: 12 may not exceed (30% of the close price range of the dataset)' in str(ex.value)
+        mpf.plot(df,type='pnf',pnf_params=dict(box_size=3, reversal=10), volume=True, savefig=buf)
+    assert 'Specified reversal must be an integer in the range [1,9]' in str(ex.value)

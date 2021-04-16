@@ -1019,6 +1019,7 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
     
     rolling_change = 0
     volume_cache = 0
+    biggest_difference = 0 # only used for the last column
 
     #Clean data to account for reversal size (added to allow overriding the default reversal of 1)
     for i in range(1, len(adjusted_boxes)):
@@ -1027,8 +1028,12 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
         rolling_change += adjusted_boxes[i]
         volume_cache += temp_volumes[i]
 
+        # if rolling_change is the same sign as the previous box and the abs value is bigger than the 
+        # abs value of biggest_difference then we should replace biggest_difference with rolling_change
+        if rolling_change*boxes[-1] > 0 and abs(rolling_change) > abs(biggest_difference):
+            biggest_difference = rolling_change
+
         # Add to new list if the rolling change is >= the reversal
-        # The -1 is because we have already subtracted 1 from the box values in the previous loop
         if abs(rolling_change) >= reversal:
 
             # if rolling_change is the same sign as the previous # of boxes then combine
@@ -1044,7 +1049,14 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
             
             # reset rolling_change and volume_cache once we've used them
             rolling_change = 0
-            volume_cache = 0    
+            volume_cache = 0
+            
+            # reset biggest_difference as we start from the beginning every time there is a reversal
+            biggest_difference = 0
+    
+    # Adjust the last box column if the left over rolling_change is the same sign as the column
+    boxes[-1] += biggest_difference
+    new_volumes[-1] += volume_cache
 
     curr_price = closes[0]
     box_values = [] # y values for the boxes
