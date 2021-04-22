@@ -1,8 +1,12 @@
 ####
 ---
 
-### <a name="v0.12.7a11"></a>v0.12.7a11 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; To Be released 2021-03-30
+### <a name="v0.12.7a12"></a>v0.12.7a12 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; released 2021-04-09
 
+- <a name="v0.12.7a12"></a>v0.12.7a12 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; merged 2021-04-08
+  - Fixed kwarg **`return_calculated_values`**
+    - It was *not* returning all values for `type='pnf'` (point and figure).
+    - See **[stackoverflow 66991998](https://stackoverflow.com/questions/66991998/)** for more information.
 - <a name="v0.12.7a11"></a>v0.12.7a11 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; merged 2021-03-26
   - Prior to this version, **`xlim`** kwarg accepted only float or int:
     - float as matplotlib date; (only when `show_nontrading=True`)

@@ -109,3 +109,23 @@ def test_pnf04(bolldata):
     if result is not None:
        print('result=',result)
     assert result is None
+
+def test_pnf05(bolldata):
+    df = bolldata
+
+    fname = base+'05.png'
+    tname = os.path.join(tdir,fname)
+    rname = os.path.join(refd,fname)
+
+    mpf.plot(df,type='pnf',pnf_params=dict(box_size='atr',atr_length='total', reversal=2),mav=(4,6,8),volume=True,savefig=tname)
+
+    tsize = os.path.getsize(tname)
+    print(glob.glob(tname),'[',tsize,'bytes',']')
+
+    rsize = os.path.getsize(rname)
+    print(glob.glob(rname),'[',rsize,'bytes',']')
+
+    result = compare_images(rname,tname,tol=IMGCOMP_TOLERANCE)
+    if result is not None:
+       print('result=',result)
+    assert result is None

@@ -81,3 +81,11 @@ def test_figratio_bounds(bolldata):
     with pytest.raises(ValueError) as ex:
         mpf.plot(df,volume=True,figratio=(10,51),savefig=buf)
     assert '"figratio" (aspect ratio)  must be between' in str(ex.value)
+
+def test_reversal_box_size_bounds(bolldata):
+    df = bolldata
+    buf = io.BytesIO()
+    mpf.plot(df,type='pnf',pnf_params=dict(box_size=3, reversal=3), volume=True, savefig=buf)
+    with pytest.raises(ValueError) as ex:
+        mpf.plot(df,type='pnf',pnf_params=dict(box_size=3, reversal=10), volume=True, savefig=buf)
+    assert 'Specified reversal must be an integer in the range [1,9]' in str(ex.value)
