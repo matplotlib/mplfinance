@@ -7,6 +7,7 @@ import pandas as pd
 import numpy  as np
 import copy
 import io
+import os
 import math
 import warnings
 import statistics as stat
@@ -168,7 +169,7 @@ def _valid_plot_kwargs():
                                         'Validator'   : lambda value: isinstance(value,dict) or (isinstance(value,list) and all([isinstance(d,dict) for d in value])) },
  
         'savefig'                   : { 'Default'     : None, 
-                                        'Validator'   : lambda value: isinstance(value,dict) or isinstance(value,str) or isinstance(value, io.BytesIO) },
+                                        'Validator'   : lambda value: isinstance(value,dict) or isinstance(value,str) or isinstance(value, io.BytesIO) or isinstance(value, os.PathLike) },
  
         'block'                     : { 'Default'     : None, 
                                         'Validator'   : lambda value: isinstance(value,bool) },
