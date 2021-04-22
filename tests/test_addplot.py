@@ -329,3 +329,28 @@ def test_addplot10(bolldata):
        print('result=',result)
     assert result is None
 
+def test_addplot11(bolldata):
+
+    df = bolldata[50:130].copy()
+
+    fname = base+'11.png'
+    tname = os.path.join(tdir,fname)
+    rname = os.path.join(refd,fname)
+    
+    df.loc[:,'trend'] = 0
+    df.loc[df['Close'] < df['Open'], 'trend'] = - 1
+    df.loc[df['Close'] > df['Open'], 'trend'] = 1
+    ap = mpf.make_addplot(df['trend'],panel=1,type='step',ylabel='simple trend')
+    mpf.plot(df,ylabel='OHLC',addplot=ap,savefig=tname)
+
+    tsize = os.path.getsize(tname)
+    print(glob.glob(tname),'[',tsize,'bytes',']')
+
+    rsize = os.path.getsize(rname)
+    print(glob.glob(rname),'[',rsize,'bytes',']')
+
+    result = compare_images(rname,tname,tol=IMGCOMP_TOLERANCE)
+    if result is not None:
+        print('result=',result)
+    assert result is None
+
