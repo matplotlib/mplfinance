@@ -301,7 +301,7 @@ def _process_kwargs(kwargs, vkwargs):
     return config
 
 def _valid_panel_id(panid):
-    return panid in ['main','lower'] or (isinstance(panid,int) and panid >= 0 and panid < 10)
+    return panid in ['main','lower'] or (isinstance(panid,int) and panid >= 0 and panid < 32)
 
 def _scale_padding_validator(value):
     if isinstance(value,(int,float)):

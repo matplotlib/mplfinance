@@ -7,8 +7,8 @@ def _build_panels( figure, config ):
     Create and return a DataFrame containing panel information
     and Axes objects for each panel, etc.
 
-    We allow up to 10 panels, identified by their panel id (panid)
-    which is an integer 0 through 9.  
+    We allow up to 32 panels, identified by their panel id (panid)
+    which is an integer 0 through 31.  
 
     Parameters
     ----------
@@ -101,8 +101,8 @@ Returns
             raise ValueError('inferred panel list is missing panels: '+str(missing))
 
     else:
-        if not isinstance(num_panels,int) or num_panels < 1 or num_panels > 10:
-            raise ValueError('num_panels must be integer 1 to 10, but is "'+str(volume_panel)+'"')
+        if not isinstance(num_panels,int) or num_panels < 1 or num_panels > 32:
+            raise ValueError('num_panels must be integer 1 to 32, but is "'+str(volume_panel)+'"')
         pset = range(0,num_panels)
 
     _nones = [None]*len(pset)

@@ -1,6 +1,20 @@
 ####
 ---
 
+### <a name="v0.12.7a17"></a>v0.12.7a17 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; released 2021-04-23
+
+- <a name="v0.12.7a17"></a>v0.12.7a17 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; merged 2021-04-22
+  - max panels to 32 (up from 10) ([Issue #377](https://github.com/matplotlib/mplfinance/issues/377))
+- <a name="v0.12.7a16"></a>v0.12.7a16 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; merged 2021-04-22
+  - New plot type **`step`** for step/staircase lines in `mpf.make_addplot()`  (Thank you [@pankaj3009](https://github.com/pankaj3009))
+- <a name="v0.12.7a15"></a>v0.12.7a15 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; merged 2021-04-22
+  - Add **`reversal`** parameter to Point and Figure charts.  (Thank you [Caleb Coffin](https://github.com/coffincw), for coding up [Issue 368](https://github.com/matplotlib/mplfinance/issues/368))
+
+- <a name="v0.12.7a14"></a>v0.12.7a14 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; merged 2021-04-18<br>
+  <a name="v0.12.7a13"></a>v0.12.7a13 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; merged 2021-04-18
+  - Allow **`os.PathLike`** (**`pathlib.Path`**) objects in **`savefig`** (Thank you [Matt Stancliff](https://github.com/mattsta))
+    
+
 ### <a name="v0.12.7a12"></a>v0.12.7a12 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; released 2021-04-09
 
 - <a name="v0.12.7a12"></a>v0.12.7a12 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; merged 2021-04-08
