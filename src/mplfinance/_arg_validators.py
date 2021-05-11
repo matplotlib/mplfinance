@@ -110,14 +110,36 @@ def _mav_validator(mav_value):
     '''
     if isinstance(mav_value,int) and mav_value > 1:
         return True
-    elif not isinstance(mav_value,tuple) and not isinstance(mav_value,list):
+    elif not isinstance(mav_value,tuple) and not isinstance(mav_value,list) and not isinstance(mav_value,dict):
         return False
 
-    if not len(mav_value) < 8:
-        return False
-    for num in mav_value:
-        if not isinstance(num,int) and num > 1:
+    if isinstance(mav_value,dict):
+        if 'scale' not in mav_value or not (isinstance(mav_value['scale'],tuple) or\
+                isinstance(mav_value['scale'],int) or isinstance(mav_value['scale'], list)):
             return False
+        if 'shift' in mav_value:
+            if not (isinstance(mav_value['shift'],tuple) or isinstance(mav_value['shift'],int) or\
+                    isinstance(mav_value['shift'], list)):
+                return False
+            if isinstance(mav_value['scale'], int) and isinstance(mav_value['shift'], int):
+                return True
+            elif isinstance(mav_value['scale'], int) or isinstance(mav_value['shift'], int):
+                return False
+            if len(mav_value['scale']) == len(mav_value['shift']):
+                for num in mav_value['scale']:
+                    if not isinstance(num, int) and num > 1:
+                        return False
+                for num in mav_value['shift']:
+                    if not isinstance(num, int) and num > 1:
+                        return False
+                return True
+            return False
+    elif not len(mav_value) < 8:
+        return False
+    else:
+        for num in mav_value:
+            if not isinstance(num,int) and num > 1:
+                return False
     return True
 
 def _hlines_validator(value):

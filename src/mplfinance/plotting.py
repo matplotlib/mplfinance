@@ -978,8 +978,12 @@ def _plot_mav(ax,config,xdates,prices,apmav=None,apwidth=None):
         mavgs = config['mav']
     mavp_list = []
     if mavgs is not None:
+        shift = None
+        if isinstance(mavgs,dict):
+            shift = mavgs['shift']
+            mavgs = mavgs['scale']
         if isinstance(mavgs,int):
-            mavgs = mavgs,      # convert to tuple 
+            mavgs = mavgs,      # convert to tuple
         if len(mavgs) > 7:
             mavgs = mavgs[0:7]  # take at most 7
      
@@ -988,8 +992,11 @@ def _plot_mav(ax,config,xdates,prices,apmav=None,apwidth=None):
         else:
             mavc = None
 
-        for mav in mavgs:
-            mavprices = pd.Series(prices).rolling(mav).mean().values
+        for idx,mav in enumerate(mavgs):
+            mean = pd.Series(prices).rolling(mav).mean()
+            if shift is not None:
+                mean = mean.shift(periods=shift[idx])
+            mavprices = mean.values
             lw = config['_width_config']['line_width']
             if mavc:
                 ax.plot(xdates, mavprices, linewidth=lw, color=next(mavc))
