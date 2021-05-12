@@ -114,10 +114,10 @@ def _mav_validator(mav_value):
         return False
 
     if isinstance(mav_value,dict):
-        if 'period' not in mav_value or not isinstance(mav_value['period'],(tuple,list,dict)):
+        if 'period' not in mav_value or not isinstance(mav_value['period'],(tuple,list,int)):
             return False
         if 'shift' in mav_value:
-            if not isinstance(mav_value['shift'],(tuple,list,dict)):
+            if not isinstance(mav_value['shift'],(tuple,list,int)):
                 return False
             if isinstance(mav_value['period'], int) and isinstance(mav_value['shift'], int):
                 return True
