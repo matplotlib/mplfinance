@@ -362,7 +362,7 @@ def test_addplot12(bolldata):
     tname = os.path.join(tdir,fname)
     rname = os.path.join(refd,fname)
 
-    mpf.plot(df,type='candle',volume=True,savefig=tname,mav={'scale':(20,40,60), 'shift': [5,10,20]})
+    mpf.plot(df,type='candle',volume=True,savefig=tname,mav={'period':(20,40,60), 'shift': [5,10,20]})
 
     tsize = os.path.getsize(tname)
     print(glob.glob(tname),'[',tsize,'bytes',']')

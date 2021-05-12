@@ -981,7 +981,7 @@ def _plot_mav(ax,config,xdates,prices,apmav=None,apwidth=None):
         shift = None
         if isinstance(mavgs,dict):
             shift = mavgs['shift']
-            mavgs = mavgs['scale']
+            mavgs = mavgs['period']
         if isinstance(mavgs,int):
             mavgs = mavgs,      # convert to tuple
         if len(mavgs) > 7:
