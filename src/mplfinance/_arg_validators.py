@@ -107,14 +107,13 @@ def _mav_validator(mav_value):
     Value for mav (moving average) keyword may be:
     scalar int greater than 1, or tuple of ints, or list of ints (each greater than 1)
     or a dict of `period` and `shift` each of which may be:
-    scalar int, or tuple of ints, or list of ints.  `period` must be greater than 1
-    while `shift` must be greater than 0.
+    scalar int, or tuple of ints, or list of ints: each `period` int must be greater than 1
     '''
     def _valid_mav(value, is_period=True):
         if not isinstance(value,(tuple,list,int)):
             return False
         if isinstance(value,int):
-            return isinstance(value,int) and (value >= 2 or not is_period)
+            return (value >= 2 or not is_period)
         # Must be a tuple or list here:
         for num in value:
             if not isinstance(num,int) or (is_period and num < 2):
