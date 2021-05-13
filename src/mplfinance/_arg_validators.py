@@ -103,22 +103,45 @@ def _get_valid_plot_types(plottype=None):
         
 
 def _mav_validator(mav_value):
-    ''' 
-    Value for mav (moving average) keyword may be:
-    scalar int greater than 1, or tuple of ints, or list of ints (greater than 1).
-    tuple or list limited to length of 7 moving averages (to keep the plot clean).
     '''
-    if isinstance(mav_value,int) and mav_value > 1:
+    Value for mav (moving average) keyword may be:
+    scalar int greater than 1, or tuple of ints, or list of ints (each greater than 1)
+    or a dict of `period` and `shift` each of which may be:
+    scalar int, or tuple of ints, or list of ints: each `period` int must be greater than 1
+    '''
+    def _valid_mav(value, is_period=True):
+        if not isinstance(value,(tuple,list,int)):
+            return False
+        if isinstance(value,int):
+            return (value >= 2 or not is_period)
+        # Must be a tuple or list here:
+        for num in value:
+            if not isinstance(num,int) or (is_period and num < 2):
+                return False
         return True
-    elif not isinstance(mav_value,tuple) and not isinstance(mav_value,list):
+
+    if not isinstance(mav_value,(tuple,list,int,dict)):
         return False
 
-    if not len(mav_value) < 8:
+    if not isinstance(mav_value,dict):
+        return _valid_mav(mav_value)
+
+    else: #isinstance(mav_value,dict)
+        if 'period' not in mav_value: return False
+
+        period = mav_value['period']
+        if not _valid_mav(period): return False
+
+        if 'shift' not in mav_value: return True
+
+        shift  = mav_value['shift']
+        if not _valid_mav(shift, False):  return False
+        if isinstance(period,int) and isinstance(shift,int): return True
+        if isinstance(period,(tuple,list)) and isinstance(shift,(tuple,list)):
+            if len(period) != len(shift): return False
+            return True
         return False
-    for num in mav_value:
-        if not isinstance(num,int) and num > 1:
-            return False
-    return True
+
 
 def _hlines_validator(value):
     if isinstance(value,dict):

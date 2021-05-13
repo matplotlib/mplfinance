@@ -354,3 +354,23 @@ def test_addplot11(bolldata):
         print('result=',result)
     assert result is None
 
+def test_addplot12(bolldata):
+
+    df = bolldata
+
+    fname = base+'12.png'
+    tname = os.path.join(tdir,fname)
+    rname = os.path.join(refd,fname)
+
+    mpf.plot(df,type='candle',volume=True,savefig=tname,mav={'period':(20,40,60), 'shift': [5,10,20]})
+
+    tsize = os.path.getsize(tname)
+    print(glob.glob(tname),'[',tsize,'bytes',']')
+
+    rsize = os.path.getsize(rname)
+    print(glob.glob(rname),'[',rsize,'bytes',']')
+
+    result = compare_images(rname,tname,tol=IMGCOMP_TOLERANCE)
+    if result is not None:
+       print('result=',result)
+    assert result is None
