@@ -266,7 +266,7 @@ Notice, in the above chart, there are no gaps along the x-coordinate, even thoug
 
 - Non-trading days can be displayed with the `show_nontrading` keyword.
 - For example, in the chart below, you can easily see weekends, as well as a gap at Thursday, November 28th for the U.S. Thanksgiving holiday.
-
+- Note that, by default, `show_nontrading=False` hides non-trading days *only if they are not represented in the data passed to* `mpf.plot` (e.g. as lines with `NaN` OHLC). 
 
 ```python
 mpf.plot(daily,type='candle',mav=(3,6,9),volume=True,show_nontrading=True)
