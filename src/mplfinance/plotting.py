@@ -908,10 +908,13 @@ def _addplot_columns(panid,panels,ydata,apdict,xdates,config):
         mark  = apdict['marker']
         color = apdict['color']
         alpha = apdict['alpha']
+        edgecolors  = apdict['edgecolors']
+        linewidths = apdict['linewidths']
+
         if isinstance(mark,(list,tuple,np.ndarray)):
             _mscatter(xdates,ydata,ax=ax,m=mark,s=size,color=color,alpha=alpha)
         else:
-            ax.scatter(xdates,ydata,s=size,marker=mark,color=color,alpha=alpha)
+            ax.scatter(xdates, ydata, s=size, marker=mark, color=color, alpha=alpha, edgecolors=edgecolors, linewidths=linewidths)
     elif aptype == 'bar':
         width  = 0.8 if apdict['width'] is None else apdict['width']
         bottom = apdict['bottom']
@@ -1026,6 +1029,7 @@ def _valid_addplot_kwargs():
     valid_linestyles = ('-','solid','--','dashed','-.','dashdot','.','dotted',None,' ','')
     valid_types = ('line','scatter','bar', 'ohlc', 'candle','step')
     valid_stepwheres = ('pre','post','mid')
+    valid_edgecolors = ('face', 'none', None)
 
     vkwargs = {
         'scatter'     : { 'Default'     : False,
@@ -1053,7 +1057,13 @@ def _valid_addplot_kwargs():
         'linestyle'   : { 'Default'     : None,
                           'Validator'   : lambda value: value in valid_linestyles },
 
-        'width'       : { 'Default'     : None, # width of `bar` or `line` 
+        'linewidths': {'Default': None,
+                      'Validator'   : lambda value: isinstance(value,(int,float)) },
+
+        'edgecolors': {'Default': None,
+                       'Validator': lambda value: mcolors.is_color_like(value) or value in valid_edgecolors},
+
+        'width'       : { 'Default'     : None, # width of `bar` or `line`
                           'Validator'   : lambda value: isinstance(value,(int,float)) or
                                                         all([isinstance(v,(int,float)) for v in value]) },
 
