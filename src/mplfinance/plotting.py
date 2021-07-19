@@ -152,7 +152,7 @@ def _valid_plot_kwargs():
                                                                       and isinstance(value[1],(float,int)) },
 
         'figscale'                  : { 'Default'     : None, # scale base figure size up or down.
-                                        'Description' : '',
+                                        'Description' : 'Scale base figure up and down.',
                                         'Validator'   : lambda value: isinstance(value,float)
                                                                       or isinstance(value,int) },
 
@@ -1122,7 +1122,7 @@ def _valid_addplot_kwargs():
                                                         or all([isinstance(v,(int,float)) for v in value]) },
 
         'bottom'      : { 'Default'     : 0,  # bottom for `type=bar` plots
-                          'Description' : '',
+                          'Description' : 'Bottom for ',
                           'Validator'   : lambda value: isinstance(value,(int,float))
                                                         or all([isinstance(v,(int,float)) for v in value]) },
 
@@ -1137,18 +1137,18 @@ def _valid_addplot_kwargs():
                           'Validator'   : lambda value: value in valid_linestyles },
 
         'marker'      : { 'Default'     : 'o',
-                          'Description' : '',
+                          'Description' : 'Marker style',
                           'Validator'   : lambda value: _bypass_kwarg_validation(value) },
 
         'markersize'  : { 'Default'     : 18,
-                          'Description' : '',
+                          'Description' : 'Size of marker.',
                           'Validator'   : lambda value: isinstance(value,(int,float)) },
 
         'mav'         : { 'Default'     : None,
                           'Description' : '',
                           'Validator'   : _mav_validator },
 
-        'panel'       : { 'Default'     : 0, 
+        'panel'       : { 'Default'     : 0,
                           'Description' : '',
                           'Validator'   : lambda value: _valid_panel_id(value) },
 
@@ -1162,7 +1162,7 @@ def _valid_addplot_kwargs():
                                                         or value == 'auto' },
         'stepwhere'   : { 'Default'     : 'pre',
                           'Description' : '',
-                          'Validator'   : lambda value : value in valid_stepwheres },                  
+                          'Validator'   : lambda value : value in valid_stepwheres },
 
         'title'       : { 'Default'     : None,
                           'Description' : '',

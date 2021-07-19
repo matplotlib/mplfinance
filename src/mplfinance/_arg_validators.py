@@ -286,6 +286,8 @@ def _validate_vkwargs_dict(vkwargs):
             raise ValueError('Items != 3 in valid kwarg table, for kwarg "'+key+'"')
         if 'Default' not in value:
             raise ValueError('Missing "Default" value for kwarg "'+key+'"')
+        if 'Description' not in value:
+            raise ValueError('Missing "Description" value for kwarg "'+key+'"')
         if 'Validator' not in value:
             raise ValueError('Missing "Validator" function for kwarg "'+key+'"')
 
