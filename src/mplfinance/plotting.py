@@ -66,7 +66,7 @@ def with_rc_context(func):
 
 def _warn_no_xgaps_deprecated(value):
     warnings.warn('\n\n ================================================================= '+
-                  '\n\n   WARNING: `no_xgaps` is *deprecated*:'+
+                  '\n\n   WARNING: `no_xgaps` is _deprecated_:'+
                   '\n     Default value is now `no_xgaps=True`'+
                   '\n     However, to set `no_xgaps=False` and silence this warning,'+
                   '\n     use instead: `show_nontrading=True`.'+
