@@ -97,11 +97,11 @@ def _construct_mpf_collections(ptype,dates,xdates,opens,highs,lows,closes,volume
 
     elif ptype =='hollow_and_filled':
             collections = _construct_hollow_candlestick_collections(xdates, opens, highs, lows, closes,
-                                                         marketcolors=style['marketcolors'],config=config )
+                                                         marketcolors=style['marketcolors'],config=config, colors=colors )
 
     elif ptype == 'ohlc' or ptype == 'bars' or ptype == 'ohlc_bars':
         collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes,
-                                                  marketcolors=style['marketcolors'],config=config )
+                                                  marketcolors=style['marketcolors'],config=config, colors=colors )
     elif ptype == 'renko':
         collections = _construct_renko_collections(
             dates, highs, lows, volumes, config['renko_params'], closes, marketcolors=style['marketcolors'])
@@ -480,7 +480,7 @@ def _valid_lines_kwargs():
     return vkwargs
 
 
-def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=None, config=None):
+def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=None, config=None, colors=None):
     """Represent the time, open, high, low, close as a vertical line
     ranging from low to high.  The left tick is the open and the right
     tick is the close.
@@ -505,8 +505,8 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=
     ret : list 
         a list or tuple of matplotlib collections to be added to the axes
     """
-
-    _check_input(opens, highs, lows, closes)
+    
+    _check_input(opens, highs, lows, closes, colors)
 
     if marketcolors is None:
         mktcolors = _get_mpfstyle('classic')['marketcolors']['ohlc']
@@ -530,13 +530,25 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=
     # we'll translate these to the date, close location
     closeSegments = [((dt, close), (dt+ticksize, close)) for dt, close in zip(dates, closes)]
 
-    if mktcolors['up'] == mktcolors['down']:
-        colors = mktcolors['up']
-    else:
-        colorup = mcolors.to_rgba(mktcolors['up'])
-        colordown = mcolors.to_rgba(mktcolors['down'])
-        colord = {True: colorup, False: colordown}
-        colors = [colord[open < close] for open, close in zip(opens, closes)]
+    bar_c = None
+    if colors:
+        bar_c = []
+        for color in colors:
+            if color:
+                bar_up = color['ohlc']['up']
+                bar_down = color['ohlc']['down']
+                if bar_up == 'k':
+                    bar_up = mktcolors['up']
+                if bar_down == 'k':
+                    bar_down = mktcolors['down']
+
+                bar_c.append({'up': mcolors.to_rgba(bar_up, 1), 'down': mcolors.to_rgba(bar_down, 1)})
+            else:
+                bar_c.append(None)
+
+    uc = mcolors.to_rgba(mktcolors['up'])
+    dc = mcolors.to_rgba(mktcolors['down'])
+    colors = _updown_colors(uc, dc, opens, closes, colors=bar_c)
 
     lw = config['_width_config']['ohlc_linewidth']
 
@@ -623,9 +635,29 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
         edge_c = []
         for color in colors:
             if color:
-                candle_c.append({'up': mcolors.to_rgba(color['candle']['up'], alpha), 'down': mcolors.to_rgba(color['candle']['down'], alpha)})
-                wick_c.append({'up': mcolors.to_rgba(color['wick']['up'], 1), 'down': mcolors.to_rgba(color['wick']['down'], 1)})
-                edge_c.append({'up': mcolors.to_rgba(color['edge']['up'], 1), 'down': mcolors.to_rgba(color['edge']['down'], 1)})
+                candle_up = color['candle']['up']
+                candle_down = color['candle']['down']
+                edge_up = color['edge']['up']
+                edge_down = color['edge']['down']
+                wick_up = color['wick']['up']
+                wick_down = color['wick']['down']
+                if candle_up == 'w':
+                    candle_up = marketcolors['candle']['up']
+                if candle_down == 'k':
+                    candle_down = marketcolors['candle']['down']
+                if edge_up == 'k':
+                    edge_up = candle_up
+                if edge_down == 'k':
+                    edge_down = candle_down
+                if wick_up == 'k':
+                    wick_up = candle_up
+                if wick_down == 'k':
+                    wick_down = candle_down
+
+                candle_c.append({'up': mcolors.to_rgba(candle_up, alpha), 'down': mcolors.to_rgba(candle_down, alpha)})
+                edge_c.append({'up': mcolors.to_rgba(edge_up, 1), 'down': mcolors.to_rgba(edge_down, 1)})
+                wick_c.append({'up': mcolors.to_rgba(wick_up, 1), 'down': mcolors.to_rgba(wick_down, 1)})
+                
             else:
                 candle_c.append(None)
                 wick_c.append(None)
@@ -659,7 +691,7 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
     return [rangeCollection, barCollection]
 
 
-def _construct_hollow_candlestick_collections(dates, opens, highs, lows, closes, marketcolors=None, config=None):
+def _construct_hollow_candlestick_collections(dates, opens, highs, lows, closes, marketcolors=None, config=None, colors=None):
     """Represent today's open to close as a "bar" line (candle body)
     and high low range as a vertical line (candle wick)
      

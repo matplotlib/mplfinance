@@ -402,7 +402,7 @@ def plot( data, **kwargs ):
         colors = config['colors']
         for c in range(len(colors)):
             if isinstance(colors[c], str):
-                config['colors'][c] = make_marketcolors(up=colors[c], down=colors[c], edge=colors[c], wick=colors[c])
+                config['colors'][c] = make_marketcolors(up=colors[c], down=colors[c], edge=colors[c], wick=colors[c], ohlc=colors[c], volume=colors[c])
     else:
         config['colors'] = None
 
