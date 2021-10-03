@@ -142,6 +142,17 @@ def _mav_validator(mav_value):
             return True
         return False
 
+def _colors_validator(value):
+    if not isinstance(value, list):
+        return False
+
+    for v in value:
+        if v:
+            if not (isinstance(v, dict) or isinstance(v, str)):
+                return False
+
+    return True
+
 
 def _hlines_validator(value):
     if isinstance(value,dict):

@@ -20,7 +20,7 @@ from mplfinance._styles         import _get_mpfstyle
 
 from six.moves import zip
 
-def _check_input(opens, closes, highs, lows):
+def _check_input(opens, closes, highs, lows, colors=None):
     """Checks that *opens*, *highs*, *lows* and *closes* have the same length.
     NOTE: this code assumes if any value open, high, low, close is
     missing (*-1*) they all are missing
@@ -45,6 +45,10 @@ def _check_input(opens, closes, highs, lows):
     same_length = len(opens) == len(highs) == len(lows) == len(closes)
     if not same_length:
         raise ValueError('O,H,L,C must have the same length!')
+
+    if colors:
+        if len(opens) != len(colors):
+            raise ValueError('O,H,L,C and Colors must have the same length!')
 
     o = np.where(np.isnan(opens))[0]
     h = np.where(np.isnan(highs))[0]
@@ -85,11 +89,11 @@ def _check_and_convert_xlim_configuration(data, config):
     return xlim
 
 
-def _construct_mpf_collections(ptype,dates,xdates,opens,highs,lows,closes,volumes,config,style):
+def _construct_mpf_collections(ptype,dates,xdates,opens,highs,lows,closes,volumes,config,style,colors):
     collections = None
     if ptype == 'candle' or ptype == 'candlestick':
         collections = _construct_candlestick_collections(xdates, opens, highs, lows, closes,
-                                                         marketcolors=style['marketcolors'],config=config )
+                                                         marketcolors=style['marketcolors'],config=config, colors=colors )
 
     elif ptype =='hollow_and_filled':
             collections = _construct_hollow_candlestick_collections(xdates, opens, highs, lows, closes,
@@ -176,16 +180,45 @@ def coalesce_volume_dates(in_volumes, in_dates, indexes):
     return volumes, dates
 
 
-def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False):
-    if upcolor == downcolor:
-        return upcolor
-    cmap = {True : upcolor, False : downcolor}
-    if not use_prev_close:
-        return [ cmap[opn < cls] for opn,cls in zip(opens,closes) ]
+def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False,colors=None):
+    if not colors:
+        if upcolor == downcolor:
+            return upcolor
+        cmap = {True : upcolor, False : downcolor}
+        if not use_prev_close:
+            return [ cmap[opn < cls] for opn,cls in zip(opens,closes) ]
+        else:
+            first = cmap[opens[0] < closes[0]] 
+            _list = [ cmap[pre < cls] for cls,pre in zip(closes[1:], closes) ]
+            return [first] + _list
     else:
-        first = cmap[opens[0] < closes[0]] 
-        _list = [ cmap[pre < cls] for cls,pre in zip(closes[1:], closes) ]
-        return [first] + _list
+        cmap = {True: 'up', False: 'down'}
+        default = {'up': upcolor, 'down': downcolor}
+        custom = []
+        if not use_prev_close:
+            for i in range(len(opens)):
+                opn = opens[i]
+                cls = closes[i]
+                if colors[i]:
+                    custom.append(colors[i][cmap[opn < cls]])
+                else:
+                    custom.append(default[cmap[opn < cls]])
+        else:
+            if color[0]:
+                custom.append(colors[0][cmap[opens[0] < closes[0]]])
+            else:
+                custom.append(default[cmap[opens[0] < closes[0]]])
+                
+            for i in range(len(closes) - 1):
+                pre = closes[1:][i]
+                cls = closes[i]
+                if colors[i]:
+                    custom.append(colors[i][cmap[pre < cls]])
+                else:
+                    custom.append(default[cmap[pre < cls]])
+        
+        return custom
+            
 
 
 def _updownhollow_colors(upcolor,downcolor,hollowcolor,opens,closes):
@@ -525,7 +558,7 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=
     return [rangeCollection, openCollection, closeCollection]
 
 
-def _construct_candlestick_collections(dates, opens, highs, lows, closes, marketcolors=None, config=None):
+def _construct_candlestick_collections(dates, opens, highs, lows, closes, marketcolors=None, config=None, colors=None):
     """Represent the open, close as a bar line and high low range as a
     vertical line.
 
@@ -552,8 +585,8 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
     ret : list
         (lineCollection, barCollection)
     """
-    
-    _check_input(opens, highs, lows, closes)
+
+    _check_input(opens, highs, lows, closes, colors)
 
     if marketcolors is None:
         marketcolors = _get_mpfstyle('classic')['marketcolors']
@@ -581,17 +614,34 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
 
     alpha  = marketcolors['alpha']
 
+    candle_c = None
+    wick_c = None
+    edge_c = None
+    if colors:
+        candle_c = []
+        wick_c = []
+        edge_c = []
+        for color in colors:
+            if color:
+                candle_c.append({'up': mcolors.to_rgba(color['candle']['up'], alpha), 'down': mcolors.to_rgba(color['candle']['down'], alpha)})
+                wick_c.append({'up': mcolors.to_rgba(color['wick']['up'], 1), 'down': mcolors.to_rgba(color['wick']['down'], 1)})
+                edge_c.append({'up': mcolors.to_rgba(color['edge']['up'], 1), 'down': mcolors.to_rgba(color['edge']['down'], 1)})
+            else:
+                candle_c.append(None)
+                wick_c.append(None)
+                edge_c.append(None)
+
     uc     = mcolors.to_rgba(marketcolors['candle'][ 'up' ], alpha)
     dc     = mcolors.to_rgba(marketcolors['candle']['down'], alpha)
-    colors = _updown_colors(uc, dc, opens, closes)
+    colors = _updown_colors(uc, dc, opens, closes, colors=candle_c)
 
     uc     = mcolors.to_rgba(marketcolors['edge'][ 'up' ], 1.0)
     dc     = mcolors.to_rgba(marketcolors['edge']['down'], 1.0)
-    edgecolor = _updown_colors(uc, dc, opens, closes)
+    edgecolor = _updown_colors(uc, dc, opens, closes, colors=edge_c)
     
     uc     = mcolors.to_rgba(marketcolors['wick'][ 'up' ], 1.0)
     dc     = mcolors.to_rgba(marketcolors['wick']['down'], 1.0)
-    wickcolor = _updown_colors(uc, dc, opens, closes)
+    wickcolor = _updown_colors(uc, dc, opens, closes, colors=wick_c)
 
     lw = config['_width_config']['candle_linewidth']
 

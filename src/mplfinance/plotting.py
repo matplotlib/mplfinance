@@ -40,6 +40,7 @@ from mplfinance._arg_validators import _alines_validator, _tlines_validator
 from mplfinance._arg_validators import _scale_padding_validator, _yscale_validator
 from mplfinance._arg_validators import _valid_panel_id, _check_for_external_axes
 from mplfinance._arg_validators import _xlim_validator
+from mplfinance._arg_validators import _colors_validator
 
 from mplfinance._panels import _build_panels
 from mplfinance._panels import _set_ticks_on_bottom_panel_only
@@ -48,6 +49,8 @@ from mplfinance._helpers import _determine_format_string
 from mplfinance._helpers import _list_of_dict
 from mplfinance._helpers import _num_or_seq_of_num
 from mplfinance._helpers import _adjust_color_brightness
+
+from mplfinance._styles import make_marketcolors
 
 VALID_PMOVE_TYPES = ['renko', 'pnf']
 
@@ -125,6 +128,9 @@ def _valid_plot_kwargs():
  
         'marketcolors'              : { 'Default'     : None, # use 'style' for default, instead.
                                         'Validator'   : lambda value: isinstance(value,dict) },
+
+        'colors'                    : { 'Default'     : None, # use default style instead.
+                                        'Validator'   : lambda value: _colors_validator(value) },
  
         'no_xgaps'                  : { 'Default'     : True,  # None means follow default logic below:
                                         'Validator'   : lambda value: _warn_no_xgaps_deprecated(value) },
@@ -391,14 +397,21 @@ def plot( data, **kwargs ):
     rwc = config['return_width_config']
     if isinstance(rwc,dict) and len(rwc)==0:
         config['return_width_config'].update(config['_width_config'])
- 
+
+    if config['colors']:
+        colors = config['colors']
+        for c in range(len(colors)):
+            if isinstance(colors[c], str):
+                config['colors'][c] = make_marketcolors(up=colors[c], down=colors[c], edge=colors[c], wick=colors[c])
+    else:
+        config['colors'] = None
 
     collections = None
     if ptype == 'line':
         lw = config['_width_config']['line_width']
         axA1.plot(xdates, closes, color=config['linecolor'], linewidth=lw)
     else:
-        collections =_construct_mpf_collections(ptype,dates,xdates,opens,highs,lows,closes,volumes,config,style)
+        collections =_construct_mpf_collections(ptype,dates,xdates,opens,highs,lows,closes,volumes,config,style,config['colors'])
 
     if ptype in VALID_PMOVE_TYPES:
         collections, calculated_values = collections
@@ -858,7 +871,7 @@ def _addplot_collections(panid,panels,apdict,xdates,config):
     if not isinstance(apdata,pd.DataFrame):
         raise TypeError('addplot type "'+aptype+'" MUST be accompanied by addplot data of type `pd.DataFrame`')
     d,o,h,l,c,v = _check_and_prepare_data(apdata,config)
-    collections = _construct_mpf_collections(aptype,d,xdates,o,h,l,c,v,config,config['style'])
+    collections = _construct_mpf_collections(aptype,d,xdates,o,h,l,c,v,config,config['style'],config['colors'])
 
     if not external_axes_mode:
         lo = math.log(max(math.fabs(np.nanmin(l)),1e-7),10) - 0.5
