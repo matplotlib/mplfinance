@@ -84,7 +84,7 @@ def animate(ival):
         if ani.event_source.interval > 12000:
             exit()
         return
-    df = df[-30:].append(nxt)
+    df = df[-700:].append(nxt)
     rs = df.resample(resample_period).agg(resample_map).dropna()
     ax.clear()
     mpf.plot(rs,ax=ax,type='candle')
