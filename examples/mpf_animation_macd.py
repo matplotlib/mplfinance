@@ -67,7 +67,7 @@ def animate(ival):
         if ani.event_source.interval > 12000:
             exit()
         return
-    data = df.iloc[0:(30+ival)]
+    data = df.iloc[ival:(30+ival)]
     exp12     = data['Close'].ewm(span=12, adjust=False).mean()
     exp26     = data['Close'].ewm(span=26, adjust=False).mean()
     macd      = exp12 - exp26

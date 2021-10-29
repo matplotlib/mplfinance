@@ -35,7 +35,7 @@ def animate(ival):
         if ani.event_source.interval > 12000:
             exit()
         return
-    data = df.iloc[0:(20+ival)]
+    data = df.iloc[ival:(20+ival)]
     ax1.clear()
     ax2.clear()
     mpf.plot(data,ax=ax1,volume=ax2,**pkwargs)
