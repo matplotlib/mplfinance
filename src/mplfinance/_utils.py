@@ -427,7 +427,8 @@ def _valid_lines_kwargs():
                                             ( isinstance(value,(list,tuple)) and
                                               all([mcolors.is_color_like(v) for v in value]) ) },
         'linestyle' : { 'Default'     : '-',
-                        'Validator'   : lambda value: value is None or value in valid_linestyles },
+                        'Validator'   : lambda value: value is None or value in valid_linestyles or
+                                            all([v in valid_linestyles for v in value]) },
         'linewidths': { 'Default'     : None,
                         'Validator'   : lambda value: value is None or
                                             isinstance(value,(float,int)) or 
@@ -1124,7 +1125,7 @@ def _construct_aline_collections(alines, dtix=None):
         'alines'     : the same as defined above: sequence of price, or dates, or segments
         'colors'     : colors for the above alines
         'linestyle'  : line types for the above alines
-        'linewidths' : line types for the above alines
+        'linewidths' : line widths for the above alines
 
     dtix:  date index for the x-axis, used for converting the dates when
            x-values are 'evenly spaced integers' (as when skipping non-trading days)
@@ -1174,7 +1175,7 @@ def _construct_hline_collections(hlines,minx,maxx):
         'hlines'     : the same as defined above: sequence of price, or dates, or segments
         'colors'     : colors for the above hlines
         'linestyle'  : line types for the above hlines
-        'linewidths' : line types for the above hlines
+        'linewidths' : line widths for the above hlines
 
     minx : the minimum value for x for the horizontal line, already converted to `xdates` format
     maxx : the maximum value for x for the horizontal line, already converted to `xdates` format
@@ -1234,7 +1235,7 @@ def _construct_vline_collections(vlines,dtix,miny,maxy):
         'vlines'     : the same as defined above: sequence of dates/datetimes
         'colors'     : colors for the above vlines
         'linestyle'  : line types for the above vlines
-        'linewidths' : line types for the above vlines
+        'linewidths' : line widths for the above vlines
 
     dtix:  date index for the x-axis, used for converting the dates when
            x-values are 'evenly spaced integers' (as when skipping non-trading days)
@@ -1300,7 +1301,7 @@ def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes
         'tlines'     : the same as defined above: sequence of pairs of date[time]s
         'colors'     : colors for the above tlines
         'linestyle'  : line types for the above tlines
-        'linewidths' : line types for the above tlines
+        'linewidths' : line widths for the above tlines
 
     dtix:  date index for the x-axis, used for converting the dates when
            x-values are 'evenly spaced integers' (as when skipping non-trading days)
