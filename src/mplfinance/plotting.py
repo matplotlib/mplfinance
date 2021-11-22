@@ -858,7 +858,15 @@ def _addplot_collections(panid,panels,apdict,xdates,config):
     if not isinstance(apdata,pd.DataFrame):
         raise TypeError('addplot type "'+aptype+'" MUST be accompanied by addplot data of type `pd.DataFrame`')
     d,o,h,l,c,v = _check_and_prepare_data(apdata,config)
-    collections = _construct_mpf_collections(aptype,d,xdates,o,h,l,c,v,config,config['style'])
+    
+    mc = apdict['marketcolors']
+    if isinstance(mc,dict):
+        apstyle = config['style'].copy()
+        apstyle['marketcolors'] = mc
+    else:
+        apstyle = config['style']
+    
+    collections = _construct_mpf_collections(aptype,d,xdates,o,h,l,c,v,config,apstyle)
 
     if not external_axes_mode:
         lo = math.log(max(math.fabs(np.nanmin(l)),1e-7),10) - 0.5
@@ -1087,7 +1095,10 @@ def _valid_addplot_kwargs():
                           'Validator'   : lambda value: _yscale_validator(value) },
 
         'stepwhere'      : { 'Default'     : 'pre',
-                          'Validator'   : lambda value : value in valid_stepwheres },                  
+                          'Validator'   : lambda value : value in valid_stepwheres },     
+        
+        'marketcolors' : { 'Default'     : None, # use 'style' for default, instead.
+                          'Validator'   : lambda value: isinstance(value,dict) },
     }
 
     _validate_vkwargs_dict(vkwargs)
