@@ -584,7 +584,7 @@ It is my intention to archive the `matplotlib/mpl-finance` repository soon, and 
 
 **With this new ` mplfinance ` package installed, in addition to the new API, users can still access the old API**.<br> The old API may be removed someday, but for the foreseeable future we will keep it ... at least until we are very confident that users of the old API can accomplish the same things with the new API.  
 
-To access the old API with the new ` mplfinance ` package installed, change the old import statments
+To access the old API with the new ` mplfinance ` package installed, change the old import statements
 
 **from:**
 
