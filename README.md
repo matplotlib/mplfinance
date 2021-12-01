@@ -264,7 +264,10 @@ Notice, in the above chart, there are no gaps along the x-coordinate, even thoug
 
 - However, sometimes people like to see these gaps, so that they can tell, with a quick glance, where the weekends and holidays fall.  
 
-- Non-trading days can be displayed with the `show_nontrading` keyword.
+- Non-trading days can be displayed with the **`show_nontrading`** keyword.
+  - Note that for these purposes **non-trading** intervals are those that ***are not represented in the data at all***.  (There are simply no rows for those dates or datetimes).  This is because, when data is retrieved from an exchange or other market data source, that data typically will *not* include rows for non-trading days (weekends and holidays for example).  Thus ...
+  - **`show_nontrading=True`** will display all dates (all time intervals) between the first time stamp and the last time stamp in the data (regardless of whether rows exist for those dates or datetimes).
+  - **`show_nontrading=False`** (the default value) will show ***only*** dates (or datetimes) that have actual rows in the data.  (This means that if there are rows in your DataFrame that exist but contain only **`NaN`** values, these rows *will still appear* on the plot even if **`show_nontrading=False`**)
 - For example, in the chart below, you can easily see weekends, as well as a gap at Thursday, November 28th for the U.S. Thanksgiving holiday.
 
 
