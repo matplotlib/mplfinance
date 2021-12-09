@@ -1,4 +1,5 @@
 import matplotlib.dates  as mdates
+import matplotlib.colors as mcolors
 import pandas   as pd
 import numpy    as np
 import datetime
@@ -52,7 +53,7 @@ def _check_and_prepare_data(data, config):
         columns =  ('Open', 'High', 'Low', 'Close', 'Volume')
         if all([c.lower() in data for c in columns[0:4]]):
             columns =  ('open', 'high', 'low', 'close', 'volume')
-
+        
     o, h, l, c, v = columns
     cols = [o, h, l, c]
 
@@ -100,7 +101,7 @@ def _get_valid_plot_types(plottype=None):
         return _alias_types[plottype]
     else:
         return plottype
-
+        
 
 def _mav_validator(mav_value):
     '''
@@ -141,17 +142,6 @@ def _mav_validator(mav_value):
             if len(period) != len(shift): return False
             return True
         return False
-
-def _colors_validator(value):
-    if not isinstance(value, (list, tuple, np.ndarray)):
-        return False
-
-    for v in value:
-        if v:
-            if v is not None and not isinstance(v, (dict, str)):
-                return False
-
-    return True
 
 
 def _hlines_validator(value):
@@ -204,11 +194,11 @@ def _alines_validator(value, returnStandardizedValue=False):
         A sequence of (line0, line1, line2), where:
 
         linen = (x0, y0), (x1, y1), ... (xm, ym)
-
+       
         or the equivalent numpy array with two columns. Each line can be a different length.
 
     The above is from the matplotlib LineCollection documentation.
-    It basically says that the "segments" passed into the LineCollection constructor
+    It basically says that the "segments" passed into the LineCollection constructor 
     must be a Sequence of Sequences of 2 or more xy Pairs.  However here in `mplfinance`
     we want to allow that (seq of seq of xy pairs) _as well as_ just a sequence of pairs.
     Therefore here in the validator we will allow both:
@@ -270,8 +260,8 @@ def _tlines_validator(value):
 def _bypass_kwarg_validation(value):
     ''' For some kwargs, we either don't know enough, or
         the validation is too complex to make it worth while,
-        so we bypass kwarg validation.  If the kwarg is
-        invalid, then eventually an exception will be
+        so we bypass kwarg validation.  If the kwarg is 
+        invalid, then eventually an exception will be 
         raised at the time the kwarg value is actually used.
     '''
     return True
@@ -300,7 +290,7 @@ def _process_kwargs(kwargs, vkwargs):
     Given a "valid kwargs table" and some kwargs, verify that each key-word
     is valid per the kwargs table, and that the value of the kwarg is the
     correct type.  Fill a configuration dictionary with the default value
-    for each kwarg, and then substitute in any values that were provided
+    for each kwarg, and then substitute in any values that were provided 
     as kwargs and return the configuration dictionary.
     '''
     # initialize configuration from valid_kwargs_table:
@@ -327,7 +317,7 @@ def _process_kwargs(kwargs, vkwargs):
 
        # ---------------------------------------------------------------
        #  At this point in the loop, if we have not raised an exception,
-       #      then kwarg is valid as far as we can tell, therefore,
+       #      then kwarg is valid as far as we can tell, therefore, 
        #      go ahead and replace the appropriate value in config:
 
         config[key] = value
@@ -346,7 +336,7 @@ def _scale_padding_validator(value):
             if key not in valid_keys:
                 raise ValueError('Invalid key "'+str(key)+'" found in `scale_padding` dict.')
             if not isinstance(value[key],(int,float)):
-                raise ValueError('`scale_padding` dict contains non-number at key "'+str(key)+'"')
+                raise ValueError('`scale_padding` dict contains non-number at key "'+str(key)+'"') 
         return True
     else:
         raise ValueError('`scale_padding` kwarg must be a number, or dict of (left,right,top,bottom) numbers.')
@@ -370,11 +360,29 @@ def _yscale_validator(value):
     return True
 
 
+def _is_marketcolor_object(obj):
+    if not isinstance(obj,dict): return False
+    market_colors_keys = ('candle','edge','wick','ohlc')
+    return all([k in obj for k in market_colors_keys])
+    
+
+def _mco_validator(value):  # marketcolor overrides validator
+    if isinstance(value,dict):     # not yet supported, but maybe we will have other
+        if 'colors' not in value:  # kwargs related to mktcolor overrides (ex: `mco_faceonly`)
+            raise ValueError('`marketcolor_overrides` as dict must contain `colors` key.')
+        colors = value['colors']
+    else:
+        colors = value
+    if not isinstance(colors,(list,tuple,np.ndarray)):
+        return False
+    return all([(c is None or mcolors.is_color_like(c) or _is_marketcolor_object(c)) for c in colors])
+
+
 def _check_for_external_axes(config):
     '''
-    Check that all `fig` and `ax` kwargs are either ALL None,
+    Check that all `fig` and `ax` kwargs are either ALL None, 
     or ALL are valid instances of Figures/Axes:
-
+ 
     An external Axes object can be passed in three places:
         - mpf.plot() `ax=` kwarg
         - mpf.plot() `volume=` kwarg
@@ -391,7 +399,7 @@ def _check_for_external_axes(config):
             raise TypeError('addplot must be `dict`, or `list of dict`, NOT '+str(type(addplot)))
         for apd in addplot:
             ap_axlist.append(apd['ax'])
-
+ 
     if len(ap_axlist) > 0:
         if config['ax'] is None:
             if not all([ax is None for ax in ap_axlist]):
@@ -416,6 +424,6 @@ def _check_for_external_axes(config):
             raise ValueError('`volume` must be of type `matplotlib.axis.Axes`')
         #if not isinstance(config['fig'],mpl.figure.Figure):
         #    raise ValueError('`fig` kwarg must be of type `matplotlib.figure.Figure`')
-
+    
     external_axes_mode = True if isinstance(config['ax'],mpl.axes.Axes) else False
     return external_axes_mode
