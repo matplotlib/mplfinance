@@ -17,13 +17,15 @@ for i in range(len(df)):
     else:
         custom_colors.append(None)
 
-STYLE = 'binance'
+#STYLE = 'binance'
 STYLE = 'yahoo'
 
 #mpf.plot(df, type='candle',style=STYLE,volume=True,block=False,figscale=1.25,savefig='pr451t2no.jpg')
-mpf.plot(df, type='ohlc',style=STYLE,volume=True,block=False,figscale=1.25)
+#mpf.plot(df, type='ohlc',style=STYLE,volume=True,block=False,figscale=1.25)
+mpf.plot(df, type='candle',style=STYLE,volume=True,block=False,figscale=1.25)
 #mpf.plot(df, type='hollow',style=STYLE,volume=True,block=False,figscale=1.25)
 
 #mpf.plot(df, type='candle',style=STYLE,marketcolor_overrides=custom_colors,volume=True,figscale=1.25,savefig='pr451t2ye.jpg')
-mpf.plot(df, type='ohlc',style=STYLE,marketcolor_overrides=custom_colors,volume=True,figscale=1.25)
+#mpf.plot(df, type='ohlc',style=STYLE,marketcolor_overrides=custom_colors,volume=True,figscale=1.25)
+mpf.plot(df, type='candle',style=STYLE,marketcolor_overrides=custom_colors,volume=True,figscale=1.25)
 #mpf.plot(df, type='hollow',style=STYLE,marketcolor_overrides=custom_colors,volume=True,figscale=1.25)
