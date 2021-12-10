@@ -17,6 +17,7 @@ from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 from mplfinance._arg_validators import _alines_validator, _bypass_kwarg_validation
 from mplfinance._arg_validators import _xlim_validator, _is_datelike
 from mplfinance._styles         import _get_mpfstyle
+from mplfinance._helpers        import _mpf_to_rgba
 
 from six.moves import zip
 
@@ -603,7 +604,7 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
     faceonly  = config['mco_faceonly']
 
     colors    = _make_updown_color_list('candle',marketcolors,opens,closes,overrides)
-    colors    = [mcolors.to_rgba(c,alpha) for c in colors] # include alpha
+    colors    = [ _mpf_to_rgba(c,alpha) for c in colors ] # include alpha
     if faceonly: overrides = None
     edgecolor = _make_updown_color_list('edge',marketcolors,opens,closes,overrides)
     wickcolor = _make_updown_color_list('wick',marketcolors,opens,closes,overrides)

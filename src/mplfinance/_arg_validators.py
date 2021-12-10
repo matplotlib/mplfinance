@@ -1,9 +1,8 @@
 import matplotlib.dates  as mdates
-import matplotlib.colors as mcolors
 import pandas   as pd
 import numpy    as np
 import datetime
-from   mplfinance._helpers import _list_of_dict
+from   mplfinance._helpers import _list_of_dict, _mpf_is_color_like
 import matplotlib as mpl
 import warnings
 
@@ -364,19 +363,20 @@ def _is_marketcolor_object(obj):
     if not isinstance(obj,dict): return False
     market_colors_keys = ('candle','edge','wick','ohlc')
     return all([k in obj for k in market_colors_keys])
-    
 
-def _mco_validator(value):  # marketcolor overrides validator
-    if isinstance(value,dict):     # not yet supported, but maybe we will have other
-        if 'colors' not in value:  # kwargs related to mktcolor overrides (ex: `mco_faceonly`)
+
+def _mco_validator(value):        # marketcolor overrides validator
+    if isinstance(value,dict):    # not yet supported, but maybe we will have other
+        if 'colors' not in value: # kwargs related to mktcolor overrides (ex: `mco_faceonly`)
             raise ValueError('`marketcolor_overrides` as dict must contain `colors` key.')
         colors = value['colors']
     else:
         colors = value
     if not isinstance(colors,(list,tuple,np.ndarray)):
         return False
-    return all([(c is None or mcolors.is_color_like(c) or _is_marketcolor_object(c)) for c in colors])
-
+    return all([(c is None or 
+                 _mpf_is_color_like(c) or
+                 _is_marketcolor_object(c) ) for c in colors])
 
 def _check_for_external_axes(config):
     '''

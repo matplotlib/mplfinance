@@ -306,6 +306,10 @@ def plot( data, **kwargs ):
         err = "`addplot` is not supported for `type='" + config['type'] +"'`"
         raise ValueError(err)
 
+    if config['marketcolor_overrides'] is not None:
+        if len(config['marketcolor_overrides']) != len(dates):
+            raise ValueError('`marketcolor_overrides` must be same length as dataframe.')
+
     external_axes_mode = _check_for_external_axes(config)
 
     if external_axes_mode:
