@@ -17,6 +17,7 @@ from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 from mplfinance._arg_validators import _alines_validator, _bypass_kwarg_validation
 from mplfinance._arg_validators import _xlim_validator, _is_datelike
 from mplfinance._styles         import _get_mpfstyle
+from mplfinance._helpers        import _mpf_to_rgba
 
 from six.moves import zip
 
@@ -177,8 +178,13 @@ def coalesce_volume_dates(in_volumes, in_dates, indexes):
 
 
 def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False):
+    # -----------------------------------------------------
+    # Note that `nan` values result in `opn < cls` == False
+    # In other words, nans don't get plotted by collections
+    # but this function will choose DOWN COLOR for nans.
+    # -----------------------------------------------------
     if upcolor == downcolor:
-        return upcolor
+        return [upcolor]*len(opens)
     cmap = {True : upcolor, False : downcolor}
     if not use_prev_close:
         return [ cmap[opn < cls] for opn,cls in zip(opens,closes) ]
@@ -187,7 +193,22 @@ def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False):
         _list = [ cmap[pre < cls] for cls,pre in zip(closes[1:], closes) ]
         return [first] + _list
 
-
+def _make_updown_color_list(key,marketcolors,opens,closes,overrides=None):
+    length = len(opens)
+    ups    = [marketcolors[key][ 'up' ]]*length
+    downs  = [marketcolors[key]['down']]*length
+    if overrides is not None:
+        for ix,mco in enumerate(overrides):
+            if mco is None: continue
+            if mcolors.is_color_like(mco):
+                ups[ix]   = mco
+                downs[ix] = mco
+            else: # assume it is correctly a marketcolors object (dict)
+                ups[ix]   = mco[key][ 'up' ]
+                downs[ix] = mco[key]['down']
+    return [ups[ix] if opens[ix] < closes[ix] else downs[ix] for ix in range(length)]
+       
+                
 def _updownhollow_colors(upcolor,downcolor,hollowcolor,opens,closes):
     if upcolor == downcolor:
         return upcolor
@@ -498,13 +519,11 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=
     # we'll translate these to the date, close location
     closeSegments = [((dt, close), (dt+ticksize, close)) for dt, close in zip(dates, closes)]
 
-    if mktcolors['up'] == mktcolors['down']:
+    if mktcolors['up'] == mktcolors['down'] and config['marketcolor_overrides'] is None:
         colors = mktcolors['up']
     else:
-        colorup = mcolors.to_rgba(mktcolors['up'])
-        colordown = mcolors.to_rgba(mktcolors['down'])
-        colord = {True: colorup, False: colordown}
-        colors = [colord[open < close] for open, close in zip(opens, closes)]
+        overrides = config['marketcolor_overrides']
+        colors    = _make_updown_color_list('ohlc',marketcolors,opens,closes,overrides)
 
     lw = config['_width_config']['ohlc_linewidth']
 
@@ -582,17 +601,14 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
 
     alpha  = marketcolors['alpha']
 
-    uc     = mcolors.to_rgba(marketcolors['candle'][ 'up' ], alpha)
-    dc     = mcolors.to_rgba(marketcolors['candle']['down'], alpha)
-    colors = _updown_colors(uc, dc, opens, closes)
+    overrides = config['marketcolor_overrides']
+    faceonly  = config['mco_faceonly']
 
-    uc     = mcolors.to_rgba(marketcolors['edge'][ 'up' ], 1.0)
-    dc     = mcolors.to_rgba(marketcolors['edge']['down'], 1.0)
-    edgecolor = _updown_colors(uc, dc, opens, closes)
-    
-    uc     = mcolors.to_rgba(marketcolors['wick'][ 'up' ], 1.0)
-    dc     = mcolors.to_rgba(marketcolors['wick']['down'], 1.0)
-    wickcolor = _updown_colors(uc, dc, opens, closes)
+    colors    = _make_updown_color_list('candle',marketcolors,opens,closes,overrides)
+    colors    = [ _mpf_to_rgba(c,alpha) for c in colors ] # include alpha
+    if faceonly: overrides = None
+    edgecolor = _make_updown_color_list('edge',marketcolors,opens,closes,overrides)
+    wickcolor = _make_updown_color_list('wick',marketcolors,opens,closes,overrides)
 
     lw = config['_width_config']['candle_linewidth']
 

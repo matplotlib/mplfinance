@@ -39,7 +39,7 @@ from mplfinance._arg_validators import _hlines_validator, _vlines_validator
 from mplfinance._arg_validators import _alines_validator, _tlines_validator
 from mplfinance._arg_validators import _scale_padding_validator, _yscale_validator
 from mplfinance._arg_validators import _valid_panel_id, _check_for_external_axes
-from mplfinance._arg_validators import _xlim_validator
+from mplfinance._arg_validators import _xlim_validator, _mco_validator
 
 from mplfinance._panels import _build_panels
 from mplfinance._panels import _set_ticks_on_bottom_panel_only
@@ -123,8 +123,11 @@ def _valid_plot_kwargs():
         'study'                     : { 'Default'     : None,
                                         'Validator'   : lambda value: _kwarg_not_implemented(value) }, 
  
-        'marketcolors'              : { 'Default'     : None, # use 'style' for default, instead.
-                                        'Validator'   : lambda value: isinstance(value,dict) },
+        'marketcolor_overrides'     : { 'Default'     : None, 
+                                        'Validator'   : _mco_validator },
+ 
+        'mco_faceonly'              : { 'Default'     : False, # If True: Override only the face of the candle
+                                        'Validator'   : lambda value: isinstance(value,bool) },
  
         'no_xgaps'                  : { 'Default'     : True,  # None means follow default logic below:
                                         'Validator'   : lambda value: _warn_no_xgaps_deprecated(value) },
@@ -302,6 +305,10 @@ def plot( data, **kwargs ):
     if config['type'] in VALID_PMOVE_TYPES and config['addplot'] is not None:
         err = "`addplot` is not supported for `type='" + config['type'] +"'`"
         raise ValueError(err)
+
+    if config['marketcolor_overrides'] is not None:
+        if len(config['marketcolor_overrides']) != len(dates):
+            raise ValueError('`marketcolor_overrides` must be same length as dataframe.')
 
     external_axes_mode = _check_for_external_axes(config)
 
