@@ -39,7 +39,7 @@ from mplfinance._arg_validators import _hlines_validator, _vlines_validator
 from mplfinance._arg_validators import _alines_validator, _tlines_validator
 from mplfinance._arg_validators import _scale_padding_validator, _yscale_validator
 from mplfinance._arg_validators import _valid_panel_id, _check_for_external_axes
-from mplfinance._arg_validators import _xlim_validator, _mco_validator
+from mplfinance._arg_validators import _xlim_validator, _mco_validator, _is_marketcolor_object
 
 from mplfinance._panels import _build_panels
 from mplfinance._panels import _set_ticks_on_bottom_panel_only
@@ -867,7 +867,7 @@ def _addplot_collections(panid,panels,apdict,xdates,config):
     d,o,h,l,c,v = _check_and_prepare_data(apdata,config)
     
     mc = apdict['marketcolors']
-    if isinstance(mc,dict):
+    if _is_marketcolor_object(mc):
         apstyle = config['style'].copy()
         apstyle['marketcolors'] = mc
     else:
@@ -1115,7 +1115,7 @@ def _valid_addplot_kwargs():
                           'Validator'   : lambda value : value in valid_stepwheres },     
         
         'marketcolors' : { 'Default'     : None, # use 'style' for default, instead.
-                          'Validator'   : lambda value: isinstance(value,dict) },
+                          'Validator'   : lambda value: _is_marketcolor_object(value) },
     }
 
     _validate_vkwargs_dict(vkwargs)
