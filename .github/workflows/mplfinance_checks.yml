@@ -1,0 +1,76 @@
+name: mplfinance Checks
+on: [ workflow_dispatch, pull_request ]
+jobs:
+  Regression_Tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8, 3.9]
+    steps:
+      - name: Preliminary Information
+        run: |
+          echo "The job was automatically triggered by a ${{ github.event_name }} event."
+          echo "This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+          echo "The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+          echo "  "
+          echo "github.ref = ${{ github.ref }}"
+          echo "github.sha = ${{ github.sha }}"
+          echo "github.event.pull_request.head.ref = ${{ github.event.pull_request.head.ref }}"
+          echo "github.event.pull_request.head.sha = ${{ github.event.pull_request.head.sha }}"
+          echo "github.event.pull_request.base.ref = ${{ github.event.pull_request.base.ref }}"
+          echo "github.event.pull_request.base.sha = ${{ github.event.pull_request.base.sha }}"
+          echo "  "
+
+      - name: Check out repository code
+        uses: actions/checkout@v2
+
+      - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Install My Package
+        run: pip install .
+
+      - name: Run Pytest
+        run: python -m pytest
+
+      - run: echo "This job's status is ${{ job.status }}."
+
+  Pull_Request_Updates_Version:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install packaging
+
+      - name: Fetch base and head on PR
+        if: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git fetch origin master ${{ github.event.pull_request.base.sha }}
+          git fetch origin master ${{ github.event.pull_request.head.sha }}
+
+      - name: Check that Pull Request includes updating the Version
+        run: |
+          git show ${{ github.event.pull_request.base.sha }}:src/mplfinance/_version.py > scripts/tv0.py
+          git show ${{ github.sha }}:src/mplfinance/_version.py > scripts/tv1.py
+          python scripts/version_update_check.py tv0 tv1
+

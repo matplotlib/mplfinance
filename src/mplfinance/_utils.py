@@ -17,6 +17,7 @@ from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 from mplfinance._arg_validators import _alines_validator, _bypass_kwarg_validation
 from mplfinance._arg_validators import _xlim_validator, _is_datelike
 from mplfinance._styles         import _get_mpfstyle
+from mplfinance._helpers        import _mpf_to_rgba
 
 from six.moves import zip
 
@@ -177,8 +178,13 @@ def coalesce_volume_dates(in_volumes, in_dates, indexes):
 
 
 def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False):
+    # -----------------------------------------------------
+    # Note that `nan` values result in `opn < cls` == False
+    # In other words, nans don't get plotted by collections
+    # but this function will choose DOWN COLOR for nans.
+    # -----------------------------------------------------
     if upcolor == downcolor:
-        return upcolor
+        return [upcolor]*len(opens)
     cmap = {True : upcolor, False : downcolor}
     if not use_prev_close:
         return [ cmap[opn < cls] for opn,cls in zip(opens,closes) ]
@@ -187,7 +193,22 @@ def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False):
         _list = [ cmap[pre < cls] for cls,pre in zip(closes[1:], closes) ]
         return [first] + _list
 
-
+def _make_updown_color_list(key,marketcolors,opens,closes,overrides=None):
+    length = len(opens)
+    ups    = [marketcolors[key][ 'up' ]]*length
+    downs  = [marketcolors[key]['down']]*length
+    if overrides is not None:
+        for ix,mco in enumerate(overrides):
+            if mco is None: continue
+            if mcolors.is_color_like(mco):
+                ups[ix]   = mco
+                downs[ix] = mco
+            else: # assume it is correctly a marketcolors object (dict)
+                ups[ix]   = mco[key][ 'up' ]
+                downs[ix] = mco[key]['down']
+    return [ups[ix] if opens[ix] < closes[ix] else downs[ix] for ix in range(length)]
+       
+                
 def _updownhollow_colors(upcolor,downcolor,hollowcolor,opens,closes):
     if upcolor == downcolor:
         return upcolor
@@ -427,7 +448,8 @@ def _valid_lines_kwargs():
                                             ( isinstance(value,(list,tuple)) and
                                               all([mcolors.is_color_like(v) for v in value]) ) },
         'linestyle' : { 'Default'     : '-',
-                        'Validator'   : lambda value: value is None or value in valid_linestyles },
+                        'Validator'   : lambda value: value is None or value in valid_linestyles or
+                                            all([v in valid_linestyles for v in value]) },
         'linewidths': { 'Default'     : None,
                         'Validator'   : lambda value: value is None or
                                             isinstance(value,(float,int)) or 
@@ -497,13 +519,11 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=
     # we'll translate these to the date, close location
     closeSegments = [((dt, close), (dt+ticksize, close)) for dt, close in zip(dates, closes)]
 
-    if mktcolors['up'] == mktcolors['down']:
+    if mktcolors['up'] == mktcolors['down'] and config['marketcolor_overrides'] is None:
         colors = mktcolors['up']
     else:
-        colorup = mcolors.to_rgba(mktcolors['up'])
-        colordown = mcolors.to_rgba(mktcolors['down'])
-        colord = {True: colorup, False: colordown}
-        colors = [colord[open < close] for open, close in zip(opens, closes)]
+        overrides = config['marketcolor_overrides']
+        colors    = _make_updown_color_list('ohlc',marketcolors,opens,closes,overrides)
 
     lw = config['_width_config']['ohlc_linewidth']
 
@@ -581,17 +601,14 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
 
     alpha  = marketcolors['alpha']
 
-    uc     = mcolors.to_rgba(marketcolors['candle'][ 'up' ], alpha)
-    dc     = mcolors.to_rgba(marketcolors['candle']['down'], alpha)
-    colors = _updown_colors(uc, dc, opens, closes)
+    overrides = config['marketcolor_overrides']
+    faceonly  = config['mco_faceonly']
 
-    uc     = mcolors.to_rgba(marketcolors['edge'][ 'up' ], 1.0)
-    dc     = mcolors.to_rgba(marketcolors['edge']['down'], 1.0)
-    edgecolor = _updown_colors(uc, dc, opens, closes)
-    
-    uc     = mcolors.to_rgba(marketcolors['wick'][ 'up' ], 1.0)
-    dc     = mcolors.to_rgba(marketcolors['wick']['down'], 1.0)
-    wickcolor = _updown_colors(uc, dc, opens, closes)
+    colors    = _make_updown_color_list('candle',marketcolors,opens,closes,overrides)
+    colors    = [ _mpf_to_rgba(c,alpha) for c in colors ] # include alpha
+    if faceonly: overrides = None
+    edgecolor = _make_updown_color_list('edge',marketcolors,opens,closes,overrides)
+    wickcolor = _make_updown_color_list('wick',marketcolors,opens,closes,overrides)
 
     lw = config['_width_config']['candle_linewidth']
 
@@ -1124,7 +1141,7 @@ def _construct_aline_collections(alines, dtix=None):
         'alines'     : the same as defined above: sequence of price, or dates, or segments
         'colors'     : colors for the above alines
         'linestyle'  : line types for the above alines
-        'linewidths' : line types for the above alines
+        'linewidths' : line widths for the above alines
 
     dtix:  date index for the x-axis, used for converting the dates when
            x-values are 'evenly spaced integers' (as when skipping non-trading days)
@@ -1174,7 +1191,7 @@ def _construct_hline_collections(hlines,minx,maxx):
         'hlines'     : the same as defined above: sequence of price, or dates, or segments
         'colors'     : colors for the above hlines
         'linestyle'  : line types for the above hlines
-        'linewidths' : line types for the above hlines
+        'linewidths' : line widths for the above hlines
 
     minx : the minimum value for x for the horizontal line, already converted to `xdates` format
     maxx : the maximum value for x for the horizontal line, already converted to `xdates` format
@@ -1234,7 +1251,7 @@ def _construct_vline_collections(vlines,dtix,miny,maxy):
         'vlines'     : the same as defined above: sequence of dates/datetimes
         'colors'     : colors for the above vlines
         'linestyle'  : line types for the above vlines
-        'linewidths' : line types for the above vlines
+        'linewidths' : line widths for the above vlines
 
     dtix:  date index for the x-axis, used for converting the dates when
            x-values are 'evenly spaced integers' (as when skipping non-trading days)
@@ -1300,7 +1317,7 @@ def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes
         'tlines'     : the same as defined above: sequence of pairs of date[time]s
         'colors'     : colors for the above tlines
         'linestyle'  : line types for the above tlines
-        'linewidths' : line types for the above tlines
+        'linewidths' : line widths for the above tlines
 
     dtix:  date index for the x-axis, used for converting the dates when
            x-values are 'evenly spaced integers' (as when skipping non-trading days)

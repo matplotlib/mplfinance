@@ -39,7 +39,7 @@ from mplfinance._arg_validators import _hlines_validator, _vlines_validator
 from mplfinance._arg_validators import _alines_validator, _tlines_validator
 from mplfinance._arg_validators import _scale_padding_validator, _yscale_validator
 from mplfinance._arg_validators import _valid_panel_id, _check_for_external_axes
-from mplfinance._arg_validators import _xlim_validator
+from mplfinance._arg_validators import _xlim_validator, _mco_validator
 
 from mplfinance._panels import _build_panels
 from mplfinance._panels import _set_ticks_on_bottom_panel_only
@@ -66,7 +66,7 @@ def with_rc_context(func):
 
 def _warn_no_xgaps_deprecated(value):
     warnings.warn('\n\n ================================================================= '+
-                  '\n\n   WARNING: `no_xgaps` is deprecated:'+
+                  '\n\n   WARNING: `no_xgaps` is /deprecated/:'+
                   '\n     Default value is now `no_xgaps=True`'+
                   '\n     However, to set `no_xgaps=False` and silence this warning,'+
                   '\n     use instead: `show_nontrading=True`.'+
@@ -123,8 +123,11 @@ def _valid_plot_kwargs():
         'study'                     : { 'Default'     : None,
                                         'Validator'   : lambda value: _kwarg_not_implemented(value) }, 
  
-        'marketcolors'              : { 'Default'     : None, # use 'style' for default, instead.
-                                        'Validator'   : lambda value: isinstance(value,dict) },
+        'marketcolor_overrides'     : { 'Default'     : None, 
+                                        'Validator'   : _mco_validator },
+ 
+        'mco_faceonly'              : { 'Default'     : False, # If True: Override only the face of the candle
+                                        'Validator'   : lambda value: isinstance(value,bool) },
  
         'no_xgaps'                  : { 'Default'     : True,  # None means follow default logic below:
                                         'Validator'   : lambda value: _warn_no_xgaps_deprecated(value) },
@@ -302,6 +305,10 @@ def plot( data, **kwargs ):
     if config['type'] in VALID_PMOVE_TYPES and config['addplot'] is not None:
         err = "`addplot` is not supported for `type='" + config['type'] +"'`"
         raise ValueError(err)
+
+    if config['marketcolor_overrides'] is not None:
+        if len(config['marketcolor_overrides']) != len(dates):
+            raise ValueError('`marketcolor_overrides` must be same length as dataframe.')
 
     external_axes_mode = _check_for_external_axes(config)
 
@@ -916,10 +923,13 @@ def _addplot_columns(panid,panels,ydata,apdict,xdates,config):
         mark  = apdict['marker']
         color = apdict['color']
         alpha = apdict['alpha']
+        edgecolors  = apdict['edgecolors']
+        linewidths = apdict['linewidths']
+
         if isinstance(mark,(list,tuple,np.ndarray)):
-            _mscatter(xdates,ydata,ax=ax,m=mark,s=size,color=color,alpha=alpha)
+            _mscatter(xdates, ydata, ax=ax, m=mark, s=size, color=color, alpha=alpha, edgecolors=edgecolors, linewidths=linewidths)
         else:
-            ax.scatter(xdates,ydata,s=size,marker=mark,color=color,alpha=alpha)
+            ax.scatter(xdates, ydata, s=size, marker=mark, color=color, alpha=alpha, edgecolors=edgecolors, linewidths=linewidths)
     elif aptype == 'bar':
         width  = 0.8 if apdict['width'] is None else apdict['width']
         bottom = apdict['bottom']
@@ -1034,6 +1044,7 @@ def _valid_addplot_kwargs():
     valid_linestyles = ('-','solid','--','dashed','-.','dashdot','.','dotted',None,' ','')
     valid_types = ('line','scatter','bar', 'ohlc', 'candle','step')
     valid_stepwheres = ('pre','post','mid')
+    valid_edgecolors = ('face', 'none', None)
 
     vkwargs = {
         'scatter'     : { 'Default'     : False,
@@ -1061,7 +1072,13 @@ def _valid_addplot_kwargs():
         'linestyle'   : { 'Default'     : None,
                           'Validator'   : lambda value: value in valid_linestyles },
 
-        'width'       : { 'Default'     : None, # width of `bar` or `line` 
+        'linewidths': {'Default': None,
+                      'Validator'   : lambda value: isinstance(value,(int,float)) },
+
+        'edgecolors': {'Default': None,
+                       'Validator': lambda value: mcolors.is_color_like(value) or value in valid_edgecolors},
+
+        'width'       : { 'Default'     : None, # width of `bar` or `line`
                           'Validator'   : lambda value: isinstance(value,(int,float)) or
                                                         all([isinstance(v,(int,float)) for v in value]) },
 
