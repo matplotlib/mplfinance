@@ -919,7 +919,7 @@ def _addplot_columns(panid,panels,ydata,apdict,xdates,config):
         linewidths = apdict['linewidths']
 
         if isinstance(mark,(list,tuple,np.ndarray)):
-            _mscatter(xdates,ydata,ax=ax,m=mark,s=size,color=color,alpha=alpha)
+            _mscatter(xdates, ydata, ax=ax, m=mark, s=size, color=color, alpha=alpha, edgecolors=edgecolors, linewidths=linewidths)
         else:
             ax.scatter(xdates, ydata, s=size, marker=mark, color=color, alpha=alpha, edgecolors=edgecolors, linewidths=linewidths)
     elif aptype == 'bar':
