@@ -43,41 +43,49 @@ def make_left_formatter(maxwidth):
             return f'{value:<{w}.{w}s}'
     return left_formatter
 
-WRAPLEN=55
+def df_wrapcols(df,wrap_columns=None):
 
-def df_wrapcol(df,wrap_column=None,wrap_length=None):
+    if wrap_columns is None: return df
+    if not isinstance(wrap_columns,dict):
+        raise TypeError('wrap_columns must be a dict of column_names and wrap_lengths')
 
-    if wrap_column is None: return df
-    if wrap_length is None: return df
+    for col in wrap_columns:
+        if col not in df.columns:
+            raise ValueError('column "'+str(col)+'" not found in df.columns')
 
     index = []
-    columns = {}
+    column_data = {}
     for col in df.columns:
-        columns[col] = []
-    nonwrapcols = [col for col in df.columns if col != wrap_column]
-
+        column_data[col] = []
+  
     for ix in df.index:
         row = df.loc[ix,]
+        
+        row_data = {}
+        for col in row.index:
+            cstr = str(row[col])
+            if col in wrap_columns:
+                wlen = wrap_columns[col]
+                tw   = textwrap.wrap(cstr,wlen) if not cstr.isspace() else [' ']
+            else:
+                tw = [cstr]
+            row_data[col] = tw
 
-        swrap = str(row[wrap_column])
-        tw  = textwrap.wrap(swrap,wrap_length) if not swrap.isspace() else [' ']
+        cmax = max(row_data,key=lambda k: len(row_data[k]))
+        rlen = len(row_data[cmax])
+        for r in range(rlen):
+            for col in row.index:
+                extension = [' ']*(rlen - len(row_data[col]))
+                row_data[col].extend(extension)
+                column_data[col].append(row_data[col][r])
+            ixstr = str(ix)+'.'+str(r) if r > 0 else str(ix)
+            index.append(ixstr)
 
-        columns[wrap_column].append(tw[0])
-        index.append(str(ix))
-        for col in nonwrapcols:
-            columns[col].append(row[col])
+    return pd.DataFrame(column_data,index=index)
 
-        if len(tw) > 1:
-            for r in range(1,len(tw)):
-                columns[wrap_column].append(tw[r])
-                index.append(str(ix)+'.'+str(r))
-                for col in nonwrapcols:
-                    columns[col].append(' ')
+WRAPLEN = 55
 
-    return pd.DataFrame(columns,index=index)
-
-
-df = df_wrapcol(df,wrap_column='Description',wrap_length=WRAPLEN)
+df = df_wrapcols(df,wrap_columns={'Description':WRAPLEN})
 print('===========================')
 print('dfnew1=',df)
 
