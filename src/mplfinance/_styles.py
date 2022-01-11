@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
 import copy
 import pprint
 import os.path as path
 
 from   mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 from   mplfinance._styledata      import _styles
+from   mplfinance._helpers        import _mpf_is_color_like
 
 
 def _get_mpfstyle(style):
@@ -74,7 +74,8 @@ def _valid_make_mpf_style_kwargs():
 
         'mavcolors'     : { 'Default'     : None,
                             'Description' : '',
-                            'Validator'   : lambda value: isinstance(value,list) },  # TODO: all([mcolors.is_color_like(v) for v in value.values()])
+                            'Validator'   : lambda value: isinstance(value,list) },  # TODO: all([_mpf_is_color_like(v) for v in value.values()])
+
 
         'facecolor'     : { 'Default'     : None,
                             'Description' : '',
@@ -169,10 +170,10 @@ def make_mpf_style( **kwargs ):
 
 def _valid_mpf_color_spec(value):
     'value must be a color, "inherit"-like, or dict of colors'
-    return ( mcolors.is_color_like(value) or 
+    return ( _mpf_is_color_like(value) or 
              ( isinstance(value,str) and value == 'inherit'[0:len(value)]) or
              ( isinstance(value,dict) and
-               all([mcolors.is_color_like(v) for v in value.values()])
+               all([_mpf_is_color_like(v) for v in value.values()])
              )
            )
 
@@ -249,6 +250,7 @@ def _valid_make_marketcolors_kwargs():
                             'Description' : '',
                             'Validator'   : lambda value: isinstance(value,bool) },
 
+
         'inherit'       : { 'Default'     : False,
                             'Description' : '',
                             'Validator'   : lambda value: isinstance(value,bool) },
@@ -313,7 +315,7 @@ def make_marketcolors(**kwargs):
         else:
             colors = dict(up=value, down=value)
         for updown in ['up','down']:
-            if not mcolors.is_color_like(colors[updown]):
+            if not _mpf_is_color_like(colors[updown]):
                 err = f'NOT is_color_like() for {key}[\'{updown}\'] = {colors[updown]}'
                 raise ValueError(err)
         return colors

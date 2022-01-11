@@ -7,4 +7,4 @@
   - [**`python mpf_animation_demo1.py`**](https://github.com/matplotlib/mplfinance/blob/master/examples/mpf_animation_demo1.py)
   - [**`python mpf_animation_demo2.py`**](https://github.com/matplotlib/mplfinance/blob/master/examples/mpf_animation_demo2.py)
   - [**`python mpf_animation_macd.py`**](https://github.com/matplotlib/mplfinance/blob/master/examples/mpf_animation_macd.py)
-    
+  - [**`python mpf_animation_growingcandle.py`**](https://github.com/matplotlib/mplfinance/blob/master/examples/mpf_animation_growingcandle.py)    
