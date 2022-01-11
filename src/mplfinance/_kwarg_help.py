@@ -122,8 +122,13 @@ def kwarg_help( func_name=None, kwarg_names=None ):
         df = df[ df['Kwarg'].isin(kwarg_names) ]
         if len(df) < 1:
             raise ValueError(' None of specified `kwarg_names` are valid for `func_name` "'+func_name,'"')
+
+    df['Default'] = ["'"+d+"'" if isinstance(d,str) else str(d) for d in df['Default']]
         
-    wraplen = 80 - (df['Kwarg'].str.len().max()+1 + 8)
+    klen = df['Kwarg'].str.len().max()+1
+    dlen = df['Default'].str.len().max()+1
+
+    wraplen = 80 - ( klen + dlen )
     df = df_wrapcols(df,wrap_columns={'Description':wraplen})
 
     dividers = []
@@ -135,8 +140,8 @@ def kwarg_help( func_name=None, kwarg_names=None ):
 
     df = dfd.append(df)
 
-    formatters = { 'Kwarg'       : make_left_formatter(df['Kwarg'].str.len().max()+1),
-                   'Default'     : make_left_formatter( 8 ),
+    formatters = { 'Kwarg'       : make_left_formatter( klen ),
+                   'Default'     : make_left_formatter( dlen ),
                    'Description' : make_left_formatter( wraplen ),
                  }
     
