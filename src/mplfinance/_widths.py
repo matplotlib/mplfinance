@@ -29,57 +29,77 @@ def _get_widths_df():
 
 _widths = _get_widths_df()
 
+
 def _valid_scale_width_kwargs():
     vkwargs = {
         'ohlc'             : { 'Default'     : None,
+                               'Description' : '',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'volume'           : { 'Default'     : None,
+                               'Description' : '',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'candle'           : { 'Default'     : None,
+                               'Description' : '',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'lines'            : { 'Default'     : None,
+                               'Description' : '',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'volume_linewidth' : { 'Default'     : None,
+                               'Description' : '',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'ohlc_linewidth'   : { 'Default'     : None,
+                               'Description' : '',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'candle_linewidth' : { 'Default'     : None,
+                               'Description' : '',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
     }
+
     _validate_vkwargs_dict(vkwargs)
+
     return vkwargs
+
 
 def _valid_update_width_kwargs():
     vkwargs = {
 
         'ohlc_ticksize'    : { 'Default'     : None,
+                               'Description' : '',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'ohlc_linewidth'   : { 'Default'     : None,
+                               'Description' : '',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'volume_width'     : { 'Default'     : None,
+                               'Description' : '',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'volume_linewidth' : { 'Default'     : None,
+                               'Description' : '',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'candle_width'     : { 'Default'     : None,
+                               'Description' : '',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'candle_linewidth' : { 'Default'     : None,
+                               'Description' : '',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'line_width'       : { 'Default'     : None,
+                               'Description' : '',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
     }
+
     _validate_vkwargs_dict(vkwargs)
+
     return vkwargs
 
 

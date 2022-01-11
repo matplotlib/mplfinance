@@ -64,6 +64,7 @@ def _check_input(opens, closes, highs, lows):
     if not same_missing:
         raise ValueError('O,H,L,C must have the same missing data!')
 
+
 def _check_and_convert_xlim_configuration(data, config):
     '''
     Check, if user entered `xlim` kwarg, if user entered dates
@@ -375,9 +376,10 @@ def _valid_renko_kwargs():
     '''
     Construct and return the "valid renko kwargs table" for the mplfinance.plot(type='renko') 
     function. A valid kwargs table is a `dict` of `dict`s. The keys of the outer dict are 
-    the valid key-words for the function.  The value for each key is a dict containing 2 
-    specific keys: "Default", and "Validator" with the following values:
+    the valid key-words for the function.  The value for each key is a dict containing 3 
+    specific keys: "Default", "Description" and "Validator" with the following values:
         "Default"      - The default value for the kwarg if none is specified.
+        "Description"  - The description for the kwarg.
         "Validator"    - A function that takes the caller specified value for the kwarg,
                          and validates that it is the correct type, and (for kwargs with 
                          a limited set of allowed values) may also validate that the
@@ -385,22 +387,28 @@ def _valid_renko_kwargs():
     '''
     vkwargs = {
         'brick_size'  : { 'Default'     : 'atr',
-                          'Validator'   : lambda value: isinstance(value,(float,int)) or value == 'atr' },
+                          'Description' : '',
+                          'Validator'   : lambda value: isinstance(value,(float,int))
+                                                        or value == 'atr' },
         'atr_length'  : { 'Default'     : 14,
-                          'Validator'   : lambda value: isinstance(value,int) or value == 'total' },               
+                          'Description' : '',
+                          'Validator'   : lambda value: isinstance(value,int)
+                                                        or value == 'total' },
     }
 
     _validate_vkwargs_dict(vkwargs)
 
     return vkwargs
 
+
 def _valid_pnf_kwargs():
     '''
     Construct and return the "valid pnf kwargs table" for the mplfinance.plot(type='pnf') 
     function. A valid kwargs table is a `dict` of `dict`s. The keys of the outer dict are 
-    the valid key-words for the function.  The value for each key is a dict containing 2 
-    specific keys: "Default", and "Validator" with the following values:
+    the valid key-words for the function.  The value for each key is a dict containing 3 
+    specific keys: "Default", "Description" and "Validator" with the following values:
         "Default"      - The default value for the kwarg if none is specified.
+        "Description"  - The description for the kwarg.
         "Validator"    - A function that takes the caller specified value for the kwarg,
                          and validates that it is the correct type, and (for kwargs with 
                          a limited set of allowed values) may also validate that the
@@ -408,25 +416,33 @@ def _valid_pnf_kwargs():
     '''
     vkwargs = {
         'box_size'    : { 'Default'     : 'atr',
-                          'Validator'   : lambda value: isinstance(value,(float,int)) or value == 'atr' },
+                          'Description' : '',
+                          'Validator'   : lambda value: isinstance(value,(float,int))
+                                                        or value == 'atr' },
         'atr_length'  : { 'Default'     : 14,
-                          'Validator'   : lambda value: isinstance(value,int) or value == 'total' },
+                          'Description' : '',
+                          'Validator'   : lambda value: isinstance(value,int)
+                                                        or value == 'total' },
+
         'reversal'    : { 'Default'     : 1,
-                          'Validator'   : lambda value: isinstance(value,int) }               
+                          'Description' : '',
+                          'Validator'   : lambda value: isinstance(value,int) },
     }
 
     _validate_vkwargs_dict(vkwargs)
 
     return vkwargs
 
+
 def _valid_lines_kwargs():
     '''
     Construct and return the "valid lines (hlines,vlines,alines,tlines) kwargs table" 
     for the mplfinance.plot() `[h|v|a|t]lines=` kwarg functions.
     A valid kwargs table is a `dict` of `dict`s. The keys of the outer dict are 
-    the valid key-words for the function.  The value for each key is a dict containing 2 
-    specific keys: "Default", and "Validator" with the following values:
+    the valid key-words for the function.  The value for each key is a dict containing 3 
+    specific keys: "Default", "Description" and "Validator" with the following values:
         "Default"      - The default value for the kwarg if none is specified.
+        "Description"  - The description for the kwarg.
         "Validator"    - A function that takes the caller specified value for the kwarg,
                          and validates that it is the correct type, and (for kwargs with 
                          a limited set of allowed values) may also validate that the
@@ -435,33 +451,53 @@ def _valid_lines_kwargs():
     valid_linestyles = ['-','solid','--','dashed','-.','dashdot',':','dotted',None,' ','']
     vkwargs = {
         'hlines'    : { 'Default'     : None,
+                        'Description' : '',
                         'Validator'   : _bypass_kwarg_validation },
+
         'vlines'    : { 'Default'     : None,
+                        'Description' : '',
                         'Validator'   : _bypass_kwarg_validation },
+
         'alines'    : { 'Default'     : None,
+                        'Description' : '',
                         'Validator'   : _bypass_kwarg_validation },
+
         'tlines'    : { 'Default'     : None,
+                        'Description' : '',
                         'Validator'   : _bypass_kwarg_validation },
+
         'colors'    : { 'Default'     : None,
-                        'Validator'   : lambda value: value is None or
-                                            mcolors.is_color_like(value) or
-                                            ( isinstance(value,(list,tuple)) and
-                                              all([mcolors.is_color_like(v) for v in value]) ) },
+                        'Description' : '',
+                        'Validator'   : lambda value: value is None
+                                                      or mcolors.is_color_like(value)
+                                                      or (isinstance(value,(list,tuple))
+                                                          and all([mcolors.is_color_like(v) for v in value]) ) },
+
         'linestyle' : { 'Default'     : '-',
+                        'Description' : '',
                         'Validator'   : lambda value: value is None or value in valid_linestyles or
                                             all([v in valid_linestyles for v in value]) },
+      
         'linewidths': { 'Default'     : None,
-                        'Validator'   : lambda value: value is None or
-                                            isinstance(value,(float,int)) or 
-                                            all([isinstance(v,(float,int)) for v in value]) },
+                        'Description' : '',
+                        'Validator'   : lambda value: value is None
+                                                      or isinstance(value,(float,int))
+                                                      or all([isinstance(v,(float,int)) for v in value]) },
+
         'alpha'     : { 'Default'     : 1.0,
+                        'Description' : '',
                         'Validator'   : lambda value: isinstance(value,(float,int)) },
 
-        'tline_use' : { 'Default'     : 'close', 
-                        'Validator'   : lambda value: isinstance(value,str) or (isinstance(value,(list,tuple)) and
-                                                                      all([isinstance(v,str) for v in value]) ) },
-        'tline_method': { 'Default'   : 'point-to-point',
-                          'Validator' : lambda value: value in ['point-to-point','least-squares'] }
+
+        'tline_use' : { 'Default'     : 'close',
+                        'Description' : '',
+                        'Validator'   : lambda value: isinstance(value,str)
+                                                      or (isinstance(value,(list,tuple))
+                                                          and all([isinstance(v,str) for v in value]) ) },
+
+        'tline_method': { 'Default'     : 'point-to-point',
+                          'Description' : '',
+                          'Validator'   : lambda value: value in ['point-to-point','least-squares'] }
     }
 
     _validate_vkwargs_dict(vkwargs)

@@ -7,3 +7,5 @@ __pycache__
 .tox/
 .cache/
 *.code-workspace
+examples/.ipynb_checkpoints/
+examples/scratch_pad/.ipynb_checkpoints/

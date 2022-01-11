@@ -99,182 +99,241 @@ def _valid_plot_kwargs():
 
     vkwargs = {
         'columns'                   : { 'Default'     : None, # use default names: ('Open', 'High', 'Low', 'Close', 'Volume')
+                                        'Description' : ('Column names to be used when plotting the data.'+
+                                                         ' Default: ("Open", "High", "Low", "Close", "Volume")'),
                                         'Validator'   : lambda value: isinstance(value, (tuple, list))
                                                                    and len(value) == 5
                                                                    and all(isinstance(c, str) for c in value) },
         'type'                      : { 'Default'     : 'ohlc',
+                                        'Description' : 'Plot type: '+str(_get_valid_plot_types()),
                                         'Validator'   : lambda value: value in _get_valid_plot_types() },
  
         'style'                     : { 'Default'     : None,
+                                        'Description' : 'plot style; see `mpf.available_styles()`',
                                         'Validator'   : _styles._valid_mpf_style },
  
         'volume'                    : { 'Default'     : False,
+                                        'Description' : 'Plot volume: True, False, or set to Axes object on which to plot.',
                                         'Validator'   : lambda value: isinstance(value,bool) or isinstance(value,mpl_axes.Axes) },
  
         'mav'                       : { 'Default'     : None,
+                                        'Description' : 'Moving Average window size(s); (int or tuple of ints)',
                                         'Validator'   : _mav_validator },
         
         'renko_params'              : { 'Default'     : dict(),
+                                        'Description' : '',
                                         'Validator'   : lambda value: isinstance(value,dict) },
 
         'pnf_params'                : { 'Default'     : dict(),
+                                        'Description' : '',
                                         'Validator'   : lambda value: isinstance(value,dict) },
  
         'study'                     : { 'Default'     : None,
+                                        'Description' : '',
                                         'Validator'   : lambda value: _kwarg_not_implemented(value) }, 
  
         'marketcolor_overrides'     : { 'Default'     : None, 
+                                        'Description' : '',
                                         'Validator'   : _mco_validator },
  
         'mco_faceonly'              : { 'Default'     : False, # If True: Override only the face of the candle
+                                        'Description' : '',
                                         'Validator'   : lambda value: isinstance(value,bool) },
  
         'no_xgaps'                  : { 'Default'     : True,  # None means follow default logic below:
+                                        'Description' : '',
                                         'Validator'   : lambda value: _warn_no_xgaps_deprecated(value) },
  
         'show_nontrading'           : { 'Default'     : False, 
+                                        'Description' : '',
                                         'Validator'   : lambda value: isinstance(value,bool) },
  
         'figscale'                  : { 'Default'     : None, # scale base figure size up or down.
+                                        'Description' : 'Scale figure size up (if > 1) or down (if < 1)',
                                         'Validator'   : lambda value: isinstance(value,float) or isinstance(value,int) },
  
         'figratio'                  : { 'Default'     : None, # aspect ratio; scaled to 8.0 height
+                                        'Description' : 'Aspect ratio of the figure. Default: (8.00,5.75)',
                                         'Validator'   : lambda value: isinstance(value,(tuple,list))
                                                                       and len(value) == 2
                                                                       and isinstance(value[0],(float,int))
                                                                       and isinstance(value[1],(float,int)) },
  
         'figsize'                   : { 'Default'     : None,  # figure size; overrides figratio and figscale
+                                        'Description' : ('Figure size: overrides both figscale and figratio,'+
+                                                        ' else defaults to figratio*figscale'),
                                         'Validator'   : lambda value: isinstance(value,(tuple,list))
                                                                       and len(value) == 2
                                                                       and isinstance(value[0],(float,int))
                                                                       and isinstance(value[1],(float,int)) },
 
         'fontscale'                 : { 'Default'     : None, # scale all fonts up or down
+                                        'Description' : 'Scale font sizes up (if > 1) or down (if < 1)',
                                         'Validator'   : lambda value: isinstance(value,float) or isinstance(value,int) },
  
         'linecolor'                 : { 'Default'     : None, # line color in line plot
+                                        'Description' : 'Line color for `type=line`',
                                         'Validator'   : lambda value: mcolors.is_color_like(value) },
 
         'title'                     : { 'Default'     : None, # Figure Title
+                                        'Description' : 'Figure Title (see also `axtitle`)',
                                         'Validator'   : lambda value: isinstance(value,(str,dict)) },
  
         'axtitle'                   : { 'Default'     : None, # Axes Title (subplot title)
+                                        'Description' : 'Axes Title (subplot title)',
                                         'Validator'   : lambda value: isinstance(value,(str,dict)) },
  
         'ylabel'                    : { 'Default'     : 'Price', # y-axis label
+                                        'Description' : '',
                                         'Validator'   : lambda value: isinstance(value,str) },
  
         'ylabel_lower'              : { 'Default'     : None, # y-axis label default logic below
+                                        'Description' : '',
                                         'Validator'   : lambda value: isinstance(value,str) },
  
         'addplot'                   : { 'Default'     : None, 
+                                        'Description' : '',
                                         'Validator'   : lambda value: isinstance(value,dict) or (isinstance(value,list) and all([isinstance(d,dict) for d in value])) },
  
         'savefig'                   : { 'Default'     : None, 
+                                        'Description' : '',
                                         'Validator'   : lambda value: isinstance(value,dict) or isinstance(value,str) or isinstance(value, io.BytesIO) or isinstance(value, os.PathLike) },
  
         'block'                     : { 'Default'     : None, 
+                                        'Description' : '',
                                         'Validator'   : lambda value: isinstance(value,bool) },
  
         'returnfig'                 : { 'Default'     : False, 
+                                        'Description' : '',
                                         'Validator'   : lambda value: isinstance(value,bool) },
 
-        'return_calculated_values'  : {'Default'      : None,
-                                       'Validator'    : lambda value: isinstance(value, dict) and len(value) == 0},
+        'return_calculated_values'  : { 'Default'      : None,
+                                        'Description' : '',
+                                        'Validator'    : lambda value: isinstance(value, dict) and len(value) == 0},
 
-        'set_ylim'                  : {'Default'      : None,
-                                       'Validator'    : lambda value: _warn_set_ylim_deprecated(value) },
+        'set_ylim'                  : { 'Default'      : None,
+                                        'Description' : '',
+                                        'Validator'    : lambda value: _warn_set_ylim_deprecated(value) },
  
-        'ylim'                      : {'Default'      : None,
-                                       'Validator'    : lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
+        'ylim'                      : { 'Default'      : None,
+                                        'Description' : 'Limits for y-axis as tuple (min,max), i.e. (bottom,top)',
+                                        'Validator'    : lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
                                                                       and all([isinstance(v,(int,float)) for v in value])},
  
-        'xlim'                      : {'Default'      : None,
-                                       'Validator'    : lambda value: _xlim_validator(value) },
+        'xlim'                      : { 'Default'      : None,
+                                        'Description' : 'Limits for x-axis as tuple (min, max), i.e. (left,right)',
+                                        'Validator'    : lambda value: _xlim_validator(value) },
  
-        'set_ylim_panelB'           : {'Default'      : None,
-                                       'Validator'    : lambda value: _warn_set_ylim_deprecated(value) },
+        'set_ylim_panelB'           : { 'Default'      : None,
+                                        'Description' : '',
+                                        'Validator'    : lambda value: _warn_set_ylim_deprecated(value) },
  
         'hlines'                    : { 'Default'     : None, 
+                                        'Description' : '',
                                         'Validator'   : lambda value: _hlines_validator(value) },
  
         'vlines'                    : { 'Default'     : None, 
+                                        'Description' : '',
                                         'Validator'   : lambda value: _vlines_validator(value) },
 
         'alines'                    : { 'Default'     : None, 
+                                        'Description' : '',
                                         'Validator'   : lambda value: _alines_validator(value) },
  
         'tlines'                    : { 'Default'     : None, 
+                                        'Description' : '',
                                         'Validator'   : lambda value: _tlines_validator(value) },
        
         'panel_ratios'              : { 'Default'     : None,
+                                        'Description' : '',
                                         'Validator'   : lambda value: isinstance(value,(tuple,list)) and len(value) <= 10 and
                                                                       all([isinstance(v,(int,float)) for v in value]) },
 
         'main_panel'                : { 'Default'     : 0,
+                                        'Description' : '',
                                         'Validator'   : lambda value: _valid_panel_id(value) },
 
         'volume_panel'              : { 'Default'     : 1,
+                                        'Description' : '',
                                         'Validator'   : lambda value: _valid_panel_id(value) },
 
         'num_panels'                : { 'Default'     : None,
+                                        'Description' : '',
                                         'Validator'   : lambda value: isinstance(value,int) and value in range(1,10+1) },
 
         'datetime_format'           : { 'Default'     : None,
+                                        'Description' : '',
                                         'Validator'   : lambda value: isinstance(value,str) },
 
         'xrotation'                 : { 'Default'     : 45,
+                                        'Description' : 'Angle (degrees) for x-axis tick labels; 90=vertical',
                                         'Validator'   : lambda value: isinstance(value,(int,float)) },
 
         'axisoff'                   : { 'Default'     : False,
+                                        'Description' : '`axisoff=True` means do NOT display any axis.',
                                         'Validator'   : lambda value: isinstance(value,bool) },
 
         'closefig'                  : { 'Default'     : 'auto',
+                                        'Description' : '',
                                         'Validator'   : lambda value: isinstance(value,bool) },
 
         'fill_between'              : { 'Default'     : None,
+                                        'Description' : '',
                                         'Validator'   : lambda value: _num_or_seq_of_num(value) or 
                                                                      (isinstance(value,dict) and 'y1' in value and
                                                                        _num_or_seq_of_num(value['y1'])) },
 
         'tight_layout'              : { 'Default'     : False,
+                                        'Description' : '',
                                         'Validator'   : lambda value: isinstance(value,bool) },
 
         'width_adjuster_version'    : { 'Default'     : 'v1',
+                                        'Description' : '',
                                         'Validator'   : lambda value: value in ('v0', 'v1') },
 
         'scale_width_adjustment'    : { 'Default'     : None,
+                                        'Description' : '',
                                         'Validator'   : lambda value: isinstance(value,dict) and len(value) > 0 },
 
         'update_width_config'       : { 'Default'     : None,
+                                        'Description' : '',
                                         'Validator'   : lambda value: isinstance(value,dict) and len(value) > 0 },
 
         'return_width_config'       : { 'Default'     : None,
+                                        'Description' : '',
                                         'Validator'   : lambda value: isinstance(value,dict) and len(value)==0 },
 
         'saxbelow'                  : { 'Default'     : True,  # Issue#115 Comment#639446764
+                                        'Description' : '',
                                         'Validator'   : lambda value: isinstance(value,bool) },
         
         'scale_padding'             : { 'Default'     : 1.0,   # Issue#193 
+                                        'Description' : '',
                                         'Validator'   : lambda value: _scale_padding_validator(value) },
 
         'ax'                        : { 'Default'     : None,
+                                        'Description' : 'Matplotlib Axes object on which to plot',
                                         'Validator'   : lambda value: isinstance(value,mpl_axes.Axes) },
 
         'volume_exponent'           : { 'Default'     : None,
+                                        'Description' : '',
                                         'Validator'   : lambda value: isinstance(value,int) or value == 'legacy'},
 
         'tz_localize'               : { 'Default'     : True,
+                                        'Description' : '',
                                         'Validator'   : lambda value: isinstance(value,bool) },
 
         'yscale'                    : { 'Default'     : None,
+                                        'Description' : '',
                                         'Validator'   : lambda value: _yscale_validator(value) },
 
         'volume_yscale'             : { 'Default'     : None,
+                                        'Description' : '',
                                         'Validator'   : lambda value: _yscale_validator(value) },
 
         'warn_too_much_data'        : { 'Default'     : 599,
+                                        'Description' : ('Tolerance for data amount in plot. Default=599 rows.'+
+                                                         ' Values greater than \'warn_too_much_data\' will trigger a warning.'),
                                         'Validator'   : lambda value: isinstance(value,int) },
     }
 
@@ -1048,73 +1107,95 @@ def _valid_addplot_kwargs():
 
     vkwargs = {
         'scatter'     : { 'Default'     : False,
+                          'Description' : '',
                           'Validator'   : lambda value: isinstance(value,bool) },
 
         'type'        : { 'Default'     : 'line',
+                          'Description' : '',
                           'Validator'   : lambda value: value in valid_types },
 
         'mav'         : { 'Default'     : None,
+                          'Description' : '',
                           'Validator'   : _mav_validator },
         
         'panel'       : { 'Default'     : 0, 
+                          'Description' : '',
                           'Validator'   : lambda value: _valid_panel_id(value) },
 
         'marker'      : { 'Default'     : 'o',
+                          'Description' : '',
                           'Validator'   : lambda value: _bypass_kwarg_validation(value)  },
 
         'markersize'  : { 'Default'     : 18,
+                          'Description' : 'size of marker for `type=scatter`; default=18',
                           'Validator'   : lambda value: isinstance(value,(int,float)) },
 
         'color'       : { 'Default'     : None,
+                          'Description' : 'color of line, scatter marker, or bar',
                           'Validator'   : lambda value: mcolors.is_color_like(value) or
                                          (isinstance(value,(list,tuple,np.ndarray)) and all([mcolors.is_color_like(v) for v in value])) },
 
         'linestyle'   : { 'Default'     : None,
+                          'Description' : 'line style for `type=line` ('+str(valid_linestyles)+')',
                           'Validator'   : lambda value: value in valid_linestyles },
 
-        'linewidths': {'Default': None,
-                      'Validator'   : lambda value: isinstance(value,(int,float)) },
+        'linewidths'  : { 'Default': None,
+                          'Description' : '',
+                          'Validator'   : lambda value: isinstance(value,(int,float)) },
 
-        'edgecolors': {'Default': None,
-                       'Validator': lambda value: mcolors.is_color_like(value) or value in valid_edgecolors},
+        'edgecolors'  : { 'Default': None,
+                          'Description' : '',
+                          'Validator': lambda value: mcolors.is_color_like(value) or value in valid_edgecolors},
 
         'width'       : { 'Default'     : None, # width of `bar` or `line`
+                          'Description' : '',
                           'Validator'   : lambda value: isinstance(value,(int,float)) or
                                                         all([isinstance(v,(int,float)) for v in value]) },
 
         'bottom'      : { 'Default'     : 0,  # bottom for `type=bar` plots
+                          'Description' : 'bottom value for `type=bar` bars. Default=0',
                           'Validator'   : lambda value: isinstance(value,(int,float)) or
                                                         all([isinstance(v,(int,float)) for v in value]) },
         'alpha'       : { 'Default'     : 1,  # alpha of `bar`, `line`, or `scatter`
+                          'Description' : 'opacity for 0.0 (transparent) to 1.0 (opaque)',
                           'Validator'   : lambda value: isinstance(value,(int,float)) or
                                                         all([isinstance(v,(int,float)) for v in value]) },
 
         'secondary_y' : { 'Default'     : 'auto',
+                          'Description' : '',
                           'Validator'   : lambda value: isinstance(value,bool) or value == 'auto' },
 
         'y_on_right'  : { 'Default'     : None,
+                          'Description' : '',
                           'Validator'   : lambda value: isinstance(value,bool) },
         
         'ylabel'      : { 'Default'     : None,
+                          'Description' : '',
                           'Validator'   : lambda value: isinstance(value,str) },
 
         'ylim'        : {'Default'      : None,
+                          'Description' : '',
                          'Validator'    : lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
                                                                       and all([isinstance(v,(int,float)) for v in value])},
 
         'title'       : { 'Default'     : None,
+                          'Description' : '',
                           'Validator'   : lambda value: isinstance(value,str) },
 
         'ax'          : { 'Default'      : None,
+                          'Description' : '',
                           'Validator'    : lambda value: isinstance(value,mpl_axes.Axes) },
 
         'yscale'      : { 'Default'     : None,
+                          'Description' : '',
                           'Validator'   : lambda value: _yscale_validator(value) },
 
-        'stepwhere'      : { 'Default'     : 'pre',
-                          'Validator'   : lambda value : value in valid_stepwheres },     
+        'stepwhere'   : { 'Default'     : 'pre',
+                          'Description' : '',
+                          'Validator'   : lambda value : value in valid_stepwheres },                  
         
-        'marketcolors' : { 'Default'     : None, # use 'style' for default, instead.
+        'marketcolors': { 'Default'     : None, # use 'style' for default, instead.
+                          'Description' : '',
                           'Validator'   : lambda value: _is_marketcolor_object(value) },
     }
 
