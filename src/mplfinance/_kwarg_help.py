@@ -67,6 +67,8 @@ def kwarg_help( func_name=None, kwarg_names=None ):
         'renko_params'      : mpf._utils._valid_renko_kwargs,
         'pnf_params'        : mpf._utils._valid_pnf_kwargs,
         'lines'             : mpf._utils._valid_lines_kwargs,
+        'scale_width_adjustment': mpf._widths._valid_scale_width_kwargs,
+        'update_width_config': mpf._widths._valid_update_width_kwargs,
     }
 
     func_kwarg_aliases = {
