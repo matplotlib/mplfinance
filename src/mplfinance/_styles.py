@@ -209,15 +209,15 @@ def _valid_make_marketcolors_kwargs():
     vkwargs = {
         'up'            : { 'Default'     : None,
                             'Description' : '',
-                            'Validator'   : lambda value: mcolors.is_color_like(value) },
+                            'Validator'   : lambda value: _mpf_is_color_like(value) },
 
         'down'          : { 'Default'     : None,
                             'Description' : '',
-                            'Validator'   : lambda value: mcolors.is_color_like(value) },
+                            'Validator'   : lambda value: _mpf_is_color_like(value) },
 
         'hollow'        : { 'Default'     : None,
                             'Description' : '',
-                            'Validator'   : lambda value: mcolors.is_color_like(value) },
+                            'Validator'   : lambda value: _mpf_is_color_like(value) },
 
         'alpha'         : { 'Default'     : None,
                             'Description' : '',
@@ -232,19 +232,19 @@ def _valid_make_marketcolors_kwargs():
                             'Description' : '',
                             'Validator'   : lambda value: isinstance(value,dict)
                                                           or isinstance(value,str)
-                                                          or mcolors.is_color_like(value) },
+                                                          or _mpf_is_color_like(value) },
 
         'ohlc'          : { 'Default'     : None,
                             'Description' : '',
                             'Validator'   : lambda value: isinstance(value,dict)
                                                           or isinstance(value,str)
-                                                          or mcolors.is_color_like(value) },
+                                                          or _mpf_is_color_like(value) },
 
         'volume'        : { 'Default'   : None,
                             'Description' : '',
                             'Validator'   : lambda value: isinstance(value,dict)
                                                           or isinstance(value,str)
-                                                          or mcolors.is_color_like(value) },
+                                                          or _mpf_is_color_like(value) },
 
         'vcdopcod'      : { 'Default'     : False,
                             'Description' : '',

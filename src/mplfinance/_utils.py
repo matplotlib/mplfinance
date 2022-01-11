@@ -1444,31 +1444,6 @@ def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes
     return _construct_aline_collections(alines, dtix)
 
 
-def _display_formetted_kwargs_table(kwargs_dict: dict):
-    """
-    Displays through stdout the provided kwargs dict along with each
-    one of the discriptions and default values.
-
-    Parameters
-    --------------
-    kwargs_dict : dict
-        Dictionary containing the kwargs in the format (kwarg, default, description)
-    """
-
-    # TODO must be defined the best way to place it in the API 
-    # (either inside the 'plot' method or some other auxiliary
-    # method)
-
-    # prints header of the table
-    print('=' * 120)
-    print("{:<30} {:<15} {}".format('kwarg', 'Default', 'Description'))
-    print('=' * 120)
-
-    for kwarg, info in kwargs_dict.items():
-        print(f'{kwarg:30} {str(info["Default"]):15} {info["Description"]}')
-        print('-' * 120)
-
-
 from matplotlib.ticker import Formatter
 class IntegerIndexDateTimeFormatter(Formatter):
     """
