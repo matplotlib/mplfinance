@@ -128,7 +128,7 @@ def kwarg_help( func_name=None, kwarg_names=None ):
     klen = df['Kwarg'].str.len().max()+1
     dlen = df['Default'].str.len().max()+1
 
-    wraplen = 80 - ( klen + dlen )
+    wraplen = max( 40, 80-(klen+dlen) )
     df = df_wrapcols(df,wrap_columns={'Description':wraplen})
 
     dividers = []
