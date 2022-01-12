@@ -114,6 +114,7 @@ def _valid_make_mpf_style_kwargs():
                             'Validator'   : lambda value: isinstance(value,dict) },
 
         'style_name'    : { 'Default'     : None,
+                            'Description' : '',
                             'Validator'   : lambda value: isinstance(value,str) },
 
     }
