@@ -57,7 +57,7 @@ def make_left_formatter(maxwidth):
     return left_formatter
 
 
-def kwarg_help( func_name=None, kwarg_names=None ):
+def kwarg_help( func_name=None, kwarg_names=None, sort=False ):
 
     func_kwarg_map = {
         'plot'              : mpf.plotting._valid_plot_kwargs,
@@ -113,6 +113,7 @@ def kwarg_help( func_name=None, kwarg_names=None ):
 
     df = (pd.DataFrame(vks).T).drop('Validator',axis=1)
     df.index.name = 'Kwarg'
+    if sort: df.sort_index(inplace=True)
     df.reset_index(inplace=True)
 
     if kwarg_names is not None:
