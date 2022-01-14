@@ -72,9 +72,5 @@ jobs:
         run: |
           git show ${{ github.event.pull_request.base.sha }}:src/mplfinance/_version.py > scripts/tv0.py
           git show ${{ github.sha }}:src/mplfinance/_version.py > scripts/tv1.py
-          ls -l tv0.py
-          cat tv0.py
-          ls -l tv1.py
-          cat tv1.py
           python scripts/version_update_check.py tv0 tv1
 
