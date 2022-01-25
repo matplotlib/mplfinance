@@ -387,11 +387,12 @@ def _valid_renko_kwargs():
     '''
     vkwargs = {
         'brick_size'  : { 'Default'     : 'atr',
-                          'Description' : '',
+                          'Description' : 'size of each brick on y-axis (typically price).'+
+                                          ' specify a number, or specify "atr" for average true range.',
                           'Validator'   : lambda value: isinstance(value,(float,int))
                                                         or value == 'atr' },
         'atr_length'  : { 'Default'     : 14,
-                          'Description' : '',
+                          'Description' : 'number of periods for atr calculation (if brick size is "atr")',
                           'Validator'   : lambda value: isinstance(value,int)
                                                         or value == 'total' },
     }
@@ -416,16 +417,18 @@ def _valid_pnf_kwargs():
     '''
     vkwargs = {
         'box_size'    : { 'Default'     : 'atr',
-                          'Description' : '',
+                          'Description' : 'size of each box on y-axis (typically price).'+
+                                          ' specify a number, or specify "atr" for average true range.',
                           'Validator'   : lambda value: isinstance(value,(float,int))
                                                         or value == 'atr' },
         'atr_length'  : { 'Default'     : 14,
-                          'Description' : '',
+                          'Description' : 'number of periods for atr calculation (if box size is "atr")',
                           'Validator'   : lambda value: isinstance(value,int)
                                                         or value == 'total' },
 
         'reversal'    : { 'Default'     : 1,
-                          'Description' : '',
+                          'Description' : 'number of boxes, in opposite direction, needed to reverse'+
+                                          ' a trend (i.e. to start a new column).',
                           'Validator'   : lambda value: isinstance(value,int) },
     }
 
@@ -451,52 +454,71 @@ def _valid_lines_kwargs():
     valid_linestyles = ['-','solid','--','dashed','-.','dashdot',':','dotted',None,' ','']
     vkwargs = {
         'hlines'    : { 'Default'     : None,
-                        'Description' : '',
+                        'Description' : 'Draw one or more HORIZONTAL LINES across entire plot, by'+
+                                        ' specifying a price, or sequence of prices.  May also be a dict'+
+                                        ' with key `hlines` specifying a price or sequence of prices, plus'+
+                                        ' one or more of the following keys: `colors`, `linestyle`,'+
+                                        ' `linewidths`, `alpha`.',
                         'Validator'   : _bypass_kwarg_validation },
 
         'vlines'    : { 'Default'     : None,
-                        'Description' : '',
+                        'Description' : 'Draw one or more VERTICAL LINES across entire plot, by'+
+                                        ' specifying a date[time], or sequence of date[time].  May also'+
+                                        ' be a dict with key `vlines` specifying a date[time] or sequence'+
+                                        ' of date[time], plus one or more of the following keys:'+
+                                        ' `colors`, `linestyle`, `linewidths`, `alpha`.',
                         'Validator'   : _bypass_kwarg_validation },
 
         'alines'    : { 'Default'     : None,
-                        'Description' : '',
+                        'Description' : 'Draw one or more ARBITRARY LINES anywhere on the plot, by'+
+                                        ' specifying a sequence of two or more date/price pairs, or by'+
+                                        ' specifying a sequence of sequences of two or more date/price pairs.'+
+                                        ' May also be a dict with key `alines` (as date/price pairs described above),'+
+                                        ' plus one or more of the following keys:'+
+                                        ' `colors`, `linestyle`, `linewidths`, `alpha`.',
                         'Validator'   : _bypass_kwarg_validation },
 
         'tlines'    : { 'Default'     : None,
-                        'Description' : '',
+                        'Description' : 'Draw one or more TREND LINES by specifying one or more pairs of date[times]'+
+                                        ' between which each trend line should be drawn.  May also be a dict with key'+
+                                        ' `tlines` as just described, plus one or more of the following keys:'+
+                                        ' `colors`, `linestyle`, `linewidths`, `alpha`, `tline_use`,`tline_method`.',
                         'Validator'   : _bypass_kwarg_validation },
 
         'colors'    : { 'Default'     : None,
-                        'Description' : '',
+                        'Description' : 'Color of [hvat]lines (or sequence of colors, if each line to be a different color)',
                         'Validator'   : lambda value: value is None
                                                       or mcolors.is_color_like(value)
                                                       or (isinstance(value,(list,tuple))
                                                           and all([mcolors.is_color_like(v) for v in value]) ) },
 
         'linestyle' : { 'Default'     : '-',
-                        'Description' : '',
+                        'Description' : 'line style of [hvat]lines (or sequence of line styles, if each line to have a different linestyle)',
                         'Validator'   : lambda value: value is None or value in valid_linestyles or
                                             all([v in valid_linestyles for v in value]) },
       
         'linewidths': { 'Default'     : None,
-                        'Description' : '',
+                        'Description' : 'line width of [hvat]lines (or sequence of line widths, if each line to have a different width)',
                         'Validator'   : lambda value: value is None
                                                       or isinstance(value,(float,int))
                                                       or all([isinstance(v,(float,int)) for v in value]) },
 
         'alpha'     : { 'Default'     : 1.0,
-                        'Description' : '',
+                        'Description' : 'Opacity of [hvat]lines.  float from 0.0 to 1.0 '+
+                                        ' (1.0 means fully opaque; 0.0 means transparent.',
                         'Validator'   : lambda value: isinstance(value,(float,int)) },
 
 
         'tline_use' : { 'Default'     : 'close',
-                        'Description' : '',
+                        'Description' : 'value to use for TREND LINE ("open","high","low","close") or sequence of'+
+                                        ' any combination of "open", "high", "low", "close" to use a average of the'+
+                                        ' specified values to determine the trend line.',
                         'Validator'   : lambda value: isinstance(value,str)
                                                       or (isinstance(value,(list,tuple))
                                                           and all([isinstance(v,str) for v in value]) ) },
 
         'tline_method': { 'Default'     : 'point-to-point',
-                          'Description' : '',
+                          'Description' : 'method for TREND LINE determination: "point-to-point" or "least-squares"',
                           'Validator'   : lambda value: value in ['point-to-point','least-squares'] }
     }
 
