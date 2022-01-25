@@ -121,11 +121,11 @@ def _valid_plot_kwargs():
                                         'Validator'   : _mav_validator },
         
         'renko_params'              : { 'Default'     : dict(),
-                                        'Description' : '',
+                                        'Description' : 'dict of renko parameters; call `mpf.kwarg_help("renko_params")`',
                                         'Validator'   : lambda value: isinstance(value,dict) },
 
         'pnf_params'                : { 'Default'     : dict(),
-                                        'Description' : '',
+                                        'Description' : 'dict of point-and-figure parameters; call `mpf.kwarg_help("pnf_params")`',
                                         'Validator'   : lambda value: isinstance(value,dict) },
  
         'study'                     : { 'Default'     : None,
