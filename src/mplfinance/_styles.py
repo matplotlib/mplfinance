@@ -210,55 +210,60 @@ def _valid_mpf_style(value):
 def _valid_make_marketcolors_kwargs():
     vkwargs = {
         'up'            : { 'Default'     : None,
-                            'Description' : '',
+                            'Description' : 'color to indicate up', 
                             'Validator'   : lambda value: _mpf_is_color_like(value) },
 
         'down'          : { 'Default'     : None,
-                            'Description' : '',
+                            'Description' : 'color to indicate down', 
                             'Validator'   : lambda value: _mpf_is_color_like(value) },
 
         'hollow'        : { 'Default'     : None,
-                            'Description' : '',
+                            'Description' : "color for hollow candles (for `type=hollow`)",
                             'Validator'   : lambda value: _mpf_is_color_like(value) },
 
         'alpha'         : { 'Default'     : None,
-                            'Description' : '',
+                            'Description' : 'opacity 0.0 (transparent) to 1.0 (opaque);'+
+                                            ' applies to candles,renko,pnf (but not ohlc bars)',
                             'Validator'   : lambda value: (isinstance(value,float)
                                                            and 0.0 <= value and 1.0 >= value ) },
 
         'edge'          : { 'Default'     : None,
-                            'Description' : '',
+                            'Description' : 'color of candle edge; may also be "i" or "inherit"'+
+                                            ' to take color from base_mpf_style',
                             'Validator'   : lambda value: _valid_mpf_color_spec(value) },
 
         'wick'          : { 'Default'     : None,
-                            'Description' : '',
+                            'Description' : "color of candle wick; may be single color,"+
+                                            " or may be dict with keys 'up' and 'down'",
                             'Validator'   : lambda value: isinstance(value,dict)
                                                           or isinstance(value,str)
                                                           or _mpf_is_color_like(value) },
 
         'ohlc'          : { 'Default'     : None,
-                            'Description' : '',
+			    'Description' : "color of ohlc bars; may be single color,"+
+					    " or may be dict with keys 'up' and 'down'",
                             'Validator'   : lambda value: isinstance(value,dict)
                                                           or isinstance(value,str)
                                                           or _mpf_is_color_like(value) },
 
         'volume'        : { 'Default'   : None,
-                            'Description' : '',
+			    'Description' : "color of volume bars; may be single color,"+
+					    " or may be dict with keys 'up' and 'down'",
                             'Validator'   : lambda value: isinstance(value,dict)
                                                           or isinstance(value,str)
                                                           or _mpf_is_color_like(value) },
 
         'vcdopcod'      : { 'Default'     : False,
-                            'Description' : '',
+                            'Description' : 'True/False volume color depends on price change from previous day',
                             'Validator'   : lambda value: isinstance(value,bool) },
 
 
         'inherit'       : { 'Default'     : False,
-                            'Description' : '',
+                            'Description' : 'inherit color from base_mpf_style for: edge,volume,ohlc,wick',
                             'Validator'   : lambda value: isinstance(value,bool) },
 
         'base_mpf_style': { 'Default'     : None,
-                            'Description' : '',
+                            'Description' : 'mplfinance style market colors as basis for new market colors object',
                             'Validator'   : lambda value: isinstance(value,str) },
     }
 
