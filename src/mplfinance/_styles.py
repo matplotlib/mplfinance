@@ -61,60 +61,61 @@ def _apply_mpfstyle(style):
 def _valid_make_mpf_style_kwargs():
     vkwargs = {
         'base_mpf_style': { 'Default'     : None,
-                            'Description' : '',
+                            'Description' : 'mplfinance style to use as base of new mplfinance style',
                             'Validator'   : lambda value: value in _styles.keys() },
 
         'base_mpl_style': { 'Default'     : None,
-                            'Description' : '',
+                            'Description' : 'matplotlib style to use as base of new mplfinance style',
                             'Validator'   : lambda value: isinstance(value,str) }, # and is in plt.style.available
 
         'marketcolors'  : { 'Default'     : None,
-                            'Description' : '',
+                            'Description' : 'market colors object, from `mpf.make_market_colors()`',
                             'Validator'   : lambda value: isinstance(value,dict)  },
 
         'mavcolors'     : { 'Default'     : None,
-                            'Description' : '',
+                            'Description' : 'sequence of colors to use for moving averages',
                             'Validator'   : lambda value: isinstance(value,list) },  # TODO: all([_mpf_is_color_like(v) for v in value.values()])
 
 
         'facecolor'     : { 'Default'     : None,
-                            'Description' : '',
+                            'Description' : 'background color for Axes',
                             'Validator'   : lambda value: isinstance(value,str) },
 
         'edgecolor'     : { 'Default'     : None,
-                            'Description' : '',
+                            'Description' : 'edge color for Axes',
                             'Validator'   : lambda value: isinstance(value,str) },
 
         'figcolor'      : { 'Default'     : None,
-                            'Description' : '',
+                            'Description' : 'background color for Figure.',
                             'Validator'   : lambda value: isinstance(value,str) },
 
         'gridcolor'     : { 'Default'     : None,
-                            'Description' : '',
+                            'Description' : 'color for grid lines',
                             'Validator'   : lambda value: isinstance(value,str) },
 
         'gridstyle'     : { 'Default'     : None,
-                            'Description' : '',
+                            'Description' : "grid line style ('-', '--', '-.', ':', '', offset, on-off-seq)."+
+                                            " (see also: https://matplotlib.org/stable/gallery/lines_bars_and_markers/linestyles.html)",
                             'Validator'   : lambda value: isinstance(value,str) },
 
         'gridaxis'      : { 'Default'     : None,
-                            'Description' : '',
+                            'Description' : "grid lines 'vertical', 'horizontal', or 'both'",
                             'Validator'   : lambda value: value in [ 'vertical'[0:len(value)], 'horizontal'[0:len(value)], 'both'[0:len(value)] ] },
 
         'y_on_right'    : { 'Default'     : None,
-                            'Description' : '',
+                            'Description' : 'True|False primary Axes y-ticks and labels on right.',
                             'Validator'   : lambda value: isinstance(value,bool) },
 
         'rc'            : { 'Default'     : None,
-                            'Description' : '',
+                            'Description' : 'rcparams overrides (dict) (all other rcparams unchanged)',
                             'Validator'   : lambda value: isinstance(value,dict) },
 
         'legacy_rc'     : { 'Default'     : None,  # Just in case someone depended upon old behavior
-                            'Description' : '',
+                            'Description' : 'rcparams to set (dict) (all other rcparams cleared)',
                             'Validator'   : lambda value: isinstance(value,dict) },
 
         'style_name'    : { 'Default'     : None,
-                            'Description' : '',
+                            'Description' : 'name for this style; useful when calling `mpf.write_style_file(style,filename)`',
                             'Validator'   : lambda value: isinstance(value,str) },
 
     }
