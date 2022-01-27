@@ -133,11 +133,13 @@ def _valid_plot_kwargs():
                                         'Validator'   : lambda value: _kwarg_not_implemented(value) }, 
  
         'marketcolor_overrides'     : { 'Default'     : None, 
-                                        'Description' : '',
+                                        'Description' : 'sequence of color objects to override market colors.'+
+                                                        'sequence must be same length as ohlc(v) DataFrame. Each'+
+                                                        'color object may be a color, marketcolor object, or None.',
                                         'Validator'   : _mco_validator },
  
         'mco_faceonly'              : { 'Default'     : False, # If True: Override only the face of the candle
-                                        'Description' : '',
+                                        'Description' : 'True/False marketcolor_overrides only apply to face of candle.',
                                         'Validator'   : lambda value: isinstance(value,bool) },
  
         'no_xgaps'                  : { 'Default'     : True,  # None means follow default logic below:
@@ -145,7 +147,7 @@ def _valid_plot_kwargs():
                                         'Validator'   : lambda value: _warn_no_xgaps_deprecated(value) },
  
         'show_nontrading'           : { 'Default'     : False, 
-                                        'Description' : '',
+                                        'Description' : 'True/False show spaces for non-trading days/periods',
                                         'Validator'   : lambda value: isinstance(value,bool) },
  
         'figscale'                  : { 'Default'     : None, # scale base figure size up or down.
@@ -184,31 +186,34 @@ def _valid_plot_kwargs():
                                         'Validator'   : lambda value: isinstance(value,(str,dict)) },
  
         'ylabel'                    : { 'Default'     : 'Price', # y-axis label
-                                        'Description' : '',
+                                        'Description' : 'label for y-axis of main plot',
                                         'Validator'   : lambda value: isinstance(value,str) },
  
         'ylabel_lower'              : { 'Default'     : None, # y-axis label default logic below
-                                        'Description' : '',
+                                        'Description' : 'label for y-axis of volume',
                                         'Validator'   : lambda value: isinstance(value,str) },
  
         'addplot'                   : { 'Default'     : None, 
-                                        'Description' : '',
+                                        'Description' : 'addplot object or sequence of addplot objects (from `mpf.make_addplot()`)',
                                         'Validator'   : lambda value: isinstance(value,dict) or (isinstance(value,list) and all([isinstance(d,dict) for d in value])) },
  
         'savefig'                   : { 'Default'     : None, 
-                                        'Description' : '',
+                                        'Description' : 'file name, or BytesIO, or dict with key `fname` plus other keys allowed as '+
+                                                        ' kwargs to matplotlib `Figure.savefig()`',
                                         'Validator'   : lambda value: isinstance(value,dict) or isinstance(value,str) or isinstance(value, io.BytesIO) or isinstance(value, os.PathLike) },
  
         'block'                     : { 'Default'     : None, 
-                                        'Description' : '',
+                                        'Description' : 'True/False wait for figure to be closed before returning',
                                         'Validator'   : lambda value: isinstance(value,bool) },
  
         'returnfig'                 : { 'Default'     : False, 
-                                        'Description' : '',
+                                        'Description' : 'return Figure and list of Axes objects created by mplfinance;'+
+                                                        ' user must display plot when ready, usually by calling `mpf.show()`',
                                         'Validator'   : lambda value: isinstance(value,bool) },
 
         'return_calculated_values'  : { 'Default'      : None,
-                                        'Description' : '',
+                                        'Description' : 'set to a variable containing an empty dict; `mpf.plot()` will fill'+
+                                                        ' the dict with various mplfinance calculated values',
                                         'Validator'    : lambda value: isinstance(value, dict) and len(value) == 0},
 
         'set_ylim'                  : { 'Default'      : None,
@@ -221,7 +226,7 @@ def _valid_plot_kwargs():
                                                                       and all([isinstance(v,(int,float)) for v in value])},
  
         'xlim'                      : { 'Default'      : None,
-                                        'Description' : 'Limits for x-axis as tuple (min, max), i.e. (left,right)',
+                                        'Description' : 'Limits for x-axis as tuple (min,max), i.e. (left,right)',
                                         'Validator'    : lambda value: _xlim_validator(value) },
  
         'set_ylim_panelB'           : { 'Default'      : None,
@@ -230,23 +235,42 @@ def _valid_plot_kwargs():
  
         'hlines'                    : { 'Default'     : None, 
                                         'Description' : '',
+                                        'Description' : 'Draw one or more HORIZONTAL LINES across entire plot, by'+
+                                                        ' specifying a price, or sequence of prices.  May also be a dict'+
+                                                        ' with key `hlines` specifying a price or sequence of prices, plus'+
+                                                        ' one or more of the following keys: `colors`, `linestyle`,'+
+                                                        ' `linewidths`, `alpha`.',
                                         'Validator'   : lambda value: _hlines_validator(value) },
  
         'vlines'                    : { 'Default'     : None, 
-                                        'Description' : '',
+                                        'Description' : 'Draw one or more VERTICAL LINES across entire plot, by'+
+                                                        ' specifying a date[time], or sequence of date[time].  May also'+
+                                                        ' be a dict with key `vlines` specifying a date[time] or sequence'+
+                                                        ' of date[time], plus one or more of the following keys:'+
+                                                        ' `colors`, `linestyle`, `linewidths`, `alpha`.',
                                         'Validator'   : lambda value: _vlines_validator(value) },
 
         'alines'                    : { 'Default'     : None, 
-                                        'Description' : '',
+                                        'Description' : 'Draw one or more ARBITRARY LINES anywhere on the plot, by'+
+                                                        ' specifying a sequence of two or more date/price pairs, or by'+
+                                                        ' specifying a sequence of sequences of two or more date/price pairs.'+
+                                                        ' May also be a dict with key `alines` (as date/price pairs described above),'+
+                                                        ' plus one or more of the following keys:'+
+                                                        ' `colors`, `linestyle`, `linewidths`, `alpha`.',
                                         'Validator'   : lambda value: _alines_validator(value) },
  
         'tlines'                    : { 'Default'     : None, 
-                                        'Description' : '',
+                                        'Description' : 'Draw one or more TREND LINES by specifying one or more pairs of date[times]'+
+                                                        ' between which each trend line should be drawn.  May also be a dict with key'+
+                                                        ' `tlines` as just described, plus one or more of the following keys:'+
+                                                        ' `colors`, `linestyle`, `linewidths`, `alpha`, `tline_use`,`tline_method`.',
                                         'Validator'   : lambda value: _tlines_validator(value) },
        
         'panel_ratios'              : { 'Default'     : None,
-                                        'Description' : '',
-                                        'Validator'   : lambda value: isinstance(value,(tuple,list)) and len(value) <= 10 and
+                                        'Description' : 'sequence of numbers indicating relative sizes of panels; sequence len'+
+                                                        ' must be same as number of panels, or len 2 where first entry is for'+
+                                                        ' main panel, and second entry is for all other panels',
+                                        'Validator'   : lambda value: isinstance(value,(tuple,list)) and len(value) <= 32 and
                                                                       all([isinstance(v,(int,float)) for v in value]) },
 
         'main_panel'                : { 'Default'     : 0,
