@@ -33,31 +33,31 @@ _widths = _get_widths_df()
 def _valid_scale_width_kwargs():
     vkwargs = {
         'ohlc'             : { 'Default'     : None,
-                               'Description' : '',
+                               'Description' : 'length of horizontal open/close tickmarks on ohlc bars',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'volume'           : { 'Default'     : None,
-                               'Description' : '',
+                               'Description' : 'width of volume bars',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'candle'           : { 'Default'     : None,
-                               'Description' : '',
+                               'Description' : 'width of candles',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'lines'            : { 'Default'     : None,
-                               'Description' : '',
+                               'Description' : 'width of lines (for line plots and moving averages)',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'volume_linewidth' : { 'Default'     : None,
-                               'Description' : '',
+                               'Description' : 'width of edges of volume bars',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'ohlc_linewidth'   : { 'Default'     : None,
-                               'Description' : '',
+                               'Description' : 'width (thickness) of ohlc bars',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'candle_linewidth' : { 'Default'     : None,
-                               'Description' : '',
+                               'Description' : 'width of candle edges and wicks',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
     }
 
@@ -70,31 +70,31 @@ def _valid_update_width_kwargs():
     vkwargs = {
 
         'ohlc_ticksize'    : { 'Default'     : None,
-                               'Description' : '',
+                               'Description' : 'length of horizontal open/close tickmarks on ohlc bars',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'ohlc_linewidth'   : { 'Default'     : None,
-                               'Description' : '',
+                               'Description' : 'width (thickness) of ohlc bars',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'volume_width'     : { 'Default'     : None,
-                               'Description' : '',
+                               'Description' : 'width of volume bars',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'volume_linewidth' : { 'Default'     : None,
-                               'Description' : '',
+                               'Description' : 'width of edges of volume bars',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'candle_width'     : { 'Default'     : None,
-                               'Description' : '',
+                               'Description' : 'width of candles',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'candle_linewidth' : { 'Default'     : None,
-                               'Description' : '',
+                               'Description' : 'width of candle edges and wicks',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
 
         'line_width'       : { 'Default'     : None,
-                               'Description' : '',
+                               'Description' : 'width of lines (for line plots and moving averages)',
                                'Validator'   : lambda value: isinstance(value,(float,int)) },
     }
 
