@@ -129,7 +129,7 @@ def _valid_plot_kwargs():
                                         'Validator'   : lambda value: isinstance(value,dict) },
  
         'study'                     : { 'Default'     : None,
-                                        'Description' : '',
+                                        'Description' : 'kwarg not implemented',
                                         'Validator'   : lambda value: _kwarg_not_implemented(value) }, 
  
         'marketcolor_overrides'     : { 'Default'     : None, 
@@ -143,7 +143,7 @@ def _valid_plot_kwargs():
                                         'Validator'   : lambda value: isinstance(value,bool) },
  
         'no_xgaps'                  : { 'Default'     : True,  # None means follow default logic below:
-                                        'Description' : '',
+                                        'Description' : 'deprecated',
                                         'Validator'   : lambda value: _warn_no_xgaps_deprecated(value) },
  
         'show_nontrading'           : { 'Default'     : False, 
@@ -211,30 +211,29 @@ def _valid_plot_kwargs():
                                                         ' user must display plot when ready, usually by calling `mpf.show()`',
                                         'Validator'   : lambda value: isinstance(value,bool) },
 
-        'return_calculated_values'  : { 'Default'      : None,
+        'return_calculated_values'  : { 'Default'     : None,
                                         'Description' : 'set to a variable containing an empty dict; `mpf.plot()` will fill'+
                                                         ' the dict with various mplfinance calculated values',
-                                        'Validator'    : lambda value: isinstance(value, dict) and len(value) == 0},
+                                        'Validator'   : lambda value: isinstance(value, dict) and len(value) == 0},
 
-        'set_ylim'                  : { 'Default'      : None,
-                                        'Description' : '',
-                                        'Validator'    : lambda value: _warn_set_ylim_deprecated(value) },
+        'set_ylim'                  : { 'Default'     : None,
+                                        'Description' : 'deprecated',
+                                        'Validator'   : lambda value: _warn_set_ylim_deprecated(value) },
  
-        'ylim'                      : { 'Default'      : None,
+        'ylim'                      : { 'Default'     : None,
                                         'Description' : 'Limits for y-axis as tuple (min,max), i.e. (bottom,top)',
-                                        'Validator'    : lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
+                                        'Validator'   : lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
                                                                       and all([isinstance(v,(int,float)) for v in value])},
  
-        'xlim'                      : { 'Default'      : None,
+        'xlim'                      : { 'Default'     : None,
                                         'Description' : 'Limits for x-axis as tuple (min,max), i.e. (left,right)',
-                                        'Validator'    : lambda value: _xlim_validator(value) },
+                                        'Validator'   : lambda value: _xlim_validator(value) },
  
-        'set_ylim_panelB'           : { 'Default'      : None,
-                                        'Description' : '',
-                                        'Validator'    : lambda value: _warn_set_ylim_deprecated(value) },
+        'set_ylim_panelB'           : { 'Default'     : None,
+                                        'Description' : 'deprecated',
+                                        'Validator'   : lambda value: _warn_set_ylim_deprecated(value) },
  
         'hlines'                    : { 'Default'     : None, 
-                                        'Description' : '',
                                         'Description' : 'Draw one or more HORIZONTAL LINES across entire plot, by'+
                                                         ' specifying a price, or sequence of prices.  May also be a dict'+
                                                         ' with key `hlines` specifying a price or sequence of prices, plus'+
@@ -274,19 +273,19 @@ def _valid_plot_kwargs():
                                                                       all([isinstance(v,(int,float)) for v in value]) },
 
         'main_panel'                : { 'Default'     : 0,
-                                        'Description' : '',
+                                        'Description' : 'integer - which panel is the main panel for `.plot()`',
                                         'Validator'   : lambda value: _valid_panel_id(value) },
 
         'volume_panel'              : { 'Default'     : 1,
-                                        'Description' : '',
+                                        'Description' : 'integer - which panel is the volume panel',
                                         'Validator'   : lambda value: _valid_panel_id(value) },
 
         'num_panels'                : { 'Default'     : None,
-                                        'Description' : '',
-                                        'Validator'   : lambda value: isinstance(value,int) and value in range(1,10+1) },
+                                        'Description' : 'total number of panels',
+                                        'Validator'   : lambda value: isinstance(value,int) and value in range(1,32+1) },
 
         'datetime_format'           : { 'Default'     : None,
-                                        'Description' : '',
+                                        'Description' : 'x-axis tick format as valid `strftime()` format string',
                                         'Validator'   : lambda value: isinstance(value,str) },
 
         'xrotation'                 : { 'Default'     : 45,
@@ -298,21 +297,32 @@ def _valid_plot_kwargs():
                                         'Validator'   : lambda value: isinstance(value,bool) },
 
         'closefig'                  : { 'Default'     : 'auto',
-                                        'Description' : '',
+                                        'Description' : 'True|False close the Figure before returning',
                                         'Validator'   : lambda value: isinstance(value,bool) },
 
         'fill_between'              : { 'Default'     : None,
-                                        'Description' : '',
+                                        'Description' : 'fill between specification as y-value, or sequence of'+
+                                                        ' y-values, or dict containing key "y1" plus any additional'+
+                                                        ' kwargs for `fill_between()`',
                                         'Validator'   : lambda value: _num_or_seq_of_num(value) or 
                                                                      (isinstance(value,dict) and 'y1' in value and
                                                                        _num_or_seq_of_num(value['y1'])) },
 
         'tight_layout'              : { 'Default'     : False,
-                                        'Description' : '',
+                                        'Description' : 'True|False implement tight layout (minimal padding around Figure)'+
+                                                        ' (see also `scale_padding` kwarg)',
                                         'Validator'   : lambda value: isinstance(value,bool) },
 
+        'scale_padding'             : { 'Default'     : 1.0,   # Issue#193 
+                                        'Description' : 'Increase, > 1.0, or decrease, < 1.0, padding around figure.'+
+                                                        ' May also be a dict containing one or more of the following keys:'+
+                                                        ' "top", "bottom", "left", "right", to individual scale padding'+
+                                                        ' on each side of Figure.',
+                                        'Validator'   : lambda value: _scale_padding_validator(value) },
+
         'width_adjuster_version'    : { 'Default'     : 'v1',
-                                        'Description' : '',
+                                        'Description' : 'specify version of object width adjustment algorithm: "v0" or "v1"'+
+                                                        ' (See also "widths" tutorial in mplfinance examples folder).',
                                         'Validator'   : lambda value: value in ('v0', 'v1') },
 
         'scale_width_adjustment'    : { 'Default'     : None,
@@ -331,10 +341,6 @@ def _valid_plot_kwargs():
                                         'Description' : '',
                                         'Validator'   : lambda value: isinstance(value,bool) },
         
-        'scale_padding'             : { 'Default'     : 1.0,   # Issue#193 
-                                        'Description' : '',
-                                        'Validator'   : lambda value: _scale_padding_validator(value) },
-
         'ax'                        : { 'Default'     : None,
                                         'Description' : 'Matplotlib Axes object on which to plot',
                                         'Validator'   : lambda value: isinstance(value,mpl_axes.Axes) },
