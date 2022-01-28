@@ -326,19 +326,22 @@ def _valid_plot_kwargs():
                                         'Validator'   : lambda value: value in ('v0', 'v1') },
 
         'scale_width_adjustment'    : { 'Default'     : None,
-                                        'Description' : '',
+                                        'Description' : 'scale width of plot objects wider, > 1.0, or narrower, < 1.0'+
+                                                        ' may also be a dict to scale individual widths.'+,
+                                                        ' (See also "widths" tutorial in mplfinance examples folder).',
                                         'Validator'   : lambda value: isinstance(value,dict) and len(value) > 0 },
 
         'update_width_config'       : { 'Default'     : None,
-                                        'Description' : '',
+                                        'Description' : 'dict - update individual items in width configuration.'+,
+                                                        ' (See also "widths" tutorial in mplfinance examples folder).',
                                         'Validator'   : lambda value: isinstance(value,dict) and len(value) > 0 },
 
         'return_width_config'       : { 'Default'     : None,
-                                        'Description' : '',
+                                        'Description' : 'empty dict variable to be filled with width configuration settings.',
                                         'Validator'   : lambda value: isinstance(value,dict) and len(value)==0 },
 
         'saxbelow'                  : { 'Default'     : True,  # Issue#115 Comment#639446764
-                                        'Description' : '',
+                                        'Description' : 'set the volume Axes below (behind) all other Axes objects',
                                         'Validator'   : lambda value: isinstance(value,bool) },
         
         'ax'                        : { 'Default'     : None,
