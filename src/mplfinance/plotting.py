@@ -327,12 +327,12 @@ def _valid_plot_kwargs():
 
         'scale_width_adjustment'    : { 'Default'     : None,
                                         'Description' : 'scale width of plot objects wider, > 1.0, or narrower, < 1.0'+
-                                                        ' may also be a dict to scale individual widths.'+,
+                                                        ' may also be a dict to scale individual widths.'+
                                                         ' (See also "widths" tutorial in mplfinance examples folder).',
                                         'Validator'   : lambda value: isinstance(value,dict) and len(value) > 0 },
 
         'update_width_config'       : { 'Default'     : None,
-                                        'Description' : 'dict - update individual items in width configuration.'+,
+                                        'Description' : 'dict - update individual items in width configuration.'+
                                                         ' (See also "widths" tutorial in mplfinance examples folder).',
                                         'Validator'   : lambda value: isinstance(value,dict) and len(value) > 0 },
 
@@ -349,24 +349,25 @@ def _valid_plot_kwargs():
                                         'Validator'   : lambda value: isinstance(value,mpl_axes.Axes) },
 
         'volume_exponent'           : { 'Default'     : None,
-                                        'Description' : '',
+                                        'Description' : 'integer exponent on the volume axis'+
+                                                        ' (or set to "legacy" for old mplfinance style)',
                                         'Validator'   : lambda value: isinstance(value,int) or value == 'legacy'},
 
         'tz_localize'               : { 'Default'     : True,
-                                        'Description' : '',
+                                        'Description' : 'True|False localize the times in the DatetimeIndex',
                                         'Validator'   : lambda value: isinstance(value,bool) },
 
         'yscale'                    : { 'Default'     : None,
-                                        'Description' : '',
+                                        'Description' : 'y-axis scale: "linear", "log", "symlog", or "logit"',
                                         'Validator'   : lambda value: _yscale_validator(value) },
 
         'volume_yscale'             : { 'Default'     : None,
-                                        'Description' : '',
+                                        'Description' : 'Volume y-axis scale: "linear", "log", "symlog", or "logit"',
                                         'Validator'   : lambda value: _yscale_validator(value) },
 
         'warn_too_much_data'        : { 'Default'     : 599,
-                                        'Description' : ('Tolerance for data amount in plot. Default=599 rows.'+
-                                                         ' Values greater than \'warn_too_much_data\' will trigger a warning.'),
+                                        'Description' : 'Tolerance for data amount in plot. Default=599 rows.'+
+                                                        ' Values greater than \'warn_too_much_data\' will trigger a warning.',
                                         'Validator'   : lambda value: isinstance(value,int) },
     }
 
@@ -1140,31 +1141,31 @@ def _valid_addplot_kwargs():
 
     vkwargs = {
         'scatter'     : { 'Default'     : False,
-                          'Description' : '',
+                          'Description' : "Deprecated.  (Use kwarg `type='scatter' instead.",
                           'Validator'   : lambda value: isinstance(value,bool) },
 
         'type'        : { 'Default'     : 'line',
-                          'Description' : '',
+                          'Description' : 'addplot type: "line","scatter","bar", "ohlc", "candle","step"',
                           'Validator'   : lambda value: value in valid_types },
 
         'mav'         : { 'Default'     : None,
-                          'Description' : '',
+                          'Description' : 'Moving Average window size(s); (int or tuple of ints)',
                           'Validator'   : _mav_validator },
         
         'panel'       : { 'Default'     : 0, 
-                          'Description' : '',
+                          'Description' : 'Panel (int 0-31) to use for this addplot',
                           'Validator'   : lambda value: _valid_panel_id(value) },
 
         'marker'      : { 'Default'     : 'o',
-                          'Description' : '',
+                          'Description' : "marker for `type='scatter'` plot",
                           'Validator'   : lambda value: _bypass_kwarg_validation(value)  },
 
         'markersize'  : { 'Default'     : 18,
-                          'Description' : 'size of marker for `type=scatter`; default=18',
+                          'Description' : 'size of marker for `type="scatter"`; default=18',
                           'Validator'   : lambda value: isinstance(value,(int,float)) },
 
         'color'       : { 'Default'     : None,
-                          'Description' : 'color of line, scatter marker, or bar',
+                          'Description' : 'color (or sequence of colors) of line(s), scatter marker(s), or bar(s).',
                           'Validator'   : lambda value: mcolors.is_color_like(value) or
                                          (isinstance(value,(list,tuple,np.ndarray)) and all([mcolors.is_color_like(v) for v in value])) },
 
@@ -1173,15 +1174,15 @@ def _valid_addplot_kwargs():
                           'Validator'   : lambda value: value in valid_linestyles },
 
         'linewidths'  : { 'Default': None,
-                          'Description' : '',
+                          'Description' : 'edge widths of scatter markers',
                           'Validator'   : lambda value: isinstance(value,(int,float)) },
 
         'edgecolors'  : { 'Default': None,
-                          'Description' : '',
+                          'Description' : 'edgecolors of scatter markers',
                           'Validator': lambda value: mcolors.is_color_like(value) or value in valid_edgecolors},
 
         'width'       : { 'Default'     : None, # width of `bar` or `line`
-                          'Description' : '',
+                          'Description' : 'width of bar or line for `type="bar"` or `type="line"',
                           'Validator'   : lambda value: isinstance(value,(int,float)) or
                                                         all([isinstance(v,(int,float)) for v in value]) },
 
