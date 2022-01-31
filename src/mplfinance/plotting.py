@@ -1196,40 +1196,48 @@ def _valid_addplot_kwargs():
                                                         all([isinstance(v,(int,float)) for v in value]) },
 
         'secondary_y' : { 'Default'     : 'auto',
-                          'Description' : '',
+                          'Description' : "True|False|'auto' place the additional plot data on a"+
+                                          " secondary y-axis.  'auto' compares the magnitude or the"+
+                                          " addplot data, to data already on the axis, and if it appears"+
+                                          " they are of different magnitudes, then it uses a secondary y-axis."+
+                                          " True or False always override 'auto'.",
                           'Validator'   : lambda value: isinstance(value,bool) or value == 'auto' },
 
         'y_on_right'  : { 'Default'     : None,
-                          'Description' : '',
+                          'Description' : 'True|False put y-axis tick labels on the right, for this addplot'+
+                                          ' regardless of what the mplfinance style says to to.',
                           'Validator'   : lambda value: isinstance(value,bool) },
-        
+
         'ylabel'      : { 'Default'     : None,
-                          'Description' : '',
+                          'Description' : 'label for y-axis (for this addplot)',
                           'Validator'   : lambda value: isinstance(value,str) },
 
         'ylim'        : {'Default'      : None,
-                          'Description' : '',
+                         'Description' : 'Limits for addplot y-axis as tuple (min,max), i.e. (bottom,top)',
                          'Validator'    : lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
                                                                       and all([isinstance(v,(int,float)) for v in value])},
 
         'title'       : { 'Default'     : None,
-                          'Description' : '',
+                          'Description' : 'Axes Title (subplot title) for this addplot.',
                           'Validator'   : lambda value: isinstance(value,str) },
 
         'ax'          : { 'Default'      : None,
-                          'Description' : '',
+                          'Description' : 'Matplotlib Axes object on which to plot this addplot',
                           'Validator'    : lambda value: isinstance(value,mpl_axes.Axes) },
 
         'yscale'      : { 'Default'     : None,
-                          'Description' : '',
+                          'Description' : 'addplot y-axis scale: "linear", "log", "symlog", or "logit"',
                           'Validator'   : lambda value: _yscale_validator(value) },
 
         'stepwhere'   : { 'Default'     : 'pre',
-                          'Description' : '',
+                          'Description' : "'pre','post', or 'mid': where to place step relative"+
+                                          " to data for `type='step'`",
                           'Validator'   : lambda value : value in valid_stepwheres },                  
         
         'marketcolors': { 'Default'     : None, # use 'style' for default, instead.
-                          'Description' : '',
+                          'Description' : "marketcolors for this addplot (instead of the mplfinance"+
+                                          " style\'s marketcolors).  For addplot `type='ohlc'`"+
+                                          " and type='candle'",
                           'Validator'   : lambda value: _is_marketcolor_object(value) },
     }
 
