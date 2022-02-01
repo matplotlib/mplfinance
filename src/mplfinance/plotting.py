@@ -121,31 +121,33 @@ def _valid_plot_kwargs():
                                         'Validator'   : _mav_validator },
         
         'renko_params'              : { 'Default'     : dict(),
-                                        'Description' : '',
+                                        'Description' : 'dict of renko parameters; call `mpf.kwarg_help("renko_params")`',
                                         'Validator'   : lambda value: isinstance(value,dict) },
 
         'pnf_params'                : { 'Default'     : dict(),
-                                        'Description' : '',
+                                        'Description' : 'dict of point-and-figure parameters; call `mpf.kwarg_help("pnf_params")`',
                                         'Validator'   : lambda value: isinstance(value,dict) },
  
         'study'                     : { 'Default'     : None,
-                                        'Description' : '',
+                                        'Description' : 'kwarg not implemented',
                                         'Validator'   : lambda value: _kwarg_not_implemented(value) }, 
  
         'marketcolor_overrides'     : { 'Default'     : None, 
-                                        'Description' : '',
+                                        'Description' : 'sequence of color objects to override market colors.'+
+                                                        'sequence must be same length as ohlc(v) DataFrame. Each'+
+                                                        'color object may be a color, marketcolor object, or None.',
                                         'Validator'   : _mco_validator },
  
         'mco_faceonly'              : { 'Default'     : False, # If True: Override only the face of the candle
-                                        'Description' : '',
+                                        'Description' : 'True/False marketcolor_overrides only apply to face of candle.',
                                         'Validator'   : lambda value: isinstance(value,bool) },
  
         'no_xgaps'                  : { 'Default'     : True,  # None means follow default logic below:
-                                        'Description' : '',
+                                        'Description' : 'deprecated',
                                         'Validator'   : lambda value: _warn_no_xgaps_deprecated(value) },
  
         'show_nontrading'           : { 'Default'     : False, 
-                                        'Description' : '',
+                                        'Description' : 'True/False show spaces for non-trading days/periods',
                                         'Validator'   : lambda value: isinstance(value,bool) },
  
         'figscale'                  : { 'Default'     : None, # scale base figure size up or down.
@@ -184,85 +186,106 @@ def _valid_plot_kwargs():
                                         'Validator'   : lambda value: isinstance(value,(str,dict)) },
  
         'ylabel'                    : { 'Default'     : 'Price', # y-axis label
-                                        'Description' : '',
+                                        'Description' : 'label for y-axis of main plot',
                                         'Validator'   : lambda value: isinstance(value,str) },
  
         'ylabel_lower'              : { 'Default'     : None, # y-axis label default logic below
-                                        'Description' : '',
+                                        'Description' : 'label for y-axis of volume',
                                         'Validator'   : lambda value: isinstance(value,str) },
  
         'addplot'                   : { 'Default'     : None, 
-                                        'Description' : '',
+                                        'Description' : 'addplot object or sequence of addplot objects (from `mpf.make_addplot()`)',
                                         'Validator'   : lambda value: isinstance(value,dict) or (isinstance(value,list) and all([isinstance(d,dict) for d in value])) },
  
         'savefig'                   : { 'Default'     : None, 
-                                        'Description' : '',
+                                        'Description' : 'file name, or BytesIO, or dict with key `fname` plus other keys allowed as '+
+                                                        ' kwargs to matplotlib `Figure.savefig()`',
                                         'Validator'   : lambda value: isinstance(value,dict) or isinstance(value,str) or isinstance(value, io.BytesIO) or isinstance(value, os.PathLike) },
  
         'block'                     : { 'Default'     : None, 
-                                        'Description' : '',
+                                        'Description' : 'True/False wait for figure to be closed before returning',
                                         'Validator'   : lambda value: isinstance(value,bool) },
  
         'returnfig'                 : { 'Default'     : False, 
-                                        'Description' : '',
+                                        'Description' : 'return Figure and list of Axes objects created by mplfinance;'+
+                                                        ' user must display plot when ready, usually by calling `mpf.show()`',
                                         'Validator'   : lambda value: isinstance(value,bool) },
 
-        'return_calculated_values'  : { 'Default'      : None,
-                                        'Description' : '',
-                                        'Validator'    : lambda value: isinstance(value, dict) and len(value) == 0},
+        'return_calculated_values'  : { 'Default'     : None,
+                                        'Description' : 'set to a variable containing an empty dict; `mpf.plot()` will fill'+
+                                                        ' the dict with various mplfinance calculated values',
+                                        'Validator'   : lambda value: isinstance(value, dict) and len(value) == 0},
 
-        'set_ylim'                  : { 'Default'      : None,
-                                        'Description' : '',
-                                        'Validator'    : lambda value: _warn_set_ylim_deprecated(value) },
+        'set_ylim'                  : { 'Default'     : None,
+                                        'Description' : 'deprecated',
+                                        'Validator'   : lambda value: _warn_set_ylim_deprecated(value) },
  
-        'ylim'                      : { 'Default'      : None,
+        'ylim'                      : { 'Default'     : None,
                                         'Description' : 'Limits for y-axis as tuple (min,max), i.e. (bottom,top)',
-                                        'Validator'    : lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
+                                        'Validator'   : lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
                                                                       and all([isinstance(v,(int,float)) for v in value])},
  
-        'xlim'                      : { 'Default'      : None,
-                                        'Description' : 'Limits for x-axis as tuple (min, max), i.e. (left,right)',
-                                        'Validator'    : lambda value: _xlim_validator(value) },
+        'xlim'                      : { 'Default'     : None,
+                                        'Description' : 'Limits for x-axis as tuple (min,max), i.e. (left,right)',
+                                        'Validator'   : lambda value: _xlim_validator(value) },
  
-        'set_ylim_panelB'           : { 'Default'      : None,
-                                        'Description' : '',
-                                        'Validator'    : lambda value: _warn_set_ylim_deprecated(value) },
+        'set_ylim_panelB'           : { 'Default'     : None,
+                                        'Description' : 'deprecated',
+                                        'Validator'   : lambda value: _warn_set_ylim_deprecated(value) },
  
         'hlines'                    : { 'Default'     : None, 
-                                        'Description' : '',
+                                        'Description' : 'Draw one or more HORIZONTAL LINES across entire plot, by'+
+                                                        ' specifying a price, or sequence of prices.  May also be a dict'+
+                                                        ' with key `hlines` specifying a price or sequence of prices, plus'+
+                                                        ' one or more of the following keys: `colors`, `linestyle`,'+
+                                                        ' `linewidths`, `alpha`.',
                                         'Validator'   : lambda value: _hlines_validator(value) },
  
         'vlines'                    : { 'Default'     : None, 
-                                        'Description' : '',
+                                        'Description' : 'Draw one or more VERTICAL LINES across entire plot, by'+
+                                                        ' specifying a date[time], or sequence of date[time].  May also'+
+                                                        ' be a dict with key `vlines` specifying a date[time] or sequence'+
+                                                        ' of date[time], plus one or more of the following keys:'+
+                                                        ' `colors`, `linestyle`, `linewidths`, `alpha`.',
                                         'Validator'   : lambda value: _vlines_validator(value) },
 
         'alines'                    : { 'Default'     : None, 
-                                        'Description' : '',
+                                        'Description' : 'Draw one or more ARBITRARY LINES anywhere on the plot, by'+
+                                                        ' specifying a sequence of two or more date/price pairs, or by'+
+                                                        ' specifying a sequence of sequences of two or more date/price pairs.'+
+                                                        ' May also be a dict with key `alines` (as date/price pairs described above),'+
+                                                        ' plus one or more of the following keys:'+
+                                                        ' `colors`, `linestyle`, `linewidths`, `alpha`.',
                                         'Validator'   : lambda value: _alines_validator(value) },
  
         'tlines'                    : { 'Default'     : None, 
-                                        'Description' : '',
+                                        'Description' : 'Draw one or more TREND LINES by specifying one or more pairs of date[times]'+
+                                                        ' between which each trend line should be drawn.  May also be a dict with key'+
+                                                        ' `tlines` as just described, plus one or more of the following keys:'+
+                                                        ' `colors`, `linestyle`, `linewidths`, `alpha`, `tline_use`,`tline_method`.',
                                         'Validator'   : lambda value: _tlines_validator(value) },
        
         'panel_ratios'              : { 'Default'     : None,
-                                        'Description' : '',
-                                        'Validator'   : lambda value: isinstance(value,(tuple,list)) and len(value) <= 10 and
+                                        'Description' : 'sequence of numbers indicating relative sizes of panels; sequence len'+
+                                                        ' must be same as number of panels, or len 2 where first entry is for'+
+                                                        ' main panel, and second entry is for all other panels',
+                                        'Validator'   : lambda value: isinstance(value,(tuple,list)) and len(value) <= 32 and
                                                                       all([isinstance(v,(int,float)) for v in value]) },
 
         'main_panel'                : { 'Default'     : 0,
-                                        'Description' : '',
+                                        'Description' : 'integer - which panel is the main panel for `.plot()`',
                                         'Validator'   : lambda value: _valid_panel_id(value) },
 
         'volume_panel'              : { 'Default'     : 1,
-                                        'Description' : '',
+                                        'Description' : 'integer - which panel is the volume panel',
                                         'Validator'   : lambda value: _valid_panel_id(value) },
 
         'num_panels'                : { 'Default'     : None,
-                                        'Description' : '',
-                                        'Validator'   : lambda value: isinstance(value,int) and value in range(1,10+1) },
+                                        'Description' : 'total number of panels',
+                                        'Validator'   : lambda value: isinstance(value,int) and value in range(1,32+1) },
 
         'datetime_format'           : { 'Default'     : None,
-                                        'Description' : '',
+                                        'Description' : 'x-axis tick format as valid `strftime()` format string',
                                         'Validator'   : lambda value: isinstance(value,str) },
 
         'xrotation'                 : { 'Default'     : 45,
@@ -274,66 +297,77 @@ def _valid_plot_kwargs():
                                         'Validator'   : lambda value: isinstance(value,bool) },
 
         'closefig'                  : { 'Default'     : 'auto',
-                                        'Description' : '',
+                                        'Description' : 'True|False close the Figure before returning',
                                         'Validator'   : lambda value: isinstance(value,bool) },
 
         'fill_between'              : { 'Default'     : None,
-                                        'Description' : '',
+                                        'Description' : 'fill between specification as y-value, or sequence of'+
+                                                        ' y-values, or dict containing key "y1" plus any additional'+
+                                                        ' kwargs for `fill_between()`',
                                         'Validator'   : lambda value: _num_or_seq_of_num(value) or 
                                                                      (isinstance(value,dict) and 'y1' in value and
                                                                        _num_or_seq_of_num(value['y1'])) },
 
         'tight_layout'              : { 'Default'     : False,
-                                        'Description' : '',
+                                        'Description' : 'True|False implement tight layout (minimal padding around Figure)'+
+                                                        ' (see also `scale_padding` kwarg)',
                                         'Validator'   : lambda value: isinstance(value,bool) },
 
+        'scale_padding'             : { 'Default'     : 1.0,   # Issue#193 
+                                        'Description' : 'Increase, > 1.0, or decrease, < 1.0, padding around figure.'+
+                                                        ' May also be a dict containing one or more of the following keys:'+
+                                                        ' "top", "bottom", "left", "right", to individual scale padding'+
+                                                        ' on each side of Figure.',
+                                        'Validator'   : lambda value: _scale_padding_validator(value) },
+
         'width_adjuster_version'    : { 'Default'     : 'v1',
-                                        'Description' : '',
+                                        'Description' : 'specify version of object width adjustment algorithm: "v0" or "v1"'+
+                                                        ' (See also "widths" tutorial in mplfinance examples folder).',
                                         'Validator'   : lambda value: value in ('v0', 'v1') },
 
         'scale_width_adjustment'    : { 'Default'     : None,
-                                        'Description' : '',
+                                        'Description' : 'scale width of plot objects wider, > 1.0, or narrower, < 1.0'+
+                                                        ' may also be a dict to scale individual widths.'+
+                                                        ' (See also "widths" tutorial in mplfinance examples folder).',
                                         'Validator'   : lambda value: isinstance(value,dict) and len(value) > 0 },
 
         'update_width_config'       : { 'Default'     : None,
-                                        'Description' : '',
+                                        'Description' : 'dict - update individual items in width configuration.'+
+                                                        ' (See also "widths" tutorial in mplfinance examples folder).',
                                         'Validator'   : lambda value: isinstance(value,dict) and len(value) > 0 },
 
         'return_width_config'       : { 'Default'     : None,
-                                        'Description' : '',
+                                        'Description' : 'empty dict variable to be filled with width configuration settings.',
                                         'Validator'   : lambda value: isinstance(value,dict) and len(value)==0 },
 
         'saxbelow'                  : { 'Default'     : True,  # Issue#115 Comment#639446764
-                                        'Description' : '',
+                                        'Description' : 'set the volume Axes below (behind) all other Axes objects',
                                         'Validator'   : lambda value: isinstance(value,bool) },
         
-        'scale_padding'             : { 'Default'     : 1.0,   # Issue#193 
-                                        'Description' : '',
-                                        'Validator'   : lambda value: _scale_padding_validator(value) },
-
         'ax'                        : { 'Default'     : None,
                                         'Description' : 'Matplotlib Axes object on which to plot',
                                         'Validator'   : lambda value: isinstance(value,mpl_axes.Axes) },
 
         'volume_exponent'           : { 'Default'     : None,
-                                        'Description' : '',
+                                        'Description' : 'integer exponent on the volume axis'+
+                                                        ' (or set to "legacy" for old mplfinance style)',
                                         'Validator'   : lambda value: isinstance(value,int) or value == 'legacy'},
 
         'tz_localize'               : { 'Default'     : True,
-                                        'Description' : '',
+                                        'Description' : 'True|False localize the times in the DatetimeIndex',
                                         'Validator'   : lambda value: isinstance(value,bool) },
 
         'yscale'                    : { 'Default'     : None,
-                                        'Description' : '',
+                                        'Description' : 'y-axis scale: "linear", "log", "symlog", or "logit"',
                                         'Validator'   : lambda value: _yscale_validator(value) },
 
         'volume_yscale'             : { 'Default'     : None,
-                                        'Description' : '',
+                                        'Description' : 'Volume y-axis scale: "linear", "log", "symlog", or "logit"',
                                         'Validator'   : lambda value: _yscale_validator(value) },
 
         'warn_too_much_data'        : { 'Default'     : 599,
-                                        'Description' : ('Tolerance for data amount in plot. Default=599 rows.'+
-                                                         ' Values greater than \'warn_too_much_data\' will trigger a warning.'),
+                                        'Description' : 'Tolerance for data amount in plot. Default=599 rows.'+
+                                                        ' Values greater than \'warn_too_much_data\' will trigger a warning.',
                                         'Validator'   : lambda value: isinstance(value,int) },
     }
 
@@ -1107,31 +1141,31 @@ def _valid_addplot_kwargs():
 
     vkwargs = {
         'scatter'     : { 'Default'     : False,
-                          'Description' : '',
+                          'Description' : "Deprecated.  (Use kwarg `type='scatter' instead.",
                           'Validator'   : lambda value: isinstance(value,bool) },
 
         'type'        : { 'Default'     : 'line',
-                          'Description' : '',
+                          'Description' : 'addplot type: "line","scatter","bar", "ohlc", "candle","step"',
                           'Validator'   : lambda value: value in valid_types },
 
         'mav'         : { 'Default'     : None,
-                          'Description' : '',
+                          'Description' : 'Moving Average window size(s); (int or tuple of ints)',
                           'Validator'   : _mav_validator },
         
         'panel'       : { 'Default'     : 0, 
-                          'Description' : '',
+                          'Description' : 'Panel (int 0-31) to use for this addplot',
                           'Validator'   : lambda value: _valid_panel_id(value) },
 
         'marker'      : { 'Default'     : 'o',
-                          'Description' : '',
+                          'Description' : "marker for `type='scatter'` plot",
                           'Validator'   : lambda value: _bypass_kwarg_validation(value)  },
 
         'markersize'  : { 'Default'     : 18,
-                          'Description' : 'size of marker for `type=scatter`; default=18',
+                          'Description' : 'size of marker for `type="scatter"`; default=18',
                           'Validator'   : lambda value: isinstance(value,(int,float)) },
 
         'color'       : { 'Default'     : None,
-                          'Description' : 'color of line, scatter marker, or bar',
+                          'Description' : 'color (or sequence of colors) of line(s), scatter marker(s), or bar(s).',
                           'Validator'   : lambda value: mcolors.is_color_like(value) or
                                          (isinstance(value,(list,tuple,np.ndarray)) and all([mcolors.is_color_like(v) for v in value])) },
 
@@ -1140,15 +1174,15 @@ def _valid_addplot_kwargs():
                           'Validator'   : lambda value: value in valid_linestyles },
 
         'linewidths'  : { 'Default': None,
-                          'Description' : '',
+                          'Description' : 'edge widths of scatter markers',
                           'Validator'   : lambda value: isinstance(value,(int,float)) },
 
         'edgecolors'  : { 'Default': None,
-                          'Description' : '',
+                          'Description' : 'edgecolors of scatter markers',
                           'Validator': lambda value: mcolors.is_color_like(value) or value in valid_edgecolors},
 
         'width'       : { 'Default'     : None, # width of `bar` or `line`
-                          'Description' : '',
+                          'Description' : 'width of bar or line for `type="bar"` or `type="line"',
                           'Validator'   : lambda value: isinstance(value,(int,float)) or
                                                         all([isinstance(v,(int,float)) for v in value]) },
 
@@ -1162,40 +1196,48 @@ def _valid_addplot_kwargs():
                                                         all([isinstance(v,(int,float)) for v in value]) },
 
         'secondary_y' : { 'Default'     : 'auto',
-                          'Description' : '',
+                          'Description' : "True|False|'auto' place the additional plot data on a"+
+                                          " secondary y-axis.  'auto' compares the magnitude or the"+
+                                          " addplot data, to data already on the axis, and if it appears"+
+                                          " they are of different magnitudes, then it uses a secondary y-axis."+
+                                          " True or False always override 'auto'.",
                           'Validator'   : lambda value: isinstance(value,bool) or value == 'auto' },
 
         'y_on_right'  : { 'Default'     : None,
-                          'Description' : '',
+                          'Description' : 'True|False put y-axis tick labels on the right, for this addplot'+
+                                          ' regardless of what the mplfinance style says to to.',
                           'Validator'   : lambda value: isinstance(value,bool) },
-        
+
         'ylabel'      : { 'Default'     : None,
-                          'Description' : '',
+                          'Description' : 'label for y-axis (for this addplot)',
                           'Validator'   : lambda value: isinstance(value,str) },
 
         'ylim'        : {'Default'      : None,
-                          'Description' : '',
+                         'Description' : 'Limits for addplot y-axis as tuple (min,max), i.e. (bottom,top)',
                          'Validator'    : lambda value: isinstance(value, (list,tuple)) and len(value) == 2 
                                                                       and all([isinstance(v,(int,float)) for v in value])},
 
         'title'       : { 'Default'     : None,
-                          'Description' : '',
+                          'Description' : 'Axes Title (subplot title) for this addplot.',
                           'Validator'   : lambda value: isinstance(value,str) },
 
         'ax'          : { 'Default'      : None,
-                          'Description' : '',
+                          'Description' : 'Matplotlib Axes object on which to plot this addplot',
                           'Validator'    : lambda value: isinstance(value,mpl_axes.Axes) },
 
         'yscale'      : { 'Default'     : None,
-                          'Description' : '',
+                          'Description' : 'addplot y-axis scale: "linear", "log", "symlog", or "logit"',
                           'Validator'   : lambda value: _yscale_validator(value) },
 
         'stepwhere'   : { 'Default'     : 'pre',
-                          'Description' : '',
+                          'Description' : "'pre','post', or 'mid': where to place step relative"+
+                                          " to data for `type='step'`",
                           'Validator'   : lambda value : value in valid_stepwheres },                  
         
         'marketcolors': { 'Default'     : None, # use 'style' for default, instead.
-                          'Description' : '',
+                          'Description' : "marketcolors for this addplot (instead of the mplfinance"+
+                                          " style\'s marketcolors).  For addplot `type='ohlc'`"+
+                                          " and type='candle'",
                           'Validator'   : lambda value: _is_marketcolor_object(value) },
     }
 
