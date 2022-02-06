@@ -844,18 +844,6 @@ def plot( data, **kwargs ):
             if not row['used2nd']:
                 row['axes'][1].set_visible(False)
 
-    if external_axes_mode:
-        return None
-
-    # Should we create a new kwarg to return a flattened axes list
-    # versus a list of tuples of primary and secondary axes?
-    # For now, for backwards compatibility, we flatten axes list:
-    axlist = [ax for axes in panels['axes'] for ax in axes]
-
-    if config['axisoff']:
-        for ax in axlist:
-            ax.set_axis_off()
-
     if config['savefig'] is not None:
         save = config['savefig']
         if isinstance(save,dict):
@@ -870,6 +858,20 @@ def plot( data, **kwargs ):
                 plt.savefig(save)
         if config['closefig']: # True or 'auto'
             plt.close(fig)
+
+    if external_axes_mode:
+        return None
+
+    # Should we create a new kwarg to return a flattened axes list
+    # versus a list of tuples of primary and secondary axes?
+    # For now, for backwards compatibility, we flatten axes list:
+    axlist = [ax for axes in panels['axes'] for ax in axes]
+
+    if config['axisoff']:
+        for ax in axlist:
+            ax.set_axis_off()
+
+
     elif not config['returnfig']:
         plt.show(block=config['block']) # https://stackoverflow.com/a/13361748/1639359 
         if config['closefig'] == True or (config['block'] and config['closefig']):
