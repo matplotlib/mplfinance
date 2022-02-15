@@ -25,5 +25,5 @@ apds = [mpf.make_addplot(exp12,color='lime'),
 fig, axlist = mpf.plot(df,type='candle',addplot=apds,figscale=1.1,figratio=(8,5),title='\nMACD',
                        style='blueskies',volume=True,volume_panel=2,panel_ratios=(6,3,2),returnfig=True)
 
-multi = MultiCursor(fig.canvas, axlist, color='r',lw=1.2)
+multi = MultiCursor(fig.canvas, axlist, color='r',lw=1.2, horizOn=True, vertOn=True)
 mpf.show()
