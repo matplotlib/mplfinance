@@ -442,11 +442,6 @@ def plot( data, **kwargs ):
     else:
         raise TypeError('style should be a `dict`; why is it not?')
 
-    # ----------------------------------------------------------------------
-    # TODO:  Add some warnings, or raise an exception, if external_axes_mode
-    #        and user is trying to figscale, figratio, or figsize.
-    # ----------------------------------------------------------------------
-
     if not external_axes_mode:
         fig = plt.figure()
         _adjust_figsize(fig,config)
