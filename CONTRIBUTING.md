@@ -16,7 +16,7 @@
   3. Work on your cloned copy of the repository, `git commit` the changes, and then **`git push`** them *to your GitHub fork*.
   4. When you are satisfied with the code in your fork then, **on the GitHub page for your fork, *open a Pull Request (PR)***.  A Pull Request effectively asks for the changes in your fork be pulled into the main mplfinance repository.  The PR provides, on github, a place to see the changes, and to post comments and discussion about them.
   5. After code review, if you are asked by a maintainer to make additional changes, you do *not* have to re-enter another Pull Request (as long as the original PR is still open).  Rather, make the changes in your local clone, and simply `git push` them to your fork again.  The changes will automatically flow into the open Pull Request.
-  6. When done, the maintainer of the repository will merge the changes from your fork to the mplfinance repository.  The PR will automatically be closed.  (Your fork, however, will continue to exist, and can be used again for additional Pull Requests in the future; See GitHub documentation for how to keep your Fork up to date).
+  6. When done, the maintainer of the repository will merge the changes from your fork into the mplfinance repository.  The PR will automatically be closed.  (Your fork, however, will continue to exist, and can be used again for additional Pull Requests in the future; See GitHub documentation for how to keep your Fork up to date).
 
 - Some References:
 - GitHub documentation:
