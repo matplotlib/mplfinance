@@ -11,8 +11,8 @@
   - *We assume you are familiar with **git** basics: `git clone`, `git commit`, etc*.
 - Note: a "Fork" is just a `git clone` *that is created on, and that lives on, GitHub*.  You create a fork using the **Fork** button on GitHub: This allows GitHub to track the relationship between the original github repository, and your Fork.
 - The basic workflow is:
-  1. Create a Fork of the mplfinance repository.  (See references below for details.)  The fork will exist under *your* github account.  
-  2. Clone *your* Fork to your local machine (`git clone`).
+  1. Create a **Fork** of the mplfinance repository.  (See references below for details.)  The fork will exist under *your* github account.  
+  2. **Clone** *your* Fork to your local machine (`git clone`).
   3. Work on your cloned copy of the repository, commit the changes, and then **`git push`** them *to your GitHub fork*.
   4. When you are satisfied with the code in your fork then, on the GitHub page for your fork, *open a Pull Request (PR)* asking that the changes in your fork be pulled into the main mplfinance repository.
   5. After code review, if you are asked by a maintainer to make additional changes, you do *not* have to re-enter another Pull Request (as long as the original PR is still open).  Rather, make the changes in your local clone, and simply `git push` them to your fork again.  The changes will automatically flow into the open Pull Request.
