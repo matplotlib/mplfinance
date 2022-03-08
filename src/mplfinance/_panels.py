@@ -63,7 +63,6 @@ Returns
     addplot      = config['addplot']
     volume       = config['volume']
     volume_panel = config['volume_panel']
-    num_panels   = config['num_panels']
     main_panel   = config['main_panel']
     panel_ratios = config['panel_ratios']
 
