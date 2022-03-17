@@ -209,10 +209,8 @@ Returns
             ax0 = figure.add_axes( [left_pad, bot_pad+lift, plot_width, height], sharex=panels.at[0,'axes'][0] )
         ax1 = ax0.twinx()
         ax1.grid(False)
-        if config['saxbelow']:      # issue#115 issuecomment-639446764
-            ax0.set_axisbelow(True) # so grid does not show through plot data on any panel.
-        elif panid == volume_panel:
-            ax0.set_axisbelow(True) # so grid does not show through volume bars.
+        if config['saxbelow'] or (panid == volume_panel):      # issue#115 issuecomment-639446764
+            ax0.set_axisbelow(True) # so grid does not show through plot data on any panel, and does not show through volume bars.
         panels.at[panid,'axes'] = (ax0,ax1)
 
     return panels
