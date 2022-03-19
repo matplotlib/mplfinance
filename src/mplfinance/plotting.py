@@ -687,7 +687,7 @@ def plot( data, **kwargs ):
             aptype = apdict['type']
             if aptype == 'ohlc' or aptype == 'candle':
                 ax = _addplot_collections(panid,panels,apdict,xdates,config)
-                _addplot_apply_supplements(ax,apdict)
+                _addplot_apply_supplements(ax,apdict,xdates)
             else:         
                 apdata = apdict['data']
                 if isinstance(apdata,list) and not isinstance(apdata[0],(float,int)):
@@ -700,7 +700,7 @@ def plot( data, **kwargs ):
                 for column in apdata:
                     ydata = apdata.loc[:,column] if havedf else column
                     ax = _addplot_columns(panid,panels,ydata,apdict,xdates,config)
-                    _addplot_apply_supplements(ax,apdict)
+                    _addplot_apply_supplements(ax,apdict,xdates)
 
     # fill_between is NOT supported for external_axes_mode
     # (caller can easily call ax.fill_between() themselves).
@@ -1045,7 +1045,7 @@ def _addplot_columns(panid,panels,ydata,apdict,xdates,config):
 
     return ax
 
-def _addplot_apply_supplements(ax,apdict):
+def _addplot_apply_supplements(ax,apdict,xdates):
     if (apdict['ylabel'] is not None):
         ax.set_ylabel(apdict['ylabel'])
     if apdict['ylim'] is not None:
@@ -1059,6 +1059,11 @@ def _addplot_apply_supplements(ax,apdict):
         ax.set_yscale(yscale,**ysd)
     elif isinstance(ysd,str):
         ax.set_yscale(ysd)
+    # added by Wen
+    if "fill_between" in apdict and apdict['fill_between'] is not None:
+        fb = apdict['fill_between']
+        fb['x'] = xdates
+        ax.fill_between(**fb)
 
 def _set_ylabels_side(ax_pri,ax_sec,primary_on_right):
     # put the primary axis on one side,
@@ -1234,6 +1239,10 @@ def _valid_addplot_kwargs():
                                           " style\'s marketcolors).  For addplot `type='ohlc'`"+
                                           " and type='candle'",
                           'Validator'   : lambda value: _is_marketcolor_object(value) },
+        'fill_between': { 'Default'     : None,    # added by Wen
+                          'Description' : " fill region",
+                          'Validator'   : lambda value: isinstance(value,dict) },
+
     }
 
     _validate_vkwargs_dict(vkwargs)
