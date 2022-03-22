@@ -32,7 +32,7 @@ from mplfinance._utils import _check_and_convert_xlim_configuration
 from mplfinance import _styles
 
 from mplfinance._arg_validators import _check_and_prepare_data, _mav_validator
-from mplfinance._arg_validators import _get_valid_plot_types
+from mplfinance._arg_validators import _get_valid_plot_types, _fill_between_validator
 from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 from mplfinance._arg_validators import _kwarg_not_implemented, _bypass_kwarg_validation
 from mplfinance._arg_validators import _hlines_validator, _vlines_validator
@@ -304,9 +304,7 @@ def _valid_plot_kwargs():
                                         'Description' : 'fill between specification as y-value, or sequence of'+
                                                         ' y-values, or dict containing key "y1" plus any additional'+
                                                         ' kwargs for `fill_between()`',
-                                        'Validator'   : lambda value: _num_or_seq_of_num(value) or 
-                                                                     (isinstance(value,dict) and 'y1' in value and
-                                                                       _num_or_seq_of_num(value['y1'])) },
+                                        'Validator'   : _fill_between_validator },
 
         'tight_layout'              : { 'Default'     : False,
                                         'Description' : 'True|False implement tight layout (minimal padding around Figure)'+
@@ -705,19 +703,23 @@ def plot( data, **kwargs ):
     # fill_between is NOT supported for external_axes_mode
     # (caller can easily call ax.fill_between() themselves).
     if config['fill_between'] is not None and not external_axes_mode:
-        fb    = config['fill_between']
-        panid = config['main_panel']
-        if isinstance(fb,dict):
+        fblist = config['fill_between']
+        panid  = config['main_panel']
+        if _num_or_seq_of_num(fblist):
+            fblist = [dict(y1=fblist),]
+        elif isinstance(fblist,dict):
+            fblist = [fblist,]
+        if not _list_of_dict(fblist):
+            raise TypeError('Bad type for `fill_between` specifier.')
+        for fb in fblist:
             if 'x' in fb:
                 raise ValueError('fill_between dict may not contain `x`')
             if 'panel' in fb:
                 panid = fb['panel']
                 del fb['panel']
-        else:
-            fb = dict(y1=fb)
-        fb['x'] = xdates
-        ax = panels.at[panid,'axes'][0]
-        ax.fill_between(**fb)
+            fb['x'] = xdates
+            ax = panels.at[panid,'axes'][0]
+            ax.fill_between(**fb)
             
     # put the primary axis on one side,
     # and the twinx() on the "other" side:
@@ -1061,9 +1063,13 @@ def _addplot_apply_supplements(ax,apdict,xdates):
         ax.set_yscale(ysd)
     # added by Wen
     if "fill_between" in apdict and apdict['fill_between'] is not None:
-        fb = apdict['fill_between']
-        fb['x'] = xdates
-        ax.fill_between(**fb)
+        fblist = apdict['fill_between']
+        if isinstance(fblist,dict):
+            fblist = [fblist,]
+        if _list_of_dict(fblist):
+            for fb in fblist:
+                fb['x'] = xdates
+                ax.fill_between(**fb)
 
 def _set_ylabels_side(ax_pri,ax_sec,primary_on_right):
     # put the primary axis on one side,
@@ -1241,7 +1247,7 @@ def _valid_addplot_kwargs():
                           'Validator'   : lambda value: _is_marketcolor_object(value) },
         'fill_between': { 'Default'     : None,    # added by Wen
                           'Description' : " fill region",
-                          'Validator'   : lambda value: isinstance(value,dict) },
+                          'Validator'   : _fill_between_validator },
 
     }
 
