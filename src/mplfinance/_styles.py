@@ -20,6 +20,9 @@ def _apply_mpfstyle(style):
 
     plt.style.use('default')
 
+    if isinstance(style['base_mpl_style'], list):
+        plt.style.use(list(map(style['base_mpl_style'], _get_mpfstyle))) 
+
     if style['base_mpl_style'] is not None:
         plt.style.use(style['base_mpl_style']) 
 
@@ -66,7 +69,7 @@ def _valid_make_mpf_style_kwargs():
 
         'base_mpl_style': { 'Default'     : None,
                             'Description' : 'matplotlib style to use as base of new mplfinance style',
-                            'Validator'   : lambda value: isinstance(value,str) }, # and is in plt.style.available
+                            'Validator'   : lambda value: isinstance(value,(str,list))}, # and is in plt.style.available
 
         'marketcolors'  : { 'Default'     : None,
                             'Description' : 'market colors object, from `mpf.make_market_colors()`',
