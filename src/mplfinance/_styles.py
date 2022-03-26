@@ -20,9 +20,6 @@ def _apply_mpfstyle(style):
 
     plt.style.use('default')
 
-    if isinstance(style['base_mpl_style'], list):
-        plt.style.use(list(map(style['base_mpl_style'], _get_mpfstyle))) 
-
     if style['base_mpl_style'] is not None:
         plt.style.use(style['base_mpl_style']) 
 
