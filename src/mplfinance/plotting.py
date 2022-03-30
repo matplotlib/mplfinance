@@ -707,18 +707,28 @@ def plot( data, **kwargs ):
     if config['fill_between'] is not None and not external_axes_mode:
         fb    = config['fill_between']
         panid = config['main_panel']
-        if isinstance(fb,dict):
-            if 'x' in fb:
-                raise ValueError('fill_between dict may not contain `x`')
-            if 'panel' in fb:
-                panid = fb['panel']
-                del fb['panel']
+        if isinstance(fb,list):
+            for element in fb:
+                if 'panel' in element:
+                    panind = element['panel']
+                    del element['panel']
+
+                element['x'] = xdates
+                ax = panels.at[panid,'axes'][0]
+                ax.fill_between(**element)
         else:
-            fb = dict(y1=fb)
-        fb['x'] = xdates
-        ax = panels.at[panid,'axes'][0]
-        ax.fill_between(**fb)
-            
+            if isinstance(fb,dict):
+                if 'x' in fb:
+                    raise ValueError('fill_between dict may not contain `x`')
+                if 'panel' in fb:
+                    panid = fb['panel']
+                    del fb['panel']
+            else:
+                fb = dict(y1=fb)
+            fb['x'] = xdates
+            ax = panels.at[panid,'axes'][0]
+            ax.fill_between(**fb)
+ 
     # put the primary axis on one side,
     # and the twinx() on the "other" side:
     if not external_axes_mode:
