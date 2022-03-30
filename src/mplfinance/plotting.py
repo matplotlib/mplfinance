@@ -304,9 +304,10 @@ def _valid_plot_kwargs():
                                         'Description' : 'fill between specification as y-value, or sequence of'+
                                                         ' y-values, or dict containing key "y1" plus any additional'+
                                                         ' kwargs for `fill_between()`',
-                                        'Validator'   : lambda value: _num_or_seq_of_num(value) or 
+                                        'Validator'   : lambda value: _num_or_seq_of_num(value) or
                                                                      (isinstance(value,dict) and 'y1' in value and
-                                                                       _num_or_seq_of_num(value['y1'])) },
+                                                                       _num_or_seq_of_num(value['y1']))  or
+                                                                        isinstance(value,(list,tuple))},
 
         'tight_layout'              : { 'Default'     : False,
                                         'Description' : 'True|False implement tight layout (minimal padding around Figure)'+
