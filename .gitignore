@@ -1,5 +1,6 @@
 doc/build
 doc/examples
+tests/
 _as_gen
 __pycache__
 *.pyc
