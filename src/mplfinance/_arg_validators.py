@@ -93,13 +93,9 @@ def _get_valid_plot_types(plottype=None):
 
     if plottype is None:
         return _valid_types_all
-
-    if plottype not in _valid_types_all:
-        return None
     elif plottype in _alias_types:
         return _alias_types[plottype]
-    else:
-        return plottype
+    return plottype
         
 
 def _mav_validator(mav_value):

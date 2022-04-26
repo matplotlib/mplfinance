@@ -855,18 +855,18 @@ def plot( data, **kwargs ):
         save = config['savefig']
         if isinstance(save,dict):
             if config['tight_layout'] and 'bbox_inches' not in save:
-                plt.savefig(**save,bbox_inches='tight')
+                fig.savefig(**save,bbox_inches='tight')
             else:
-                plt.savefig(**save)
+                fig.savefig(**save)
         else:
             if config['tight_layout']:
-                plt.savefig(save,bbox_inches='tight')
+                fig.savefig(save,bbox_inches='tight')
             else:
-                plt.savefig(save)
+                fig.savefig(save)
         if config['closefig']: # True or 'auto'
             plt.close(fig)
     elif not config['returnfig']:
-        plt.show(block=config['block']) # https://stackoverflow.com/a/13361748/1639359 
+        plt.show(block=config['block']) # https://stackoverflow.com/a/13361748/1639359
         if config['closefig'] == True or (config['block'] and config['closefig']):
             plt.close(fig)
     
