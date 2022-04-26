@@ -866,7 +866,7 @@ def plot( data, **kwargs ):
         if config['closefig']: # True or 'auto'
             plt.close(fig)
     elif not config['returnfig']:
-        fig.show() # https://stackoverflow.com/a/13361748/1639359 
+        plt.show(block=config['block']) # https://stackoverflow.com/a/13361748/1639359
         if config['closefig'] == True or (config['block'] and config['closefig']):
             plt.close(fig)
     
