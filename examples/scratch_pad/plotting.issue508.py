@@ -32,7 +32,7 @@ from mplfinance._utils import _check_and_convert_xlim_configuration
 from mplfinance import _styles
 
 from mplfinance._arg_validators import _check_and_prepare_data, _mav_validator
-from mplfinance._arg_validators import _get_valid_plot_types, _fill_between_validator
+from mplfinance._arg_validators import _get_valid_plot_types
 from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 from mplfinance._arg_validators import _kwarg_not_implemented, _bypass_kwarg_validation
 from mplfinance._arg_validators import _hlines_validator, _vlines_validator
@@ -304,7 +304,9 @@ def _valid_plot_kwargs():
                                         'Description' : 'fill between specification as y-value, or sequence of'+
                                                         ' y-values, or dict containing key "y1" plus any additional'+
                                                         ' kwargs for `fill_between()`',
-                                        'Validator'   : _fill_between_validator },
+                                        'Validator'   : lambda value: _num_or_seq_of_num(value) or 
+                                                                     (isinstance(value,dict) and 'y1' in value and
+                                                                       _num_or_seq_of_num(value['y1'])) },
 
         'tight_layout'              : { 'Default'     : False,
                                         'Description' : 'True|False implement tight layout (minimal padding around Figure)'+
@@ -439,6 +441,11 @@ def plot( data, **kwargs ):
         if not external_axes_mode: _styles._apply_mpfstyle(style)
     else:
         raise TypeError('style should be a `dict`; why is it not?')
+
+    # ----------------------------------------------------------------------
+    # TODO:  Add some warnings, or raise an exception, if external_axes_mode
+    #        and user is trying to figscale, figratio, or figsize.
+    # ----------------------------------------------------------------------
 
     if not external_axes_mode:
         fig = plt.figure()
@@ -685,7 +692,7 @@ def plot( data, **kwargs ):
             aptype = apdict['type']
             if aptype == 'ohlc' or aptype == 'candle':
                 ax = _addplot_collections(panid,panels,apdict,xdates,config)
-                _addplot_apply_supplements(ax,apdict,xdates)
+                _addplot_apply_supplements(ax,apdict)
             else:         
                 apdata = apdict['data']
                 if isinstance(apdata,list) and not isinstance(apdata[0],(float,int)):
@@ -698,28 +705,24 @@ def plot( data, **kwargs ):
                 for column in apdata:
                     ydata = apdata.loc[:,column] if havedf else column
                     ax = _addplot_columns(panid,panels,ydata,apdict,xdates,config)
-                    _addplot_apply_supplements(ax,apdict,xdates)
+                    _addplot_apply_supplements(ax,apdict)
 
     # fill_between is NOT supported for external_axes_mode
     # (caller can easily call ax.fill_between() themselves).
     if config['fill_between'] is not None and not external_axes_mode:
-        fblist = config['fill_between']
-        panid  = config['main_panel']
-        if _num_or_seq_of_num(fblist):
-            fblist = [dict(y1=fblist),]
-        elif isinstance(fblist,dict):
-            fblist = [fblist,]
-        if not _list_of_dict(fblist):
-            raise TypeError('Bad type for `fill_between` specifier.')
-        for fb in fblist:
+        fb    = config['fill_between']
+        panid = config['main_panel']
+        if isinstance(fb,dict):
             if 'x' in fb:
                 raise ValueError('fill_between dict may not contain `x`')
             if 'panel' in fb:
                 panid = fb['panel']
                 del fb['panel']
-            fb['x'] = xdates
-            ax = panels.at[panid,'axes'][0]
-            ax.fill_between(**fb)
+        else:
+            fb = dict(y1=fb)
+        fb['x'] = xdates
+        ax = panels.at[panid,'axes'][0]
+        ax.fill_between(**fb)
             
     # put the primary axis on one side,
     # and the twinx() on the "other" side:
@@ -857,18 +860,18 @@ def plot( data, **kwargs ):
         save = config['savefig']
         if isinstance(save,dict):
             if config['tight_layout'] and 'bbox_inches' not in save:
-                fig.savefig(**save,bbox_inches='tight')
+                plt.savefig(**save,bbox_inches='tight')
             else:
-                fig.savefig(**save)
+                plt.savefig(**save)
         else:
             if config['tight_layout']:
-                fig.savefig(save,bbox_inches='tight')
+                plt.savefig(save,bbox_inches='tight')
             else:
-                fig.savefig(save)
+                plt.savefig(save)
         if config['closefig']: # True or 'auto'
             plt.close(fig)
     elif not config['returnfig']:
-        plt.show(block=config['block']) # https://stackoverflow.com/a/13361748/1639359
+        plt.show(block=config['block']) # https://stackoverflow.com/a/13361748/1639359 
         if config['closefig'] == True or (config['block'] and config['closefig']):
             plt.close(fig)
     
@@ -1021,11 +1024,17 @@ def _addplot_columns(panid,panels,ydata,apdict,xdates,config):
         else:
             ax.scatter(xdates, ydata, s=size, marker=mark, color=color, alpha=alpha, edgecolors=edgecolors, linewidths=linewidths)
     elif aptype == 'bar':
-        width  = 0.8 if apdict['width'] is None else apdict['width']
+        w = config['_width_config']['volume_width']
+        lw = config['_width_config']['volume_linewidth']
+        ##   volumeAxes.bar(xdates,volumes,width=w,linewidth=lw,color=vcol
+        width  = w  if apdict['width'] is None else apdict['width']
+        linew  = lw if apdict['width'] is None else 0.25*apdict['width']
+        print('width=',width,"  apdict['width']=",apdict['width'])
         bottom = apdict['bottom']
         color  = apdict['color']
         alpha  = apdict['alpha']
-        ax.bar(xdates,ydata,width=width,bottom=bottom,color=color,alpha=alpha)
+        print('bar: xdates[0:10]=',xdates[0:10],' ydata[0:10]=',ydata[0:10],' len(ydata)=',len(ydata),' ax=',ax)
+        ax.bar(xdates,ydata,width=width,linewidth=linew,bottom=bottom,color=color,alpha=alpha)
     elif aptype == 'line':
         ls     = apdict['linestyle']
         color  = apdict['color']
@@ -1038,6 +1047,7 @@ def _addplot_columns(panid,panels,ydata,apdict,xdates,config):
         color  = apdict['color']
         width  = apdict['width'] if apdict['width'] is not None else 1.6*config['_width_config']['line_width']
         alpha  = apdict['alpha']
+        print('step: xdates[0:10]=',xdates[0:10],' ydata[0:10]=',ydata[0:10],' len(ydata)=',len(ydata),' ax=',ax)
         ax.step(xdates,ydata,where = stepwhere,linestyle=ls,color=color,linewidth=width,alpha=alpha)
     else:
         raise ValueError('addplot type "'+str(aptype)+'" NOT yet supported.')
@@ -1047,7 +1057,7 @@ def _addplot_columns(panid,panels,ydata,apdict,xdates,config):
 
     return ax
 
-def _addplot_apply_supplements(ax,apdict,xdates):
+def _addplot_apply_supplements(ax,apdict):
     if (apdict['ylabel'] is not None):
         ax.set_ylabel(apdict['ylabel'])
     if apdict['ylim'] is not None:
@@ -1061,15 +1071,6 @@ def _addplot_apply_supplements(ax,apdict,xdates):
         ax.set_yscale(yscale,**ysd)
     elif isinstance(ysd,str):
         ax.set_yscale(ysd)
-    # added by Wen
-    if "fill_between" in apdict and apdict['fill_between'] is not None:
-        fblist = apdict['fill_between']
-        if isinstance(fblist,dict):
-            fblist = [fblist,]
-        if _list_of_dict(fblist):
-            for fb in fblist:
-                fb['x'] = xdates
-                ax.fill_between(**fb)
 
 def _set_ylabels_side(ax_pri,ax_sec,primary_on_right):
     # put the primary axis on one side,
@@ -1245,10 +1246,6 @@ def _valid_addplot_kwargs():
                                           " style\'s marketcolors).  For addplot `type='ohlc'`"+
                                           " and type='candle'",
                           'Validator'   : lambda value: _is_marketcolor_object(value) },
-        'fill_between': { 'Default'     : None,    # added by Wen
-                          'Description' : " fill region",
-                          'Validator'   : _fill_between_validator },
-
     }
 
     _validate_vkwargs_dict(vkwargs)
