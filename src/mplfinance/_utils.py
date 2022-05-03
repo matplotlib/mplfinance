@@ -557,7 +557,6 @@ def _construct_ohlc_collections(dates, opens, highs, lows, closes, marketcolors=
 
     if marketcolors is None:
         mktcolors = _get_mpfstyle('classic')['marketcolors']['ohlc']
-        #print('default mktcolors=',mktcolors)
     else:
         mktcolors = marketcolors['ohlc']
 
@@ -635,7 +634,6 @@ def _construct_candlestick_collections(dates, opens, highs, lows, closes, market
 
     if marketcolors is None:
         marketcolors = _get_mpfstyle('classic')['marketcolors']
-        #print('default market colors:',marketcolors)
 
     datalen = len(dates)
 
@@ -719,7 +717,6 @@ def _construct_hollow_candlestick_collections(dates, opens, highs, lows, closes,
 
     if marketcolors is None:
         marketcolors = _get_mpfstyle('classic')['marketcolors']
-        #print('default market colors:',marketcolors)
 
     datalen = len(dates)
 
@@ -828,7 +825,6 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
     renko_params = _process_kwargs(config_renko_params, _valid_renko_kwargs())
     if marketcolors is None:
         marketcolors = _get_mpfstyle('classic')['marketcolors']
-        #print('default market colors:',marketcolors)
     
     brick_size = renko_params['brick_size']
     atr_length = renko_params['atr_length']
@@ -1005,7 +1001,6 @@ def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnf
     pointnfig_params = _process_kwargs(config_pointnfig_params, _valid_pnf_kwargs())
     if marketcolors is None:
         marketcolors = _get_mpfstyle('classic')['marketcolors']
-        #print('default market colors:',marketcolors)
     
     box_size = pointnfig_params['box_size']
     atr_length = pointnfig_params['atr_length']
@@ -1218,9 +1213,6 @@ def _construct_aline_collections(alines, dtix=None):
     else:
         aconfig = _process_kwargs({}, _valid_lines_kwargs())
 
-    #print('aconfig=',aconfig)
-    #print('alines=',alines)
-
     alines = _alines_validator(alines, returnStandardizedValue=True)
     if alines is None:
         raise ValueError('Unable to standardize alines value: '+str(alines))
@@ -1403,6 +1395,7 @@ def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes
     # reconstruct the data frame:
     df = pd.DataFrame({'open':opens,'high':highs,'low':lows,'close':closes},
                       index=pd.DatetimeIndex(mdates.num2date(dates))   )
+    df.index = df.index.tz_localize(None)
 
     # possible `tvalue`s : close,open,high,low,oc_avg,hl_avg,ohlc_avg,hilo
     #          'hilo' means high on the up trend, low on the down trend.
@@ -1436,7 +1429,7 @@ def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes
         x1, x2 = xs[0], xs[-1]
         y1 = m*x1 + b
         y2 = m*x2 + b
-        x1, x2 = mdates.num2date(x1), mdates.num2date(x2)
+        x1, x2 = mdates.num2date(x1).replace(tzinfo=None), mdates.num2date(x2).replace(tzinfo=None)
         return ((x1,y1),(x2,y2))
 
     if isinstance(tline_use,str):
