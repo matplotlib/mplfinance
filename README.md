@@ -23,6 +23,7 @@ pip install --upgrade mplfinance
     - **[Customizing the Appearance of Plots](https://github.com/matplotlib/mplfinance/blob/master/markdown/customization_and_styles.md)** 
     - **[Adding Your Own Technical Studies to Plots](https://github.com/matplotlib/mplfinance/blob/master/examples/addplot.ipynb)**
     - **[Subplots: Multiple Plots on a Single Figure](https://github.com/matplotlib/mplfinance/blob/master/markdown/subplots.md)**
+    - **[Fill Between: Filling Plots with Color](https://github.com/matplotlib/mplfinance/blob/master/examples/fill_between.ipynb)**
     - **[Price-Movement Plots (Renko, P&F, etc)](https://github.com/matplotlib/mplfinance/blob/master/examples/price-movement_plots.ipynb)**
     - **[Trends, Support, Resistance, and Trading Lines](https://github.com/matplotlib/mplfinance/blob/master/examples/using_lines.ipynb)**
     - **[Coloring Individual Candlesticks](https://github.com/matplotlib/mplfinance/blob/master/examples/marketcolor_overrides.ipynb)** (New: December 2021)
