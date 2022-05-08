@@ -98,6 +98,10 @@ def _get_valid_plot_types(plottype=None):
     return plottype
         
 
+def _use_column_validator(value):
+    return isinstance(value, str) and value.lower() in ('open', 'high', 'low', 'close')
+
+
 def _mav_validator(mav_value):
     '''
     Value for mav (moving average) keyword may be:

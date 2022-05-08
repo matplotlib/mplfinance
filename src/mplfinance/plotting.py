@@ -40,6 +40,7 @@ from mplfinance._arg_validators import _alines_validator, _tlines_validator
 from mplfinance._arg_validators import _scale_padding_validator, _yscale_validator
 from mplfinance._arg_validators import _valid_panel_id, _check_for_external_axes
 from mplfinance._arg_validators import _xlim_validator, _mco_validator, _is_marketcolor_object
+from mplfinance._arg_validators import _use_column_validator
 
 from mplfinance._panels import _build_panels
 from mplfinance._panels import _set_ticks_on_bottom_panel_only
@@ -107,6 +108,11 @@ def _valid_plot_kwargs():
         'type'                      : { 'Default'     : 'ohlc',
                                         'Description' : 'Plot type: '+str(_get_valid_plot_types()),
                                         'Validator'   : lambda value: value in _get_valid_plot_types() },
+
+        'use_column'                : { 'Default'     : 'Close',
+                                        'Description' : 'Column to be used for line chart.' +
+                                                        'Accepts values "Open", "High", "Low", "Close"',
+                                        'Validator'   : lambda value: _use_column_validator(value) },
  
         'style'                     : { 'Default'     : None,
                                         'Description' : 'plot style; see `mpf.available_styles()`',
@@ -491,7 +497,13 @@ def plot( data, **kwargs ):
     collections = None
     if ptype == 'line':
         lw = config['_width_config']['line_width']
-        axA1.plot(xdates, closes, color=config['linecolor'], linewidth=lw)
+        line_data = {
+            'open':     opens,
+            'high':     highs,
+            'low':      lows,
+            'close':    closes
+        }.get(config['use_column'], closes)
+        axA1.plot(xdates, line_data, color=config['linecolor'], linewidth=lw)
     else:
         collections =_construct_mpf_collections(ptype,dates,xdates,opens,highs,lows,closes,volumes,config,style)
 
