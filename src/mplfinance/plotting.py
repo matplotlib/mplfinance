@@ -304,8 +304,10 @@ def _valid_plot_kwargs():
                                         'Description' : 'fill between specification as y-value, or sequence of'+
                                                         ' y-values, or dict containing key "y1" plus any additional'+
                                                         ' kwargs for `fill_between()`',
-                                        'Validator'   : _fill_between_validator },
-
+                                        'Validator'   : lambda value: _num_or_seq_of_num(value) or
+                                                                     (isinstance(value,dict) and 'y1' in value and
+                                                                       _num_or_seq_of_num(value['y1']))  or
+                                                                        isinstance(value,(list,tuple))},
         'tight_layout'              : { 'Default'     : False,
                                         'Description' : 'True|False implement tight layout (minimal padding around Figure)'+
                                                         ' (see also `scale_padding` kwarg)',
@@ -703,24 +705,30 @@ def plot( data, **kwargs ):
     # fill_between is NOT supported for external_axes_mode
     # (caller can easily call ax.fill_between() themselves).
     if config['fill_between'] is not None and not external_axes_mode:
-        fblist = config['fill_between']
-        panid  = config['main_panel']
-        if _num_or_seq_of_num(fblist):
-            fblist = [dict(y1=fblist),]
-        elif isinstance(fblist,dict):
-            fblist = [fblist,]
-        if not _list_of_dict(fblist):
-            raise TypeError('Bad type for `fill_between` specifier.')
-        for fb in fblist:
-            if 'x' in fb:
-                raise ValueError('fill_between dict may not contain `x`')
-            if 'panel' in fb:
-                panid = fb['panel']
-                del fb['panel']
+        fb    = config['fill_between']
+        panid = config['main_panel']
+        if isinstance(fb,list):
+            for element in fb:
+                if 'panel' in element:
+                    panind = element['panel']
+                    del element['panel']
+
+                element['x'] = xdates
+                ax = panels.at[panid,'axes'][0]
+                ax.fill_between(**element)
+        else:
+            if isinstance(fb,dict):
+                if 'x' in fb:
+                    raise ValueError('fill_between dict may not contain `x`')
+                if 'panel' in fb:
+                    panid = fb['panel']
+                    del fb['panel']
+            else:
+                fb = dict(y1=fb)
             fb['x'] = xdates
             ax = panels.at[panid,'axes'][0]
             ax.fill_between(**fb)
-            
+ 
     # put the primary axis on one side,
     # and the twinx() on the "other" side:
     if not external_axes_mode:
