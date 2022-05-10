@@ -703,8 +703,7 @@ def plot( data, **kwargs ):
     # fill_between is NOT supported for external_axes_mode
     # (caller can easily call ax.fill_between() themselves).
     if config['fill_between'] is not None and not external_axes_mode:
-        fblist = config['fill_between']
-        panid  = config['main_panel']
+        fblist = copy.deepcopy(config['fill_between'])
         if _num_or_seq_of_num(fblist):
             fblist = [dict(y1=fblist),]
         elif isinstance(fblist,dict):
@@ -714,10 +713,11 @@ def plot( data, **kwargs ):
         for fb in fblist:
             if 'x' in fb:
                 raise ValueError('fill_between dict may not contain `x`')
+            panid = config['main_panel']
             if 'panel' in fb:
                 panid = fb['panel']
                 del fb['panel']
-            fb['x'] = xdates
+            fb['x'] = xdates # add 'x' to caller's fb dict
             ax = panels.at[panid,'axes'][0]
             ax.fill_between(**fb)
             
@@ -1063,13 +1063,18 @@ def _addplot_apply_supplements(ax,apdict,xdates):
         ax.set_yscale(ysd)
     # added by Wen
     if "fill_between" in apdict and apdict['fill_between'] is not None:
-        fblist = apdict['fill_between']
+        # deep copy because mplfinance code sometimes modifies the fill_between dict
+        fblist = copy.deepcopy(apdict['fill_between'])
         if isinstance(fblist,dict):
             fblist = [fblist,]
         if _list_of_dict(fblist):
             for fb in fblist:
-                fb['x'] = xdates
+                if 'x' in fb:
+                    raise ValueError('fill_between dict may not contain `x`')
+                fb['x'] = xdates # add 'x' to caller's fb dict
                 ax.fill_between(**fb)
+        else:
+            raise ValueError('Invalid addplot fill_between: must be `dict` or `list of dict`')
 
 def _set_ylabels_side(ax_pri,ax_sec,primary_on_right):
     # put the primary axis on one side,

@@ -163,35 +163,74 @@ def test_fill_between06(bolldata):
     signal    = macd.ewm(span=9, adjust=False).mean()
     histogram = macd - signal
     
-    fb_12up = dict(y1=exp12.values,y2=exp26.values,where=exp12>exp26,color="#93c47d",alpha=0.6,interpolate=True)
-    fb_12dn = dict(y1=exp12.values,y2=exp26.values,where=exp12<exp26,color="#e06666",alpha=0.6,interpolate=True)
+    fb_12up = dict(y1=exp12.values,y2=exp26.values,where=(exp12>exp26).values,color="#93c47d",alpha=0.6,interpolate=True)
+    fb_12dn = dict(y1=exp12.values,y2=exp26.values,where=(exp12<exp26).values,color="#e06666",alpha=0.6,interpolate=True)
     fb_exp12 = [fb_12up,fb_12dn]
     
-    fb_macd_up = dict(y1=macd.values,y2=signal.values,where=signal<macd,color="#93c47d",alpha=0.6,interpolate=True)
-    fb_macd_dn = dict(y1=macd.values,y2=signal.values,where=signal>macd,color="#e06666",alpha=0.6,interpolate=True)
-    #fb_macd_up['panel'] = 1
-    #fb_macd_dn['panel'] = 1
+    fb_macd_up = dict(y1=macd.values,y2=signal.values,where=(signal<macd).values,color="#93c47d",alpha=0.6,interpolate=True)
+    fb_macd_dn = dict(y1=macd.values,y2=signal.values,where=(signal>macd).values,color="#e06666",alpha=0.6,interpolate=True)
     
     fb_macd = [fb_macd_up,fb_macd_dn]
     
-    apds = [mpf.make_addplot(exp12,color='lime'),
-            mpf.make_addplot(exp26,color='c'),
-            mpf.make_addplot(histogram,type='bar',width=0.7,panel=1,
-                             color='dimgray',alpha=0.65,secondary_y=True),
-            mpf.make_addplot(macd,panel=1,color='fuchsia',secondary_y=False),
-            mpf.make_addplot(signal,panel=1,color='b',secondary_y=False,fill_between=fb_macd),
-           ]
-    
-    s = mpf.make_mpf_style(base_mpf_style='blueskies',facecolor='aliceblue')#,rc={'figure.facecolor':'lightcyan'})
-    
-    mpf.plot(df,type='candle',addplot=apds,figscale=1.6,figratio=(1,1),title='\n\nMACD',
-             style=s,volume=True,volume_panel=2,panel_ratios=(3,4,1),tight_layout=True,
-             fill_between=fb_exp12,
-             savefig=tname)
-    
-    _report_file_sizes(tname,rname)
+    s = mpf.make_mpf_style(base_mpf_style='blueskies',facecolor='aliceblue')
 
-    result = compare_images(rname,tname,tol=IMGCOMP_TOLERANCE)
-    if result is not None:
-       print('result=',result)
-    assert result is None
+    import pprint
+    pp = pprint.PrettyPrinter(indent=4)
+
+    for tag in ['a','b','c']:
+        apds = [mpf.make_addplot(exp12,color='lime'),
+                mpf.make_addplot(exp26,color='c'),
+                mpf.make_addplot(histogram,type='bar',width=0.7,panel=1,
+                                 color='dimgray',alpha=0.65,secondary_y=True),
+                mpf.make_addplot(macd,panel=1,color='fuchsia',secondary_y=False),
+                mpf.make_addplot(signal,panel=1,color='b',secondary_y=False)
+               ]
+
+        new_tname = tname[0:-4]+tag+tname[-4:]
+        if tag == 'a':
+            print('fb_exp12')
+            pp.pprint(fb_exp12)
+            print('fb_macd')
+            pp.pprint(fb_macd)
+            apds[ 0] = mpf.make_addplot(exp12,color='lime',fill_between=fb_exp12)
+            apds[-1] = mpf.make_addplot(signal,panel=1,color='b',secondary_y=False,fill_between=fb_macd)
+            mpf.plot(df,type='candle',addplot=apds,figscale=0.8,figratio=(1,1),title='\n\nMACD',
+                     style=s,volume=True,volume_panel=2,panel_ratios=(3,4,1),tight_layout=True,
+                     savefig=new_tname)
+        elif tag == 'b':
+            print('fb_exp12')
+            pp.pprint(fb_exp12)
+            print('fb_macd')
+            pp.pprint(fb_macd)
+            apds[ 0] = mpf.make_addplot(exp12,color='lime')
+            apds[-1] = mpf.make_addplot(signal,panel=1,color='b',secondary_y=False,fill_between=fb_macd)
+            mpf.plot(df,type='candle',addplot=apds,figscale=0.8,figratio=(1,1),title='\n\nMACD',
+                     style=s,volume=True,volume_panel=2,panel_ratios=(3,4,1),tight_layout=True,
+                     fill_between=fb_exp12,
+                     savefig=new_tname)
+        elif tag == 'c':
+            apds[ 0] = mpf.make_addplot(exp12,color='lime')
+            apds[-1] = mpf.make_addplot(signal,panel=1,color='b',secondary_y=False)
+            fb_macd[0]['panel'] = 1
+            fb_macd[1]['panel'] = 1
+            print('fb_exp12')
+            pp.pprint(fb_exp12)
+            print('fb_macd')
+            pp.pprint(fb_macd)
+            print('fb_macd+fb_exp12')
+            pp.pprint(fb_macd+fb_exp12)
+            mpf.plot(df,type='candle',addplot=apds,figscale=0.8,figratio=(1,1),title='\n\nMACD',
+                     style=s,volume=True,volume_panel=2,panel_ratios=(3,4,1),tight_layout=True,
+                     fill_between=fb_macd+fb_exp12,
+                     savefig=new_tname)
+        else:
+            print('Should NEVER get to here!')
+            raise ValueError('Should NEVER get to here!')
+    
+        _report_file_sizes(new_tname,rname)
+
+        result = compare_images(rname,new_tname,tol=IMGCOMP_TOLERANCE)
+        if result is not None:
+           print('result=',result)
+        assert result is None
+
