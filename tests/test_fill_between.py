@@ -26,32 +26,39 @@ for fn in oldtestfiles:
 # IMGCOMP_TOLERANCE = 7.0  # this works fine for linux
 IMGCOMP_TOLERANCE = 11.0  # required for a windows pass. (really 10.25 may do it).
 
-def _get_scaled_down_dataset(bolldata):
+def _get_data_subset(bolldata,scaled_down=False):
     start = int(0.2*len(bolldata))
     end   = 2*start
     df = bolldata.iloc[start:end]
+    if not scaled_down:
+        return df
     scaled_down_data = df/df['Close'].mean()
     scaled_down_data -= 0.9*scaled_down_data['Low'].min()
     return scaled_down_data
 
+def _get_file_names(id):
+    fname = base+id+'.png'
+    tname = os.path.join(tdir,fname)
+    rname = os.path.join(refd,fname)
+    return fname,tname,rname
+
+def _report_file_sizes(tname,rname):
+    tsize = os.path.getsize(tname)
+    print(glob.glob(tname),'[',tsize,'bytes',']')
+    rsize = os.path.getsize(rname)
+    print(glob.glob(rname),'[',rsize,'bytes',']')
+
 
 def test_fill_between01(bolldata):
 
-    scaled_down_data = _get_scaled_down_dataset(bolldata)
-
-    fname = base+'01.png'
-    tname = os.path.join(tdir,fname)
-    rname = os.path.join(refd,fname)
+    scaled_down_data  = _get_data_subset(bolldata,True)
+    fname,tname,rname = _get_file_names('01')
 
     mpf.plot(scaled_down_data,figscale=0.7,
              fill_between=scaled_down_data['Close'].values,
              savefig=tname)
 
-    tsize = os.path.getsize(tname)
-    print(glob.glob(tname),'[',tsize,'bytes',']')
-
-    rsize = os.path.getsize(rname)
-    print(glob.glob(rname),'[',rsize,'bytes',']')
+    _report_file_sizes(tname,rname)
 
     result = compare_images(rname,tname,tol=IMGCOMP_TOLERANCE)
     if result is not None:
@@ -60,21 +67,79 @@ def test_fill_between01(bolldata):
 
 def test_fill_between02(bolldata):
 
-    scaled_down_data = _get_scaled_down_dataset(bolldata)
-
-    fname = base+'02.png'
-    tname = os.path.join(tdir,fname)
-    rname = os.path.join(refd,fname)
+    scaled_down_data  = _get_data_subset(bolldata,True)
+    fname,tname,rname = _get_file_names('02')
 
     mpf.plot(scaled_down_data,figscale=0.7,
              fill_between={'y1':scaled_down_data['Close'].values,'alpha':0.75},
              savefig=tname)
 
-    tsize = os.path.getsize(tname)
-    print(glob.glob(tname),'[',tsize,'bytes',']')
+    _report_file_sizes(tname,rname)
 
-    rsize = os.path.getsize(rname)
-    print(glob.glob(rname),'[',rsize,'bytes',']')
+    result = compare_images(rname,tname,tol=IMGCOMP_TOLERANCE)
+    if result is not None:
+       print('result=',result)
+    assert result is None
+
+def test_fill_between03(bolldata):
+
+    df  = _get_data_subset(bolldata)
+    fname,tname,rname = _get_file_names('03')
+
+    mpf.plot(df,figscale=0.7,
+             fill_between=dict(y1=df['Close'].mean(),
+                               y2=df['Close'].values,
+                               alpha=0.67),
+             type='candle',style='yahoo',savefig=tname)
+
+    _report_file_sizes(tname,rname)
+
+    result = compare_images(rname,tname,tol=IMGCOMP_TOLERANCE)
+    if result is not None:
+       print('result=',result)
+    assert result is None
+
+def test_fill_between04(bolldata):
+
+    df  = _get_data_subset(bolldata)
+    fname,tname,rname = _get_file_names('04')
+
+    fb_above=dict(y1=df['Close'].mean(),
+                  y2=df['Close'].values,
+                  alpha=0.5,
+                  color='lime',
+                  where=((df['Close'] > df['Close'].mean()).values)
+                 )
+
+    fb_below=dict(y1=df['Close'].mean(),
+                  y2=df['Close'].values,
+                  alpha=0.5,
+                  color='magenta',
+                  where=((df['Close'] < df['Close'].mean()).values)
+                 )
+
+    mpf.plot(df,figscale=0.7,
+             fill_between=[fb_above,fb_below],
+             type='candle',style='yahoo',savefig=tname)
+
+    _report_file_sizes(tname,rname)
+
+    result = compare_images(rname,tname,tol=IMGCOMP_TOLERANCE)
+    if result is not None:
+       print('result=',result)
+
+def test_fill_between05(bolldata):
+
+    df = _get_data_subset(bolldata)
+    fname,tname,rname = _get_file_names('05')
+
+    mpf.plot(df,figscale=0.7,
+             fill_between=dict(y1=df['Low'].values,
+                               y2=df['High'].values,
+                               alpha=0.33),
+             type='candle',style='yahoo',savefig=tname)
+
+    _report_file_sizes(tname,rname)
 
     result = compare_images(rname,tname,tol=IMGCOMP_TOLERANCE)
     if result is not None:
@@ -82,32 +147,7 @@ def test_fill_between02(bolldata):
     assert result is None
 
 
-##  import pandas as pd
-##  
-##  # ### Read in daily data for the S&P 500 from November of 2019 
-##  
-##  daily = pd.read_csv('data/SP500_NOV2019_Hist.csv',index_col=0,parse_dates=True)
-##  daily.index.name = 'Date'
-##  daily.shape
-##  daily.head(3)
-##  
-##  import mplfinance as mpf
-##  mpf.__version__
-##  
-##  print('''
-##  
-##  A single y-value or series **assumes** we fill between ZERO and that single y-value or series.
-##  
-##  Therefore, scale down the data, close to zero, so that we can demonstrate specifying
-##  a single y-value, or single y-series for fill_between:
-##  
-##  ''')
-##  scaled_down_data = (daily/3000)-1.0
-##  
-##  mpf.plot(scaled_down_data,figscale=0.7)
-##  mpf.plot(scaled_down_data,figscale=0.7,fill_between=0.03)
-##  mpf.plot(scaled_down_data,figscale=0.7,fill_between=scaled_down_data['Close'].values)
-##  
+
 ##  print('''
 ##  
 ##  Use a dict to specify two y values, or two series, (y1 and y2) for `fill_between`:
