@@ -16,38 +16,71 @@ from itertools import cycle
 #from pandas.plotting import register_matplotlib_converters
 #register_matplotlib_converters()
 
-from mplfinance._utils import _construct_aline_collections
-from mplfinance._utils import _construct_hline_collections
-from mplfinance._utils import _construct_vline_collections
-from mplfinance._utils import _construct_tline_collections
-from mplfinance._utils import _construct_mpf_collections
+# from mplfinance._utils import _construct_aline_collections
+# from mplfinance._utils import _construct_hline_collections
+# from mplfinance._utils import _construct_vline_collections
+# from mplfinance._utils import _construct_tline_collections
+# from mplfinance._utils import _construct_mpf_collections
 
-from mplfinance._widths import _determine_width_config
+# from mplfinance._widths import _determine_width_config
 
-from mplfinance._utils import _updown_colors
-from mplfinance._utils import IntegerIndexDateTimeFormatter
-from mplfinance._utils import _mscatter
-from mplfinance._utils import _check_and_convert_xlim_configuration
+# from mplfinance._utils import _updown_colors
+# from mplfinance._utils import IntegerIndexDateTimeFormatter
+# from mplfinance._utils import _mscatter
+# from mplfinance._utils import _check_and_convert_xlim_configuration
 
-from mplfinance import _styles
+# from mplfinance import _styles
 
-from mplfinance._arg_validators import _check_and_prepare_data, _mav_validator
-from mplfinance._arg_validators import _get_valid_plot_types
-from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
-from mplfinance._arg_validators import _kwarg_not_implemented, _bypass_kwarg_validation
-from mplfinance._arg_validators import _hlines_validator, _vlines_validator
-from mplfinance._arg_validators import _alines_validator, _tlines_validator
-from mplfinance._arg_validators import _scale_padding_validator, _yscale_validator
-from mplfinance._arg_validators import _valid_panel_id, _check_for_external_axes
-from mplfinance._arg_validators import _xlim_validator, _mco_validator, _is_marketcolor_object
+# from mplfinance._arg_validators import _check_and_prepare_data, _mav_validator
+# from mplfinance._arg_validators import _get_valid_plot_types
+# from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
+# from mplfinance._arg_validators import _kwarg_not_implemented, _bypass_kwarg_validation
+# from mplfinance._arg_validators import _hlines_validator, _vlines_validator
+# from mplfinance._arg_validators import _alines_validator, _tlines_validator
+# from mplfinance._arg_validators import _scale_padding_validator, _yscale_validator
+# from mplfinance._arg_validators import _valid_panel_id, _check_for_external_axes
+# from mplfinance._arg_validators import _xlim_validator, _mco_validator, _is_marketcolor_object
 
-from mplfinance._panels import _build_panels
-from mplfinance._panels import _set_ticks_on_bottom_panel_only
+# from mplfinance._panels import _build_panels
+# from mplfinance._panels import _set_ticks_on_bottom_panel_only
 
-from mplfinance._helpers import _determine_format_string
-from mplfinance._helpers import _list_of_dict
-from mplfinance._helpers import _num_or_seq_of_num
-from mplfinance._helpers import _adjust_color_brightness
+# from mplfinance._helpers import _determine_format_string
+# from mplfinance._helpers import _list_of_dict
+# from mplfinance._helpers import _num_or_seq_of_num
+# from mplfinance._helpers import _adjust_color_brightness
+
+from _utils import _construct_aline_collections
+from _utils import _construct_hline_collections
+from _utils import _construct_vline_collections
+from _utils import _construct_tline_collections
+from _utils import _construct_mpf_collections
+
+from _widths import _determine_width_config
+
+from _utils import _updown_colors
+from _utils import IntegerIndexDateTimeFormatter
+from _utils import _mscatter
+from _utils import _check_and_convert_xlim_configuration
+
+import _styles
+
+from _arg_validators import _check_and_prepare_data, _mav_validator
+from _arg_validators import _get_valid_plot_types
+from _arg_validators import _process_kwargs, _validate_vkwargs_dict
+from _arg_validators import _kwarg_not_implemented, _bypass_kwarg_validation
+from _arg_validators import _hlines_validator, _vlines_validator
+from _arg_validators import _alines_validator, _tlines_validator
+from _arg_validators import _scale_padding_validator, _yscale_validator
+from _arg_validators import _valid_panel_id, _check_for_external_axes
+from _arg_validators import _xlim_validator, _mco_validator, _is_marketcolor_object
+
+from _panels import _build_panels
+from _panels import _set_ticks_on_bottom_panel_only
+
+from _helpers import _determine_format_string
+from _helpers import _list_of_dict
+from _helpers import _num_or_seq_of_num
+from _helpers import _adjust_color_brightness
 
 VALID_PMOVE_TYPES = ['renko', 'pnf']
 

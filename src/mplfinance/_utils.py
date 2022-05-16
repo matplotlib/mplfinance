@@ -1410,8 +1410,8 @@ def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes
     tline_use    = tconfig['tline_use']
     tline_method = tconfig['tline_method']
 
-    #print('tconfig=',tconfig)
-    #print('tlines=',tlines)
+    # print('tconfig=',tconfig)
+    # print('tlines=',tlines)
 
     # reconstruct the data frame:
     df = pd.DataFrame({'open':opens,'high':highs,'low':lows,'close':closes},
@@ -1424,15 +1424,23 @@ def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes
     def _tline_point_to_point(dfslice,tline_use):
         p1 = dfslice.iloc[ 0]
         p2 = dfslice.iloc[-1]
-        print('p1: ', p1)
-        print('p2: ', p2)
-        print('tline_use: ', tline_use)
-        x1 = p1.name
+
+        xs = mdates.date2num(dfslice.index.to_pydatetime())
+        x1 = xs[0]
         y1 = p1[tline_use].mean()
-        x2 = p2.name
+        x2 = xs[-1]
         y2 = p2[tline_use].mean()
-        print(f'x1: {x1}, x2: {x2}, y1: {y1}, y2: {y2}')
-        return ((x1,y1),(x2,y2))
+        x0 = x1 - tconfig['extend_start']
+        x3 = x2 + tconfig['extend_end']
+        m = (y2 - y1) / (x2 - x1)
+        y0 = y1 - m * (x1 - x0)
+        y3 = y2 + m * (x3 - x2)
+        x0 = mdates.num2date(x0)
+        x1 = mdates.num2date(x1)
+        x2 = mdates.num2date(x2)
+        x3 = mdates.num2date(x3)
+        print(f'x0: {x0}, y0: {y0}, x1: {x1}, y1: {y1}, x2: {x2}, y2: {y2}, x3: {x3}, y3: {y3}')
+        return ((x0,y0),(x3,y3))
 
     def _tline_lsq(dfslice,tline_use):
         '''
@@ -1451,10 +1459,16 @@ def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes
         a  = np.vstack([xs, np.ones(len(xs))]).T
         m, b  = np.dot(np.linalg.inv(np.dot(a.T,a)), np.dot(a.T,ys))
         x1, x2 = xs[0], xs[-1]
+        x0 = x1 - tconfig['extend_start']
+        x3 = x2 + tconfig['extend_end']
         y1 = m*x1 + b
         y2 = m*x2 + b
-        x1, x2 = mdates.num2date(x1), mdates.num2date(x2)
-        return ((x1,y1),(x2,y2))
+        y0 = m*x0 + b
+        y3 = m*x3 + b
+        x0, x1, x2, x3 = mdates.num2date(x0), mdates.num2date(x1), \
+                mdates.num2date(x2), mdates.num2date(x3)
+        print(f'x0: {x0}, y0: {y0}, x1: {x1}, y1: {y1}, x2: {x2}, y2: {y2}, x3: {x3}, y3: {y3}')
+        return ((x0,y0),(x3,y3))
 
     if isinstance(tline_use,str):
         tline_use = [tline_use,]
@@ -1470,9 +1484,7 @@ def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes
         if tline_method == 'least squares' or tline_method == 'least-squares':
             p1,p2 = _tline_lsq(dfslice,tline_use)
         elif tline_method == 'point-to-point':
-            print("entering _tline_point_to_point")
             p1,p2 = _tline_point_to_point(dfslice,tline_use)
-            print(f'p1: {p1}, p2: {p2}')
         else:
             raise ValueError('\nUnrecognized value for `tline_method` = "'+str(tline_method)+'"')
 
