@@ -13,11 +13,11 @@ from matplotlib             import colors as mcolors
 from matplotlib.patches     import Ellipse
 from matplotlib.collections import LineCollection, PolyCollection, PatchCollection
 
-from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
-from mplfinance._arg_validators import _alines_validator, _bypass_kwarg_validation
-from mplfinance._arg_validators import _xlim_validator, _is_datelike
-from mplfinance._styles         import _get_mpfstyle
-from mplfinance._helpers        import _mpf_to_rgba
+from _arg_validators import _process_kwargs, _validate_vkwargs_dict
+from _arg_validators import _alines_validator, _bypass_kwarg_validation
+from _arg_validators import _xlim_validator, _is_datelike
+from _styles         import _get_mpfstyle
+from _helpers        import _mpf_to_rgba
 
 from six.moves import zip
 
@@ -482,7 +482,8 @@ def _valid_lines_kwargs():
                         'Description' : 'Draw one or more TREND LINES by specifying one or more pairs of date[times]'+
                                         ' between which each trend line should be drawn.  May also be a dict with key'+
                                         ' `tlines` as just described, plus one or more of the following keys:'+
-                                        ' `colors`, `linestyle`, `linewidths`, `alpha`, `tline_use`,`tline_method`.',
+                                        ' `extend_start`, `extend_end`, `colors`,'+
+                                        ' `linestyle`, `linewidths`, `alpha`, `tline_use`,`tline_method`.',
                         'Validator'   : _bypass_kwarg_validation },
 
         'colors'    : { 'Default'     : None,
@@ -519,7 +520,15 @@ def _valid_lines_kwargs():
 
         'tline_method': { 'Default'     : 'point-to-point',
                           'Description' : 'method for TREND LINE determination: "point-to-point" or "least-squares"',
-                          'Validator'   : lambda value: value in ['point-to-point','least-squares'] }
+                          'Validator'   : lambda value: value in ['point-to-point','least-squares'] },
+        
+        'extend_start':  { 'Default'     : 0,
+                          'Description' : 'number of time points by which the tline is to be extended from start',
+                          'Validator'   : _bypass_kwarg_validation },
+
+        'extend_end':  { 'Default'     : 0,
+                          'Description' : 'number of time points by which the tline is to be extended from end',
+                          'Validator'   : _bypass_kwarg_validation }
     }
 
     _validate_vkwargs_dict(vkwargs)
@@ -1372,10 +1381,14 @@ def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes
     tlines may also be a dict, containing
     the following keys:
 
-        'tlines'     : the same as defined above: sequence of pairs of date[time]s
-        'colors'     : colors for the above tlines
-        'linestyle'  : line types for the above tlines
-        'linewidths' : line widths for the above tlines
+        'tlines'      : the same as defined above: sequence of pairs of date[time]s
+        'colors'      : colors for the above tlines
+        'linestyle'   : line types for the above tlines
+        'linewidths'  : line widths for the above tlines
+        'extend_start': number of time points before the tlines start time point
+                        from where line has to be drawn (default = 0)
+        'extend_end'  : number of time points after the tlines end point till where 
+                       line has to be drawn (default = 0)
 
     dtix:  date index for the x-axis, used for converting the dates when
            x-values are 'evenly spaced integers' (as when skipping non-trading days)
@@ -1411,10 +1424,14 @@ def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes
     def _tline_point_to_point(dfslice,tline_use):
         p1 = dfslice.iloc[ 0]
         p2 = dfslice.iloc[-1]
+        print('p1: ', p1)
+        print('p2: ', p2)
+        print('tline_use: ', tline_use)
         x1 = p1.name
         y1 = p1[tline_use].mean()
         x2 = p2.name
         y2 = p2[tline_use].mean()
+        print(f'x1: {x1}, x2: {x2}, y1: {y1}, y2: {y2}')
         return ((x1,y1),(x2,y2))
 
     def _tline_lsq(dfslice,tline_use):
@@ -1453,7 +1470,9 @@ def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes
         if tline_method == 'least squares' or tline_method == 'least-squares':
             p1,p2 = _tline_lsq(dfslice,tline_use)
         elif tline_method == 'point-to-point':
+            print("entering _tline_point_to_point")
             p1,p2 = _tline_point_to_point(dfslice,tline_use)
+            print(f'p1: {p1}, p2: {p2}')
         else:
             raise ValueError('\nUnrecognized value for `tline_method` = "'+str(tline_method)+'"')
 
