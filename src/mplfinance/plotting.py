@@ -110,7 +110,7 @@ def _valid_plot_kwargs():
                                         'Validator'   : lambda value: value in _get_valid_plot_types() },
 
         'use_column'                : { 'Default'     : 'Close',
-                                        'Description' : 'Column to be used for line chart.' +
+                                        'Description' : 'Column to be used for type "line" and moving averages' +
                                                         'Accepts values "Open", "High", "Low", "Close"',
                                         'Validator'   : lambda value: _use_column_validator(value) },
  
@@ -397,6 +397,13 @@ def plot( data, **kwargs ):
     
     dates,opens,highs,lows,closes,volumes = _check_and_prepare_data(data, config)
 
+    line_data = {
+        'open':     opens,
+        'high':     highs,
+        'low':      lows,
+        'close':    closes
+    }.get(config['use_column'], closes)
+
     config['xlim'] = _check_and_convert_xlim_configuration(data, config)
 
     if config['type'] in VALID_PMOVE_TYPES and config['addplot'] is not None:
@@ -494,13 +501,7 @@ def plot( data, **kwargs ):
 
     collections = None
     if ptype == 'line':
-        lw = config['_width_config']['line_width']
-        line_data = {
-            'open':     opens,
-            'high':     highs,
-            'low':      lows,
-            'close':    closes
-        }.get(config['use_column'], closes)
+        lw = config['_width_config']['line_width']        
         axA1.plot(xdates, line_data, color=config['linecolor'], linewidth=lw)
     else:
         collections =_construct_mpf_collections(ptype,dates,xdates,opens,highs,lows,closes,volumes,config,style)
@@ -526,7 +527,7 @@ def plot( data, **kwargs ):
     if ptype in VALID_PMOVE_TYPES:
         mavprices = _plot_mav(axA1,config,xdates,pmove_avgvals)
     else:
-        mavprices = _plot_mav(axA1,config,xdates,closes)
+        mavprices = _plot_mav(axA1,config,xdates,line_data)
 
     avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
     if not config['tight_layout']:
