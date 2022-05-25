@@ -363,6 +363,16 @@ def _valid_plot_kwargs():
                                         'Description' : 'Volume y-axis scale: "linear", "log", "symlog", or "logit"',
                                         'Validator'   : lambda value: _yscale_validator(value) },
 
+        'volume_ylim'               : { 'Default'     : None,
+                                        'Description' : 'Volume y-axis limits as tuple (min,max), i.e. (bottom,top)',
+                                        'Validator'   : lambda value: isinstance(value, (list,tuple)) and len(value) == 2
+                                                        and all([isinstance(v,(int,float)) for v in value])},
+
+        'volume_alpha'              : { 'Default'     : 1,  # alpha of Volume bars
+                                        'Description' : 'opacity for Volume bar: 0.0 (transparent) to 1.0 (opaque)',
+                                        'Validator'   : lambda value: isinstance(value,(int,float)) or
+                                                        all([isinstance(v,(int,float)) for v in value]) },
+
         'warn_too_much_data'        : { 'Default'     : 599,
                                         'Description' : 'Tolerance for data amount in plot. Default=599 rows.'+
                                                         ' Values greater than \'warn_too_much_data\' will trigger a warning.',
@@ -452,13 +462,26 @@ def plot( data, **kwargs ):
         raise ValueError('Request for volume, but NO volume data.')
 
     if external_axes_mode:
-        panels     = None
+        panels = None
+        axA1   = config['ax']
+        axA1.set_axisbelow(config['saxbelow'])
         if config['volume']:
             volumeAxes = config['volume']
             volumeAxes.set_axisbelow(config['saxbelow'])
     else:
         panels = _build_panels(fig, config)
-        volumeAxes = panels.at[config['volume_panel'],'axes'][0] if config['volume'] is True else None
+        axA1 = panels.at[config['main_panel'],'axes'][0]
+        if config['volume']:
+            if config['volume_panel'] == config['main_panel']:
+                # ohlc and volume on same panel: move volume to secondary axes:
+                volumeAxes = panels.at[config['volume_panel'],'axes'][1]
+                volumeAxes.set_zorder(axA1.get_zorder()-0.1) # Make sure ohlc is above volume
+                axA1.patch.set_visible(False)                # Let volume show through
+                panels.at[config['main_panel'],'used2nd'] = True
+            else:
+                volumeAxes = panels.at[config['volume_panel'],'axes'][0]
+        else:
+            volumeAxes = None
 
     fmtstring = _determine_format_string(dates, config['datetime_format'])
 
@@ -471,20 +494,12 @@ def plot( data, **kwargs ):
         formatter = IntegerIndexDateTimeFormatter(dates, fmtstring)
         xdates = np.arange(len(dates))
 
-    if external_axes_mode:
-        axA1 = config['ax']
-        axA1.set_axisbelow(config['saxbelow'])
-    else:
-        axA1 = panels.at[config['main_panel'],'axes'][0]
-
     # Will have to handle widths config separately for PMOVE types ??
     config['_width_config'] = _determine_width_config(xdates, config)
-
 
     rwc = config['return_width_config']
     if isinstance(rwc,dict) and len(rwc)==0:
         config['return_width_config'].update(config['_width_config'])
- 
 
     collections = None
     if ptype == 'line':
@@ -621,10 +636,15 @@ def plot( data, **kwargs ):
         w  = config['_width_config']['volume_width']
         lw = config['_width_config']['volume_linewidth']
 
-        adjc =  _adjust_color_brightness(vcolors,0.90)
-        volumeAxes.bar(xdates,volumes,width=w,linewidth=lw,color=vcolors,ec=adjc)
-        vymin = 0.3 * np.nanmin(volumes)
-        vymax = 1.1 * np.nanmax(volumes)
+        adjc = _adjust_color_brightness(vcolors,0.90)
+        valp = config['volume_alpha']
+        volumeAxes.bar(xdates,volumes,width=w,linewidth=lw,color=vcolors,ec=adjc,alpha=valp)
+        if config['volume_ylim'] is not None:
+            vymin = config['volume_ylim'][0]
+            vymax = config['volume_ylim'][1]
+        else:
+            vymin = 0.3 * np.nanmin(volumes)
+            vymax = 1.1 * np.nanmax(volumes)
         volumeAxes.set_ylim(vymin,vymax)
 
     xrotation = config['xrotation']
