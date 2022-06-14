@@ -3,6 +3,7 @@ import pandas   as pd
 import numpy    as np
 import datetime
 from   mplfinance._helpers import _list_of_dict, _mpf_is_color_like
+from   mplfinance._helpers import _num_or_seq_of_num
 import matplotlib as mpl
 import warnings
 
@@ -93,13 +94,9 @@ def _get_valid_plot_types(plottype=None):
 
     if plottype is None:
         return _valid_types_all
-
-    if plottype not in _valid_types_all:
-        return None
     elif plottype in _alias_types:
         return _alias_types[plottype]
-    else:
-        return plottype
+    return plottype
         
 
 def _mav_validator(mav_value):
@@ -434,3 +431,15 @@ def _check_for_external_axes(config):
     
     external_axes_mode = True if isinstance(config['ax'],mpl.axes.Axes) else False
     return external_axes_mode
+
+def _valid_fb_dict(value):
+    return (isinstance(value,dict) and
+            'y1' in value and
+            _num_or_seq_of_num(value['y1']))
+
+def _fill_between_validator(value):
+    if _num_or_seq_of_num(value): return True
+    if _valid_fb_dict(value): return True
+    if _list_of_dict(value):
+        return all([_valid_fb_dict(v) for v in value])
+    return False
