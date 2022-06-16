@@ -1358,7 +1358,8 @@ def _construct_vline_collections(vlines,dtix,miny,maxy):
     lcollection = LineCollection(lines,colors=co,linewidths=lw,linestyles=ls,antialiaseds=(0,),alpha=al)
     return lcollection
 
-def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes):
+def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes, \
+        show_nontrading):
     """construct trend line collections
 
     Parameters
@@ -1390,6 +1391,7 @@ def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes
     ret : list
         lines collections
     """
+
     if tlines is None:
         return None
 
@@ -1417,20 +1419,40 @@ def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes
     def _tline_point_to_point(dfslice,tline_use):
         p1 = dfslice.iloc[ 0]
         p2 = dfslice.iloc[-1]
+        
+        # import pdb
+        # pdb.set_trace()
 
+        dates_pos = np.arange(len(dates))
         xs = mdates.date2num(dfslice.index.to_pydatetime())
+        
         x1 = xs[0]
         y1 = p1[tline_use].mean()
         x2 = xs[-1]
         y2 = p2[tline_use].mean()
-        x0 = x1 - tconfig['extend_start']
-        x3 = x2 + tconfig['extend_end']
-        m = (y2 - y1) / (x2 - x1)
-        y0 = y1 - m * (x1 - x0)
-        y3 = y2 + m * (x3 - x2)
+
+        if show_nontrading:
+            # m: slope of trend line
+            m = (y2 - y1) / (x2 - x1)
+            x0 = x1 - tconfig['extend_start']
+            x3 = x2 + tconfig['extend_end']
+            y0 = y1 - m * (x1 - x0)
+            y3 = y2 + m * (x3 - x2)
+        else:
+            # m: slope of trend line: len(xs) is the number of bars
+            m = (y2 - y1) / len(xs)
+            x1_pos = dates_pos[dates == x1]
+            x2_pos = dates_pos[dates == x2]
+            x0_pos = x1_pos - tconfig['extend_start']
+            x3_pos = x2_pos + tconfig['extend_end']
+            y0 = y1 - m * (x1_pos - x0_pos)
+            y3 = y2 + m * (x3_pos - x2_pos)
+            y0 = y0[0]
+            y3 = y3[0]
+            x0 = dates[x0_pos][0]
+            x3 = dates[x3_pos][0]
+             
         x0 = mdates.num2date(x0)
-        x1 = mdates.num2date(x1)
-        x2 = mdates.num2date(x2)
         x3 = mdates.num2date(x3)
         
         return ((x0,y0),(x3,y3))
@@ -1458,8 +1480,7 @@ def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes
         y2 = m*x2 + b
         y0 = m*x0 + b
         y3 = m*x3 + b
-        x0, x1, x2, x3 = mdates.num2date(x0), mdates.num2date(x1), \
-                mdates.num2date(x2), mdates.num2date(x3)
+        x0, x3 = mdates.num2date(x0), mdates.num2date(x3)
         return ((x0,y0),(x3,y3))
 
     if isinstance(tline_use,str):
