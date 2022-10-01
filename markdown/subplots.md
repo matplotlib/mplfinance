@@ -17,10 +17,10 @@
 * The Panels Method attains its simplicity, in part, by having certain limitations.<br>These limitiations are:
    - Subplots are always stacked vertically.
    - All subplots share the same x-axis.
-   - There is a maximum of 10 subplots.
+   - There is a maximum of 32 subplots.
 * The Panels Method is adequate to plot:
   - ohlc, candlesticks, etc.
-  - with volume, and 
+  - with volume, and
   - with one or more studies/indicators, such as:
     - MACD, DMI, RSI, Bollinger, Accumulation/Distribution Oscillator, Commodity Channel Index, Etc.
 * [**See here for a tutorial and details on implementing the mplfinance Panels Method for subplots.**](https://github.com/matplotlib/mplfinance/blob/master/examples/panels.ipynb)
