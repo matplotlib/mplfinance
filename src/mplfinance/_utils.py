@@ -438,7 +438,6 @@ def _valid_pnf_kwargs():
 
 
 def _valid_lines_kwargs():
-
     '''
     Construct and return the "valid lines (hlines,vlines,alines,tlines) kwargs table"
     for the mplfinance.plot() `[h|v|a|t]lines=` kwarg functions.
@@ -504,12 +503,12 @@ def _valid_lines_kwargs():
                                                       or isinstance(value,(float,int))
                                                       or all([isinstance(v,(float,int)) for v in value]) },
 
-        'alpha'     : { 'Default'     : 1.0,
-                        'Description' : 'Opacity of [hvat]lines (or sequence of opacities,'
-                        + 'if each line is to have a different opacity)'
-                        + 'float from 0.0 to 1.0 '+' (1.0 means fully opaque; 0.0 means transparent.',
-                        'Validator'   : lambda value: isinstance(value,(float,int))
-                                        or all([isinstance(v, (float, int)) for v in value])    },
+        'alpha': {'Default': 1.0,
+                  'Description': 'Opacity of [hvat]lines (or sequence of opacities,'
+                                 + 'if each line is to have a different opacity)'
+                                 + 'float from 0.0 to 1.0 ' + ' (1.0 means fully opaque; 0.0 means transparent.',
+                  'Validator': lambda value: isinstance(value, (float, int))
+                                             or all([isinstance(v, (float, int)) for v in value])},
 
 
         'tline_use' : { 'Default'     : 'close',
