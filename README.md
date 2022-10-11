@@ -587,6 +587,14 @@ My name is Daniel Goldfarb.  In November 2019, I became the maintainer of `matpl
 It is my intention to archive the `matplotlib/mpl-finance` repository soon, and direct everyone to `matplotlib/mplfinance`.  The main reason for the rename is to avoid confusion with the hyphen and the underscore: As it was, `mpl-finance` was *installed with the hyphen, but imported with an underscore `mpl_finance`.*  Going forward it will be a simple matter of both installing and importing `mplfinance`.
 
 ---
+
+## What is mplfinance and how to use it?
+It is Mplfinance. Through Mplfinance, we can easily create a candlestick chart padded with volume bars or a Renko chart with just a few lines of code. Mplfinance also permits us to add the trading signals on the chart. In the sections below, we will go through several practical usages of Mplfinance.
+
+## What happened to MPL-finance?
+The old mpl-finance consisted of code extracted from the deprecated matplotlib.finance module along with a few examples of usage. It has been mostly un-maintained for the past three years.
+
+
 ## <a name="oldapi"></a>Old API availability
 
 **With this new ` mplfinance ` package installed, in addition to the new API, users can still access the old API**.<br> The old API may be removed someday, but for the foreseeable future we will keep it ... at least until we are very confident that users of the old API can accomplish the same things with the new API.  
