@@ -1147,6 +1147,45 @@ def _plot_mav(ax,config,xdates,prices,apmav=None,apwidth=None):
             mavp_list.append(mavprices)
     return mavp_list
 
+
+def _plot_ema(ax,config,xdates,prices,apmav=None,apwidth=None):
+    '''ema: exponential moving average'''
+    style = config['style']
+    if apmav is not None:
+        mavgs = apmav
+    else:
+        mavgs = config['ema']
+    mavp_list = []
+    if mavgs is not None:
+        shift = None
+        if isinstance(mavgs,dict):
+            shift = mavgs['shift']
+            mavgs = mavgs['period']
+        if isinstance(mavgs,int):
+            mavgs = mavgs,      # convert to tuple
+        if len(mavgs) > 7:
+            mavgs = mavgs[0:7]  # take at most 7
+     
+        if style['mavcolors'] is not None:
+            mavc = cycle(style['mavcolors'])
+        else:
+            mavc = None
+
+        for idx,mav in enumerate(mavgs):
+            # mean = pd.Series(prices).rolling(mav).mean()
+            mean = pd.Series(prices).ewm(span=mav,adjust=False).mean()
+            if shift is not None:
+                mean = mean.shift(periods=shift[idx])
+            mavprices = mean.values
+            lw = config['_width_config']['line_width']
+            if mavc:
+                ax.plot(xdates, mavprices, linewidth=lw, color=next(mavc))
+            else:
+                ax.plot(xdates, mavprices, linewidth=lw)
+            mavp_list.append(mavprices)
+    return mavp_list
+
+
 def _auto_secondary_y( panels, panid, ylo, yhi ):
     # If mag(nitude) for this panel is not yet set, then set it
     # here, as this is the first ydata to be plotted on this panel:
