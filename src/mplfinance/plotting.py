@@ -119,6 +119,10 @@ def _valid_plot_kwargs():
         'mav'                       : { 'Default'     : None,
                                         'Description' : 'Moving Average window size(s); (int or tuple of ints)',
                                         'Validator'   : _mav_validator },
+
+        'ema'                       : { 'Default'     : None,
+                                        'Description' : 'Exponential Moving Average window size(s); (int or tuple of ints)',
+                                        'Validator'   : _mav_validator },
         
         'renko_params'              : { 'Default'     : dict(),
                                         'Description' : 'dict of renko parameters; call `mpf.kwarg_help("renko_params")`',
