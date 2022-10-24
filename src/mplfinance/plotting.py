@@ -532,8 +532,10 @@ def plot( data, **kwargs ):
 
     if ptype in VALID_PMOVE_TYPES:
         mavprices = _plot_mav(axA1,config,xdates,pmove_avgvals)
+        emaprices = _plot_ema(axA1, config, xdates, pmove_avgvals)
     else:
         mavprices = _plot_mav(axA1,config,xdates,closes)
+        emaprices = _plot_ema(axA1, config, xdates, closes)
 
     avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
     if not config['tight_layout']:
@@ -599,6 +601,13 @@ def plot( data, **kwargs ):
             else:
                 for jj in range(0,len(mav)):     
                     retdict['mav' + str(mav[jj])] = mavprices[jj]
+        if config['ema'] is not None:
+            ema = config['ema']
+            if len(ema) != len(emaprices):
+                warnings.warn('len(ema)='+str(len(ema))+' BUT len(emaprices)='+str(len(emaprices)))
+            else:
+                for jj in range(0, len(ema)):
+                    retdict['ema' + str(ema[jj])] = emaprices[jj]
         retdict['minx'] = minx
         retdict['maxx'] = maxx
         retdict['miny'] = miny
@@ -1180,13 +1189,13 @@ def _plot_ema(ax,config,xdates,prices,apmav=None,apwidth=None):
             mean = pd.Series(prices).ewm(span=mav,adjust=False).mean()
             if shift is not None:
                 mean = mean.shift(periods=shift[idx])
-            mavprices = mean.values
+            emaprices = mean.values
             lw = config['_width_config']['line_width']
             if mavc:
-                ax.plot(xdates, mavprices, linewidth=lw, color=next(mavc))
+                ax.plot(xdates, emaprices, linewidth=lw, color=next(mavc))
             else:
-                ax.plot(xdates, mavprices, linewidth=lw)
-            mavp_list.append(mavprices)
+                ax.plot(xdates, emaprices, linewidth=lw)
+            mavp_list.append(emaprices)
     return mavp_list
 
 
