@@ -14,14 +14,29 @@ base='ema'
 tdir = os.path.join('tests','test_images')
 refd = os.path.join('tests','reference_images')
 
+globpattern  = os.path.join(tdir,base+'*.png')
+oldtestfiles = glob.glob(globpattern)
+for fn in oldtestfiles:
+    try:
+        os.remove(fn)
+    except:
+        print('Error removing file "'+fn+'"')
+
 IMGCOMP_TOLERANCE = 10.0  # this works fine for linux
 # IMGCOMP_TOLERANCE = 11.0  # required for a windows pass. (really 10.25 may do it).
 
+_df = pd.DataFrame()
+def get_ema_data():
+    global _df
+    if len(_df) == 0:
+        _df = pd.read_csv('./examples/data/yahoofinance-GOOG-20040819-20180120.csv',
+                          index_col='Date',parse_dates=True)
+    return _df
+    
+
 def create_ema_image(tname):
 
-    df = pd.read_csv('./examples/data/yahoofinance-GOOG-20040819-20180120.csv', parse_dates=True)
-    df.index = pd.DatetimeIndex(df['Date'])
-
+    df = get_ema_data()
     df = df[-50:]               # show last 50 data points only                     
 
     ema25 = df['Close'].ewm(span=25.0, adjust=False).mean()       
@@ -42,7 +57,7 @@ def create_ema_image(tname):
     )
 
 
-def test_ema():
+def test_ema01():
 
     fname = base+'01.png'
     tname = os.path.join(tdir,fname)
@@ -61,5 +76,49 @@ def test_ema():
         print('result=',result)
     assert result is None
 
+def test_ema02():
+    fname = base+'02.png'
+    tname = os.path.join(tdir,fname)
+    rname = os.path.join(refd,fname)
 
-test_ema()
+    df = get_ema_data()
+    df = df[-125:-35]
+
+    mpf.plot(df, type='candle', ema=(5,15,25), mav=(5,15,25), savefig=tname)
+
+    tsize = os.path.getsize(tname)
+    print(glob.glob(tname),'[',tsize,'bytes',']')
+
+    rsize = os.path.getsize(rname)
+    print(glob.glob(rname),'[',rsize,'bytes',']')
+
+    result = compare_images(rname,tname,tol=IMGCOMP_TOLERANCE)
+    if result is not None:
+        print('result=',result)
+    assert result is None
+
+def test_ema03():
+    fname = base+'03.png'
+    tname = os.path.join(tdir,fname)
+    rname = os.path.join(refd,fname)
+
+    df = get_ema_data()
+    df = df[-125:-35]
+
+    mac = ['red','orange','yellow','green','blue','purple']
+
+    mpf.plot(df, type='candle', ema=(5,10,15,25), mav=(5,15,25),
+             mavcolors=mac, savefig=tname)
+
+
+    tsize = os.path.getsize(tname)
+    print(glob.glob(tname),'[',tsize,'bytes',']')
+
+    rsize = os.path.getsize(rname)
+    print(glob.glob(rname),'[',rsize,'bytes',']')
+
+    result = compare_images(rname,tname,tol=IMGCOMP_TOLERANCE)
+    if result is not None:
+        print('result=',result)
+    assert result is None
+

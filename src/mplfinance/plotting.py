@@ -124,6 +124,12 @@ def _valid_plot_kwargs():
                                         'Description' : 'Exponential Moving Average window size(s); (int or tuple of ints)',
                                         'Validator'   : _mav_validator },
         
+        'mavcolors'                 : { 'Default'     : None,
+                                        'Description' : 'color cycle for moving averages (list or tuple of colors)'+
+                                                        '(overrides mpf style mavcolors).',
+                                        'Validator'   : lambda value: isinstance(value,(list,tuple)) and
+                                                                      all([mcolors.is_color_like(v) for v in value]) },
+
         'renko_params'              : { 'Default'     : dict(),
                                         'Description' : 'dict of renko parameters; call `mpf.kwarg_help("renko_params")`',
                                         'Validator'   : lambda value: isinstance(value,dict) },
@@ -453,6 +459,13 @@ def plot( data, **kwargs ):
         if not external_axes_mode: _styles._apply_mpfstyle(style)
     else:
         raise TypeError('style should be a `dict`; why is it not?')
+
+    if config['mavcolors'] is not None:
+        config['_ma_color_cycle'] = cycle(config['mavcolors'])
+    elif style['mavcolors'] is not None:
+        config['_ma_color_cycle'] = cycle(style['mavcolors'])
+    else:
+        config['_ma_color_cycle'] = None
 
     if not external_axes_mode:
         fig = plt.figure()
@@ -1142,10 +1155,7 @@ def _plot_mav(ax,config,xdates,prices,apmav=None,apwidth=None):
         if len(mavgs) > 7:
             mavgs = mavgs[0:7]  # take at most 7
      
-        if style['mavcolors'] is not None:
-            mavc = cycle(style['mavcolors'])
-        else:
-            mavc = None
+        mavc = config['_ma_color_cycle']
 
         for idx,mav in enumerate(mavgs):
             mean = pd.Series(prices).rolling(mav).mean()
@@ -1178,11 +1188,8 @@ def _plot_ema(ax,config,xdates,prices,apmav=None,apwidth=None):
             mavgs = mavgs,      # convert to tuple
         if len(mavgs) > 7:
             mavgs = mavgs[0:7]  # take at most 7
-     
-        if style['mavcolors'] is not None:
-            mavc = cycle(style['mavcolors'])
-        else:
-            mavc = None
+
+        mavc = config['_ma_color_cycle']
 
         for idx,mav in enumerate(mavgs):
             # mean = pd.Series(prices).rolling(mav).mean()
