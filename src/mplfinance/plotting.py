@@ -119,7 +119,17 @@ def _valid_plot_kwargs():
         'mav'                       : { 'Default'     : None,
                                         'Description' : 'Moving Average window size(s); (int or tuple of ints)',
                                         'Validator'   : _mav_validator },
+
+        'ema'                       : { 'Default'     : None,
+                                        'Description' : 'Exponential Moving Average window size(s); (int or tuple of ints)',
+                                        'Validator'   : _mav_validator },
         
+        'mavcolors'                 : { 'Default'     : None,
+                                        'Description' : 'color cycle for moving averages (list or tuple of colors)'+
+                                                        '(overrides mpf style mavcolors).',
+                                        'Validator'   : lambda value: isinstance(value,(list,tuple)) and
+                                                                      all([mcolors.is_color_like(v) for v in value]) },
+
         'renko_params'              : { 'Default'     : dict(),
                                         'Description' : 'dict of renko parameters; call `mpf.kwarg_help("renko_params")`',
                                         'Validator'   : lambda value: isinstance(value,dict) },
@@ -450,6 +460,13 @@ def plot( data, **kwargs ):
     else:
         raise TypeError('style should be a `dict`; why is it not?')
 
+    if config['mavcolors'] is not None:
+        config['_ma_color_cycle'] = cycle(config['mavcolors'])
+    elif style['mavcolors'] is not None:
+        config['_ma_color_cycle'] = cycle(style['mavcolors'])
+    else:
+        config['_ma_color_cycle'] = None
+
     if not external_axes_mode:
         fig = plt.figure()
         _adjust_figsize(fig,config)
@@ -528,8 +545,10 @@ def plot( data, **kwargs ):
 
     if ptype in VALID_PMOVE_TYPES:
         mavprices = _plot_mav(axA1,config,xdates,pmove_avgvals)
+        emaprices = _plot_ema(axA1, config, xdates, pmove_avgvals)
     else:
         mavprices = _plot_mav(axA1,config,xdates,closes)
+        emaprices = _plot_ema(axA1, config, xdates, closes)
 
     avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
     if not config['tight_layout']:
@@ -595,6 +614,13 @@ def plot( data, **kwargs ):
             else:
                 for jj in range(0,len(mav)):     
                     retdict['mav' + str(mav[jj])] = mavprices[jj]
+        if config['ema'] is not None:
+            ema = config['ema']
+            if len(ema) != len(emaprices):
+                warnings.warn('len(ema)='+str(len(ema))+' BUT len(emaprices)='+str(len(emaprices)))
+            else:
+                for jj in range(0, len(ema)):
+                    retdict['ema' + str(ema[jj])] = emaprices[jj]
         retdict['minx'] = minx
         retdict['maxx'] = maxx
         retdict['miny'] = miny
@@ -1129,10 +1155,7 @@ def _plot_mav(ax,config,xdates,prices,apmav=None,apwidth=None):
         if len(mavgs) > 7:
             mavgs = mavgs[0:7]  # take at most 7
      
-        if style['mavcolors'] is not None:
-            mavc = cycle(style['mavcolors'])
-        else:
-            mavc = None
+        mavc = config['_ma_color_cycle']
 
         for idx,mav in enumerate(mavgs):
             mean = pd.Series(prices).rolling(mav).mean()
@@ -1146,6 +1169,42 @@ def _plot_mav(ax,config,xdates,prices,apmav=None,apwidth=None):
                 ax.plot(xdates, mavprices, linewidth=lw)
             mavp_list.append(mavprices)
     return mavp_list
+
+
+def _plot_ema(ax,config,xdates,prices,apmav=None,apwidth=None):
+    '''ema: exponential moving average'''
+    style = config['style']
+    if apmav is not None:
+        mavgs = apmav
+    else:
+        mavgs = config['ema']
+    mavp_list = []
+    if mavgs is not None:
+        shift = None
+        if isinstance(mavgs,dict):
+            shift = mavgs['shift']
+            mavgs = mavgs['period']
+        if isinstance(mavgs,int):
+            mavgs = mavgs,      # convert to tuple
+        if len(mavgs) > 7:
+            mavgs = mavgs[0:7]  # take at most 7
+
+        mavc = config['_ma_color_cycle']
+
+        for idx,mav in enumerate(mavgs):
+            # mean = pd.Series(prices).rolling(mav).mean()
+            mean = pd.Series(prices).ewm(span=mav,adjust=False).mean()
+            if shift is not None:
+                mean = mean.shift(periods=shift[idx])
+            emaprices = mean.values
+            lw = config['_width_config']['line_width']
+            if mavc:
+                ax.plot(xdates, emaprices, linewidth=lw, color=next(mavc))
+            else:
+                ax.plot(xdates, emaprices, linewidth=lw)
+            mavp_list.append(emaprices)
+    return mavp_list
+
 
 def _auto_secondary_y( panels, panid, ylo, yhi ):
     # If mag(nitude) for this panel is not yet set, then set it
