@@ -708,6 +708,7 @@ def plot( data, **kwargs ):
                 if apdict['y_on_right'] is not None:
                     panels.at[panid,'y_on_right'] = apdict['y_on_right']
             aptype = apdict['type']
+
             if aptype == 'ohlc' or aptype == 'candle':
                 ax = _addplot_collections(panid,panels,apdict,xdates,config)
                 _addplot_apply_supplements(ax,apdict,xdates)
