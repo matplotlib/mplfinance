@@ -218,15 +218,22 @@ Returns
     return panels
     
 
-def _set_ticks_on_bottom_panel_only(panels,formatter,rotation=45):
+def _set_ticks_on_bottom_panel_only(panels,formatter,rotation=45,xlabel=None):
 
     bot = panels.index.values[-1]
     ax  = panels.at[bot,'axes'][0]
     ax.tick_params(axis='x',rotation=rotation)
     ax.xaxis.set_major_formatter(formatter)
 
+    if xlabel is not None:
+        ax.set_xlabel(xlabel)
+
     if len(panels) == 1: return
 
+    # [::-1] reverses the order of the panel id's
+    # [1:] all but the first element, which, since the array
+    #      is reversed, means we take all but the LAST panel id.
+    # Thus, only the last (bottom) panel id gets tick labels:
     for panid in panels.index.values[::-1][1:]:
         panels.at[panid,'axes'][0].tick_params(axis='x',labelbottom=False)
 

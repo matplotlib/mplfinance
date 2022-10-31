@@ -185,8 +185,8 @@ def _valid_plot_kwargs():
                                         'Description' : 'Axes Title (subplot title)',
                                         'Validator'   : lambda value: isinstance(value,(str,dict)) },
                                         
-        'xlabel'                    : { 'Default'     : 'Date', # x-axis label
-                                        'Description' : 'label for x-axis of main plot',
+        'xlabel'                    : { 'Default'     : None,   # x-axis label
+                                        'Description' : 'label for x-axis of plot',
                                         'Validator'   : lambda value: isinstance(value,str) },
  
         'ylabel'                    : { 'Default'     : 'Price', # y-axis label
@@ -653,10 +653,12 @@ def plot( data, **kwargs ):
 
     xrotation = config['xrotation']
     if not external_axes_mode:
-        _set_ticks_on_bottom_panel_only(panels,formatter,rotation=xrotation)
+        _set_ticks_on_bottom_panel_only(panels,formatter,rotation=xrotation,
+                                        xlabel=config['xlabel'])
     else:
         axA1.tick_params(axis='x',rotation=xrotation)
         axA1.xaxis.set_major_formatter(formatter)
+        axA1.set_xlabel(config['xlabel'])
 
     ysd = config['yscale']
     if isinstance(ysd,dict):
@@ -705,7 +707,13 @@ def plot( data, **kwargs ):
                 elif panid == 'lower': panid = 1  # for backwards compatibility
                 if apdict['y_on_right'] is not None:
                     panels.at[panid,'y_on_right'] = apdict['y_on_right']
-
+                if apdict['xlabel'] is not None:
+                    apdict['xlabel'] = None # set to None so `_addplot_apply_supplements()` won't apply it.
+                    warnings.warn('\n\n ================================================================= '+
+                                  '\n\n     WARNING: make_addplot `xlabel` IGNORED in Panels mode.'+
+                                  '\n              Use `mpf.plot(...,xlabel=)` instead.'+
+                                  '\n\n ================================================================ ',
+                                  category=UserWarning)
             aptype = apdict['type']
             if aptype == 'ohlc' or aptype == 'candle':
                 ax = _addplot_collections(panid,panels,apdict,xdates,config)
@@ -783,7 +791,6 @@ def plot( data, **kwargs ):
                            # working in `addplot`).
 
     axA1.set_ylabel(config['ylabel'])
-    axA1.set_xlabel(config['xlabel'])
 
     if config['volume']:
         if external_axes_mode:
@@ -1248,6 +1255,10 @@ def _valid_addplot_kwargs():
 
         'ylabel'      : { 'Default'     : None,
                           'Description' : 'label for y-axis (for this addplot)',
+                          'Validator'   : lambda value: isinstance(value,str) },
+
+        'xlabel'      : { 'Default'     : None, # x-axis label
+                          'Description' : 'x-axis label (for addplot ONLY when in external axes mode)',
                           'Validator'   : lambda value: isinstance(value,str) },
 
         'ylim'        : {'Default'      : None,
