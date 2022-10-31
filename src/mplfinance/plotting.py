@@ -194,6 +194,10 @@ def _valid_plot_kwargs():
         'axtitle'                   : { 'Default'     : None, # Axes Title (subplot title)
                                         'Description' : 'Axes Title (subplot title)',
                                         'Validator'   : lambda value: isinstance(value,(str,dict)) },
+                                        
+        'xlabel'                    : { 'Default'     : None,   # x-axis label
+                                        'Description' : 'label for x-axis of plot',
+                                        'Validator'   : lambda value: isinstance(value,str) },
  
         'ylabel'                    : { 'Default'     : 'Price', # y-axis label
                                         'Description' : 'label for y-axis of main plot',
@@ -675,10 +679,12 @@ def plot( data, **kwargs ):
 
     xrotation = config['xrotation']
     if not external_axes_mode:
-        _set_ticks_on_bottom_panel_only(panels,formatter,rotation=xrotation)
+        _set_ticks_on_bottom_panel_only(panels,formatter,rotation=xrotation,
+                                        xlabel=config['xlabel'])
     else:
         axA1.tick_params(axis='x',rotation=xrotation)
         axA1.xaxis.set_major_formatter(formatter)
+        axA1.set_xlabel(config['xlabel'])
 
     ysd = config['yscale']
     if isinstance(ysd,dict):
@@ -727,8 +733,8 @@ def plot( data, **kwargs ):
                 elif panid == 'lower': panid = 1  # for backwards compatibility
                 if apdict['y_on_right'] is not None:
                     panels.at[panid,'y_on_right'] = apdict['y_on_right']
-
             aptype = apdict['type']
+
             if aptype == 'ohlc' or aptype == 'candle':
                 ax = _addplot_collections(panid,panels,apdict,xdates,config)
                 _addplot_apply_supplements(ax,apdict,xdates)
@@ -1096,6 +1102,11 @@ def _addplot_columns(panid,panels,ydata,apdict,xdates,config):
 def _addplot_apply_supplements(ax,apdict,xdates):
     if (apdict['ylabel'] is not None):
         ax.set_ylabel(apdict['ylabel'])
+    # Note that xlabel is NOT supported for addplot.  This is because
+    # in Panels Mode, there is only one xlabel (on the bottom axes)
+    # which is handled by the `xlabel` kwarg of `mpf.plot()`,
+    # whereas in External Axes Mode, users can call `Axes.set_xlabel()` on
+    # the axes object of their choice.
     if apdict['ylim'] is not None:
         ax.set_ylim(apdict['ylim'][0],apdict['ylim'][1])
     if apdict['title'] is not None:
