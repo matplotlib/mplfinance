@@ -707,13 +707,6 @@ def plot( data, **kwargs ):
                 elif panid == 'lower': panid = 1  # for backwards compatibility
                 if apdict['y_on_right'] is not None:
                     panels.at[panid,'y_on_right'] = apdict['y_on_right']
-                if apdict['xlabel'] is not None:
-                    apdict['xlabel'] = None # set to None so `_addplot_apply_supplements()` won't apply it.
-                    warnings.warn('\n\n ================================================================= '+
-                                  '\n\n     WARNING: make_addplot `xlabel` IGNORED in Panels mode.'+
-                                  '\n              Use `mpf.plot(...,xlabel=)` instead.'+
-                                  '\n\n ================================================================ ',
-                                  category=UserWarning)
             aptype = apdict['type']
             if aptype == 'ohlc' or aptype == 'candle':
                 ax = _addplot_collections(panid,panels,apdict,xdates,config)
@@ -1082,8 +1075,11 @@ def _addplot_columns(panid,panels,ydata,apdict,xdates,config):
 def _addplot_apply_supplements(ax,apdict,xdates):
     if (apdict['ylabel'] is not None):
         ax.set_ylabel(apdict['ylabel'])
-    if (apdict['xlabel'] is not None):
-        ax.set_xlabel(apdict['xlabel'])
+    # Note that xlabel is NOT supported for addplot.  This is because
+    # in Panels Mode, there is only one xlabel (on the bottom axes)
+    # which is handled by the `xlabel` kwarg of `mpf.plot()`,
+    # whereas in External Axes Mode, users can call `Axes.set_xlabel()` on
+    # the axes object of their choice.
     if apdict['ylim'] is not None:
         ax.set_ylim(apdict['ylim'][0],apdict['ylim'][1])
     if apdict['title'] is not None:
@@ -1255,10 +1251,6 @@ def _valid_addplot_kwargs():
 
         'ylabel'      : { 'Default'     : None,
                           'Description' : 'label for y-axis (for this addplot)',
-                          'Validator'   : lambda value: isinstance(value,str) },
-
-        'xlabel'      : { 'Default'     : None, # x-axis label
-                          'Description' : 'x-axis label (for addplot ONLY when in external axes mode)',
                           'Validator'   : lambda value: isinstance(value,str) },
 
         'ylim'        : {'Default'      : None,
