@@ -46,15 +46,15 @@ def _check_and_prepare_data(data, config):
         expect_cols = columns
     else:
         expect_cols = cols
-    
-    for c in expect_cols:
-        if c not in data.columns:
+     
+    for col in expect_cols:
+        if col not in data.columns:
             for dc in data.columns:
                 if dc.strip() != dc:
                     warnings.warn('\n ================================================================= '+
                                   '\n   Input DataFrame column name "'+dc+'" '+
                                   '\n   contains leading and/or trailing whitespace.',category=UserWarning)
-            raise ValueError('Column "'+c+'" NOT FOUND in Input DataFrame!'+
+            raise ValueError('Column "'+col+'" NOT FOUND in Input DataFrame!'+
                              '\n            CHECK that your column names are correct AND/OR'+
                              '\n            CHECK for leading or trailing blanks in your column names.')
 
