@@ -1235,7 +1235,7 @@ def _auto_secondary_y( panels, panid, ylo, yhi ):
 
 def _valid_addplot_kwargs():
 
-    valid_linestyles = ('-','solid','--','dashed','-.','dashdot','.','dotted',None,' ','')
+    valid_linestyles = ('-','solid','--','dashed','-.','dashdot',':','dotted',None,' ','')
     valid_types = ('line','scatter','bar', 'ohlc', 'candle','step')
     valid_stepwheres = ('pre','post','mid')
     valid_edgecolors = ('face', 'none', None)
