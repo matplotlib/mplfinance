@@ -107,6 +107,10 @@ def _valid_plot_kwargs():
         'type'                      : { 'Default'     : 'ohlc',
                                         'Description' : 'Plot type: '+str(_get_valid_plot_types()),
                                         'Validator'   : lambda value: value in _get_valid_plot_types() },
+       'markevery'                 : { 'Default'     : None,
+                                        'Description' : 'markevery: size color shape ',
+                                        'Validator'   : lambda value: isinstance(value,(tuple, list, int))},
+
  
         'style'                     : { 'Default'     : None,
                                         'Description' : 'plot style; see `mpf.available_styles()`',
@@ -407,7 +411,8 @@ def plot( data, **kwargs ):
     moving averages, renko, etc.
     Also provide ability to plot trading signals, and/or addtional user-defined data.
     """
-
+    import sys
+    sys.stdout = sys.__stdout__
     config = _process_kwargs(kwargs, _valid_plot_kwargs())
 
     # translate alias types:
@@ -492,6 +497,7 @@ def plot( data, **kwargs ):
     else:
         panels = _build_panels(fig, config)
         axA1 = panels.at[config['main_panel'],'axes'][0]
+        warnings.warn(f"this type is {type(axA1)}")
         if config['volume']:
             if config['volume_panel'] == config['main_panel']:
                 # ohlc and volume on same panel: move volume to secondary axes:
@@ -525,10 +531,10 @@ def plot( data, **kwargs ):
     collections = None
     if ptype == 'line':
         lw = config['_width_config']['line_width']
-        axA1.plot(xdates, closes, color=config['linecolor'], linewidth=lw)
+        pmarkevery = config['markevery']
+        axA1.plot(xdates, closes,  'o', markevery=pmarkevery, ls='-', color=config['linecolor'], linewidth=lw, )    else:
     else:
         collections =_construct_mpf_collections(ptype,dates,xdates,opens,highs,lows,closes,volumes,config,style)
-
     if ptype in VALID_PMOVE_TYPES:
         collections, calculated_values = collections
         volumes       = calculated_values['volumes']
@@ -650,10 +656,35 @@ def plot( data, **kwargs ):
         tlines = [tlines,]
     for tline_item in tlines:
         line_collections.append(_construct_tline_collections(tline_item, dtix, dates, opens, highs, lows, closes))
-     
-    for collection in line_collections:
-        if collection is not None:
-            axA1.add_collection(collection)
+        ### note
+    # if config['addplot'] is not None:
+    #     for panid,row in panels.iterrows():
+    #         print(panid)
+    #         print("the value of min and max is ",miny,maxy)
+    #         print("type of row is ", type(row))
+    #         print("panid is ",panid)
+    #         print("row key is ",row.keys())
+    #         ax = row['axes']
+    #         line_collections = []
+    #         if (panid == 0):
+    #             line_collections.append(_construct_vline_collections(config['vlines'], dtix, miny, maxy))
+    #         else:
+    #             line_collections.append(_construct_vline_collections(config['vlines'], dtix, 200, 600))
+
+    #         for collection in line_collections:
+    #             if collection is not None:
+    #                 ax[0].add_collection(collection)
+    if config['addplot'] is not None:
+        for panid,row in panels.iterrows():
+            ax = row['axes']
+            print(dtix)
+            print(config['vlines'])
+            # _date_to_iloc
+            ax[0].axvline(x=50.5,linestyle='--')
+    else:
+        for collection in line_collections:
+            if collection is not None:
+                axA1.add_collection(collection)
 
     datalen = len(xdates)
     if config['volume']:
