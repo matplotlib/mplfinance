@@ -260,7 +260,7 @@ def _valid_plot_kwargs():
                                         'Validator'   : lambda value: _hlines_validator(value) },
  
         'vlines'                    : { 'Default'     : None, 
-                                        'Description' : 'Draw one or more VERTICAL LINES across entire plot, by'+
+                                        'Description' : 'Draw VERTICAL LINES across one plot, by'+
                                                         ' specifying a date[time], or sequence of date[time].  May also'+
                                                         ' be a dict with key `vlines` specifying a date[time] or sequence'+
                                                         ' of date[time], plus one or more of the following keys:'+
@@ -532,7 +532,7 @@ def plot( data, **kwargs ):
     if ptype == 'line':
         lw = config['_width_config']['line_width']
         pmarkevery = config['markevery']
-        axA1.plot(xdates, closes,  'o', markevery=pmarkevery, ls='-', color=config['linecolor'], linewidth=lw, )    
+        axA1.plot(xdates, closes,  'o', markevery=pmarkevery, ls='-', color=config['linecolor'], linewidth=lw )    
     else:
         collections =_construct_mpf_collections(ptype,dates,xdates,opens,highs,lows,closes,volumes,config,style)
     if ptype in VALID_PMOVE_TYPES:
@@ -656,31 +656,28 @@ def plot( data, **kwargs ):
         tlines = [tlines,]
     for tline_item in tlines:
         line_collections.append(_construct_tline_collections(tline_item, dtix, dates, opens, highs, lows, closes))
-        ### note
-    # if config['addplot'] is not None:
-    #     for panid,row in panels.iterrows():
-    #         print(panid)
-    #         print("the value of min and max is ",miny,maxy)
-    #         print("type of row is ", type(row))
-    #         print("panid is ",panid)
-    #         print("row key is ",row.keys())
-    #         ax = row['axes']
-    #         line_collections = []
-    #         if (panid == 0):
-    #             line_collections.append(_construct_vline_collections(config['vlines'], dtix, miny, maxy))
-    #         else:
-    #             line_collections.append(_construct_vline_collections(config['vlines'], dtix, 200, 600))
+    
+    vlinelist = config['vlines']
 
-    #         for collection in line_collections:
-    #             if collection is not None:
-    #                 ax[0].add_collection(collection)
-    if config['addplot'] is not None:
+    if config['addplot'] is not None and vlinelist is not None:
         for panid,row in panels.iterrows():
             ax = row['axes']
-            print(dtix)
-            print(config['vlines'])
-            # _date_to_iloc
-            ax[0].axvline(x=50.5,linestyle='--')
+
+            # print("the type of vlinelist is ",type(vlinelist))
+
+            # print(vlinelist)
+            # print(vlinelist['vlines'])
+
+            # for line in vlinelist['vlines']:
+            #     print("the line is ",line)
+            #     print("the line is type ",type(line))
+
+            #     print("the data type is ",type(data))
+            #     print("the data type is ",data.columns)
+            #     ax[0].axvline(x=data.loc[str(line)],linestyle='--')
+            ax[0].axvline(x=50,linestyle='--')
+
+
     else:
         for collection in line_collections:
             if collection is not None:
