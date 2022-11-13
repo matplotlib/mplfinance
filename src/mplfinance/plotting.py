@@ -532,7 +532,7 @@ def plot( data, **kwargs ):
     if ptype == 'line':
         lw = config['_width_config']['line_width']
         pmarkevery = config['markevery']
-        axA1.plot(xdates, closes,  'o', markevery=pmarkevery, ls='-', color=config['linecolor'], linewidth=lw, )    else:
+        axA1.plot(xdates, closes,  'o', markevery=pmarkevery, ls='-', color=config['linecolor'], linewidth=lw, )    
     else:
         collections =_construct_mpf_collections(ptype,dates,xdates,opens,highs,lows,closes,volumes,config,style)
     if ptype in VALID_PMOVE_TYPES:
