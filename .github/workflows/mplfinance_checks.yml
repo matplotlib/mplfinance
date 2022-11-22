@@ -46,7 +46,7 @@ jobs:
       - run: echo "This job's status is ${{ job.status }}."
 
   Pull_Request_Updates_Version:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     if: github.event_name == 'pull_request'
     steps:
       - name: Check out repository code
