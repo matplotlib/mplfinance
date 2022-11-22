@@ -936,7 +936,7 @@ def _construct_renko_collections(dates, highs, lows, volumes, config_renko_param
 
 
 def _construct_pointnfig_collections(dates, highs, lows, volumes, config_pointnfig_params, closes, marketcolors=None):
-    """Represent the price change with Xs and Os
+    r"""Represent the price change with Xs and Os
 
     NOTE: this code assumes if any value open, low, high, close is
     missing they all are missing

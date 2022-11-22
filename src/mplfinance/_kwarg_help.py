@@ -139,7 +139,7 @@ def kwarg_help( func_name=None, kwarg_names=None, sort=False ):
     dfd.columns = df.columns
     dfd.index = pd.Index(['---'])
 
-    df = dfd.append(df)
+    df = pd.concat([dfd,df])
 
     formatters = { 'Kwarg'       : make_left_formatter( klen ),
                    'Default'     : make_left_formatter( dlen ),

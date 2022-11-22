@@ -70,7 +70,7 @@ def percentB_aboveone(percentB,price):
     import numpy as np
     signal   = []
     previous = 2
-    for date,value in percentB.iteritems():
+    for date,value in percentB.items():
         if value > 1 and previous <= 1:
             signal.append(price[date]*1.01)
         else:
@@ -82,7 +82,7 @@ def percentB_belowzero(percentB,price):
     import numpy as np
     signal   = []
     previous = -1.0
-    for date,value in percentB.iteritems():
+    for date,value in percentB.items():
         if value < 0 and previous >= 0:
             signal.append(price[date]*0.99)
         else:
