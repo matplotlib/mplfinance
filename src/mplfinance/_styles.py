@@ -20,7 +20,14 @@ def _apply_mpfstyle(style):
 
     plt.style.use('default')
 
-    if style['base_mpl_style'] is not None:
+    if style['base_mpl_style'] == 'seaborn-darkgrid':
+        # deal with deprecation of old seaborn-darkgrid:
+        try:
+            plt.style.use('seaborn-v0_8-darkgrid')
+            style['base_mpl_style'] = 'seaborn-v0_8-darkgrid'
+        except:
+            plt.style.use(style['base_mpl_style']) 
+    elif style['base_mpl_style'] is not None:
         plt.style.use(style['base_mpl_style']) 
 
     if style['rc'] is not None:
