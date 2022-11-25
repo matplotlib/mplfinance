@@ -21,6 +21,7 @@ from mplfinance._utils import _construct_hline_collections
 from mplfinance._utils import _construct_vline_collections
 from mplfinance._utils import _construct_tline_collections
 from mplfinance._utils import _construct_mpf_collections
+from mplfinance._utils import _construct_pnf_scatter
 
 from mplfinance._widths import _determine_width_config
 
@@ -526,33 +527,45 @@ def plot( data, **kwargs ):
     if ptype == 'line':
         lw = config['_width_config']['line_width']
         axA1.plot(xdates, closes, color=config['linecolor'], linewidth=lw)
+    elif ptype == 'pnf':
+        pnf_results = _construct_pnf_scatter(axA1,ptype,dates,xdates,opens,highs,lows,closes,volumes,config,style)
     else:
         collections =_construct_mpf_collections(ptype,dates,xdates,opens,highs,lows,closes,volumes,config,style)
 
-    if ptype in VALID_PMOVE_TYPES:
-        collections, calculated_values = collections
-        volumes       = calculated_values['volumes']
-        pmove_dates   = calculated_values['dates']
-        pmove_values  = calculated_values['values']
-        if all([isinstance(v,(list,tuple)) for v in pmove_values]):
-            pmove_avgvals = [sum(v)/len(v) for v in pmove_values]
-        else:
-            pmove_avgvals = pmove_values
-        pmove_size    = calculated_values['size']
-        pmove_counts  = calculated_values['counts'] if 'counts' in calculated_values else None
-        formatter = IntegerIndexDateTimeFormatter(pmove_dates, fmtstring)
-        xdates = np.arange(len(pmove_dates))
+    if ptype == 'pnf':
+        volumes    = pnf_results['pnf_volumes']
+        pnf_values = pnf_results['pnf_values']
+        pnf_mdates = mdates.date2num(list(pnf_values.keys()))
+        formatter  = IntegerIndexDateTimeFormatter(pnf_mdates,fmtstring)
+        xdates     = pnf_results['pnf_xdates']
+    elif ptype == 'renko':
+        collections, renko_results = collections
+        volumes       = renko_results['volumes']
+        renko_dates   = renko_results['dates']
+        renko_values  = renko_results['values']
+        formatter = IntegerIndexDateTimeFormatter(renko_dates, fmtstring)
+        renko_avgvals = renko_values
+        renko_size    = renko_results['size']
+        xdates = np.arange(len(renko_dates))
 
     if collections is not None:
         for collection in collections:
             axA1.add_collection(collection)
 
-    if ptype in VALID_PMOVE_TYPES:
-        mavprices = _plot_mav(axA1,config,xdates,pmove_avgvals)
-        emaprices = _plot_ema(axA1, config, xdates, pmove_avgvals)
+    #formatter = IntegerIndexDateTimeFormatter(xdates, fmtstring)
+
+    if (ptype == 'pnf' and 
+        (config['mav'] is not None or config['ema'] is not None)):
+        warnings.warn('\n\n ================================================================ '+
+                      '\n\n   MOVING Averages IGNORED for POINT and FIGURE PLOTS!'+
+                      '\n\n ================================================================ ',
+                      category=UserWarning)
+    elif ptype == 'renko':
+        mavprices = _plot_mav(axA1,config,xdates,renko_avgvals)
+        emaprices = _plot_ema(axA1,config,xdates,renko_avgvals)
     else:
         mavprices = _plot_mav(axA1,config,xdates,closes)
-        emaprices = _plot_ema(axA1, config, xdates, closes)
+        emaprices = _plot_ema(axA1,config,xdates,closes)
 
     avg_dist_between_points = (xdates[-1] - xdates[0]) / float(len(xdates))
     if not config['tight_layout']:
@@ -565,15 +578,19 @@ def plot( data, **kwargs ):
     if len(xdates) == 1:  # kludge special case
         minx = minx - 0.75
         maxx = maxx + 0.75
-    if ptype not in VALID_PMOVE_TYPES:
+
+    if ptype == 'renko':
+        _lows  = renko_avgvals 
+        _highs = [value+renko_size for value in renko_avgvals]
+    else:
         _lows  = lows
         _highs = highs
-    else:
-        _lows  = pmove_avgvals
-        _highs = [value+pmove_size for value in pmove_avgvals]
 
-    miny = np.nanmin(_lows)
-    maxy = np.nanmax(_highs)
+    if ptype == 'pnf':
+       miny, maxy = pnf_results['pnf_ylimits']
+    else:
+        miny = np.nanmin(_lows)
+        maxy = np.nanmax(_highs)
 
     if config['ylim'] is not None:
         axA1.set_ylim(config['ylim'][0], config['ylim'][1])
@@ -600,25 +617,23 @@ def plot( data, **kwargs ):
     if config['return_calculated_values'] is not None:
         retdict = config['return_calculated_values']
         if ptype == 'renko':
-            retdict['renko_bricks' ] = pmove_values
-            retdict['renko_dates'  ] = mdates.num2date(pmove_dates)
-            retdict['renko_size'   ] = pmove_size
+            retdict['renko_bricks' ] = renko_values
+            retdict['renko_dates'  ] = mdates.num2date(renko_dates)
+            retdict['renko_size'   ] = renko_size
             retdict['renko_volumes'] = volumes if config['volume'] else None
         elif ptype == 'pnf':
-            retdict['pnf_dates'    ] = mdates.num2date(pmove_dates)
-            retdict['pnf_counts'   ] = pmove_counts
-            retdict['pnf_values'   ] = pmove_values
-            retdict['pnf_avgvals'  ] = pmove_avgvals
-            retdict['pnf_size'     ] = pmove_size
-            retdict['pnf_volumes'  ] = volumes if config['volume'] else None
-        if config['mav'] is not None:
+            retdict['pnf_dates'    ] = mdates.num2date(pnf_mdates)
+            retdict['pnf_values'   ] = pnf_values
+            retdict['pnf_size'     ] = pnf_results['pnf_boxsize']
+            retdict['pnf_volumes'  ] = volumes[:len(pnf_values)] if config['volume'] else None
+        if config['mav'] is not None and ptype != 'pnf':
             mav = config['mav']
             if len(mav) != len(mavprices):
                 warnings.warn('len(mav)='+str(len(mav))+' BUT len(mavprices)='+str(len(mavprices)))
             else:
                 for jj in range(0,len(mav)):     
                     retdict['mav' + str(mav[jj])] = mavprices[jj]
-        if config['ema'] is not None:
+        if config['ema'] is not None and ptype != 'pnf':
             ema = config['ema']
             if len(ema) != len(emaprices):
                 warnings.warn('len(ema)='+str(len(ema))+' BUT len(emaprices)='+str(len(emaprices)))
@@ -633,6 +648,7 @@ def plot( data, **kwargs ):
     # Note: these are NOT mutually exclusive, so the order of this
     #       if/elif is important: VALID_PMOVE_TYPES must be first.
     if ptype in VALID_PMOVE_TYPES:
+        pmove_dates = pnf_mdates if ptype == 'pnf' else renko_dates
         dtix = pd.DatetimeIndex([dt for dt in mdates.num2date(pmove_dates)])
     elif not config['show_nontrading']:
         dtix = data.index
@@ -685,6 +701,12 @@ def plot( data, **kwargs ):
         axA1.tick_params(axis='x',rotation=xrotation)
         axA1.xaxis.set_major_formatter(formatter)
         axA1.set_xlabel(config['xlabel'])
+
+    if config['type'] == 'pnf':
+        pnf_xs = list(pnf_results['pnf_df'].XBox.values)
+        pnf_os = list(pnf_results['pnf_df'].OBox.values)
+        tick_vals = sorted( set(pnf_xs + pnf_os) )
+        axA1.set_yticks(tick_vals)
 
     ysd = config['yscale']
     if isinstance(ysd,dict):
