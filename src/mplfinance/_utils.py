@@ -1573,8 +1573,9 @@ def _construct_pnf_scatter(ax,ptype,dates,xdates,opens,highs,lows,closes,volumes
     lo   = min(yvals)
     xlen = int(round((hi-lo)/box_size,0)+2) # +2 empirical kludge
     pad  = (xlen-xvals[-1]) * pointnfig_params['scale_right_padding']
-    print('hi,lo,xlen,xvals[-1],pad=',hi,lo,xlen,xvals[-1],pad)
-    print('ylim_top,ylim_bot=',ylim_top,ylim_bot)
+    pad  = max(0,pad) # less than zero not allowed
+    #print('hi,lo,xlen,xvals[-1],pad=',hi,lo,xlen,xvals[-1],pad)
+    #print('ylim_top,ylim_bot=',ylim_top,ylim_bot)
 
     xdates = np.arange(len(pnfd)+int(pad))
     pnf_volumes = pnf_volumes + [float('nan')]*int(pad)

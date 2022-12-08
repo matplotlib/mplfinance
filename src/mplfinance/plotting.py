@@ -707,6 +707,12 @@ def plot( data, **kwargs ):
         pnf_os = list(pnf_results['pnf_df'].OBox.values)
         tick_vals = sorted( set(pnf_xs + pnf_os) )
         axA1.set_yticks(tick_vals)
+        skip = int( round(len(xdates)/10.0, 0) )
+        skip = max(1,skip) # must be at least 1
+        tick_vals = [t for t in range(0-skip,len(xdates)+1,skip)]
+        #print('len(xdates)=',len(xdates),'len(pnf_mdates)=',len(pnf_mdates))
+        #print('skip=',skip,'\nxdates=',xdates,'\npnf_dates=',[str(d.date()) for d in mdates.num2date(pnf_mdates)])
+        axA1.set_xticks(tick_vals)
 
     ysd = config['yscale']
     if isinstance(ysd,dict):
