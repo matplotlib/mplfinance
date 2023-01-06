@@ -1291,7 +1291,7 @@ def _valid_addplot_kwargs():
 
         'markersize'  : { 'Default'     : 18,
                           'Description' : 'size of marker for `type="scatter"`; default=18',
-                          'Validator'   : lambda value: isinstance(value,(int,float)) },
+                          'Validator'   : lambda value: isinstance(value,(int,float, pd.Series, np.ndarray)) },
 
         'color'       : { 'Default'     : None,
                           'Description' : 'color (or sequence of colors) of line(s), scatter marker(s), or bar(s).',
