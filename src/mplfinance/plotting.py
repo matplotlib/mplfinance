@@ -32,7 +32,7 @@ from mplfinance._utils import _check_and_convert_xlim_configuration
 
 from mplfinance import _styles
 
-from mplfinance._arg_validators import _check_and_prepare_data, _mav_validator
+from mplfinance._arg_validators import _check_and_prepare_data, _mav_validator, _label_validator
 from mplfinance._arg_validators import _get_valid_plot_types, _fill_between_validator
 from mplfinance._arg_validators import _process_kwargs, _validate_vkwargs_dict
 from mplfinance._arg_validators import _kwarg_not_implemented, _bypass_kwarg_validation
@@ -1093,6 +1093,7 @@ def _addplot_columns(panid,panels,ydata,apdict,xdates,config):
         mark  = apdict['marker']
         color = apdict['color']
         alpha = apdict['alpha']
+        labels = apdict['labels']
         edgecolors  = apdict['edgecolors']
         linewidths = apdict['linewidths']
 
@@ -1100,18 +1101,24 @@ def _addplot_columns(panid,panels,ydata,apdict,xdates,config):
             _mscatter(xdates, ydata, ax=ax, m=mark, s=size, color=color, alpha=alpha, edgecolors=edgecolors, linewidths=linewidths)
         else:
             ax.scatter(xdates, ydata, s=size, marker=mark, color=color, alpha=alpha, edgecolors=edgecolors, linewidths=linewidths)
+            if labels is not None:
+                ax.legend(labels=labels)
     elif aptype == 'bar':
         width  = 0.8 if apdict['width'] is None else apdict['width']
         bottom = apdict['bottom']
         color  = apdict['color']
         alpha  = apdict['alpha']
         ax.bar(xdates,ydata,width=width,bottom=bottom,color=color,alpha=alpha)
+        if apdict['labels'] is not None:
+            ax.legend(labels=apdict['labels'])
     elif aptype == 'line':
         ls     = apdict['linestyle']
         color  = apdict['color']
         width  = apdict['width'] if apdict['width'] is not None else 1.6*config['_width_config']['line_width']
         alpha  = apdict['alpha']
         ax.plot(xdates,ydata,linestyle=ls,color=color,linewidth=width,alpha=alpha)
+        if apdict['labels'] is not None:
+            ax.legend(labels=apdict['labels'])
     elif aptype == 'step':
         stepwhere = apdict['stepwhere']
         ls = apdict['linestyle']
@@ -1119,6 +1126,8 @@ def _addplot_columns(panid,panels,ydata,apdict,xdates,config):
         width  = apdict['width'] if apdict['width'] is not None else 1.6*config['_width_config']['line_width']
         alpha  = apdict['alpha']
         ax.step(xdates,ydata,where = stepwhere,linestyle=ls,color=color,linewidth=width,alpha=alpha)
+        if apdict['labels'] is not None:
+            ax.legend(labels=apdict['labels'])
     else:
         raise ValueError('addplot type "'+str(aptype)+'" NOT yet supported.')
 
@@ -1371,6 +1380,9 @@ def _valid_addplot_kwargs():
         'fill_between': { 'Default'     : None,    # added by Wen
                           'Description' : " fill region",
                           'Validator'   : _fill_between_validator },
+        "labels"      : { 'Default'     : None,
+                          'Description' : 'Labels for the added plot.',
+                          'Validator'   : _label_validator },
 
     }
 
