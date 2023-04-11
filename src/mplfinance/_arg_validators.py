@@ -7,6 +7,7 @@ from   mplfinance._helpers import _num_or_seq_of_num
 import matplotlib as mpl
 import warnings
 
+
 def _check_and_prepare_data(data, config):
     '''
     Check and Prepare the data input:
@@ -94,6 +95,7 @@ def _check_and_prepare_data(data, config):
 
     return dates, opens, highs, lows, closes, volumes
 
+
 def _label_validator(label_value):
     ''' Validates the input of label for the added plots.
     label_value may be a str or a list of str.
@@ -101,12 +103,7 @@ def _label_validator(label_value):
     if isinstance(label_value,str):
         return True
     return False
-    # elif not isinstance(label_value,(tuple,list)):
-    #     return False
-    # for label in label_value:
-    #     if not isinstance(label,str):
-    #         return False
-    # return True
+
 
 def _get_valid_plot_types(plottype=None):
 
