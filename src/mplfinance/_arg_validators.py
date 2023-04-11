@@ -95,6 +95,9 @@ def _check_and_prepare_data(data, config):
     return dates, opens, highs, lows, closes, volumes
 
 def _label_validator(label_value):
+    ''' Validates the input of labels for the added plots.
+    label_value may be a str or a list of str.
+    '''
     if isinstance(label_value,str):
         return True
     elif not isinstance(label_value,(tuple,list)):
