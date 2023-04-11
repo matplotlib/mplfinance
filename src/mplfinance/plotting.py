@@ -783,8 +783,8 @@ def plot( data, **kwargs ):
                     _addplot_apply_supplements(ax,apdict,xdates)
                 if apdict["label"]: # not supported for aptype == 'ohlc' or 'candle'
                     contains_legend_label.append(ax)
-        for ax in set(contains_legend_label): # there will be duplicates, 
-            ax.legend() # but its ok to call ax.legend() multiple times
+        for ax in set(contains_legend_label): # there might be duplicates
+            ax.legend()
 
     # fill_between is NOT supported for external_axes_mode
     # (caller can easily call ax.fill_between() themselves).
