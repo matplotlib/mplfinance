@@ -388,6 +388,12 @@ def _valid_plot_kwargs():
                                         'Validator'   : lambda value: isinstance(value,(int,float)) or
                                                         all([isinstance(v,(int,float)) for v in value]) },
 
+        'volume_mco'                : { 'Default'     : False,  
+                                        'Description' : 'Use the same marketcolor override for volume bars as'+
+                                                        ' `marketcolor_overrides`. `marketcolor_overrides` must be valid.'+
+                                                        ' See `examples/marketcolor_overrides.ipynb`',
+                                        'Validator'   : lambda value: isinstance(value,bool) },
+
         'warn_too_much_data'        : { 'Default'     : 599,
                                         'Description' : 'Tolerance for data amount in plot. Default=599 rows.'+
                                                         ' Values greater than \'warn_too_much_data\' will trigger a warning.',
@@ -674,10 +680,8 @@ def plot( data, **kwargs ):
     datalen = len(xdates)
     if config['volume']:
         vup,vdown = style['marketcolors']['volume'].values()
-        #-- print('vup,vdown=',vup,vdown)
-        vcolors = _updown_colors(vup, vdown, opens, closes, use_prev_close=style['marketcolors']['vcdopcod'])
-        #-- print('len(vcolors),len(opens),len(closes)=',len(vcolors),len(opens),len(closes))
-        #-- print('vcolors=',vcolors)
+        overrides = config['marketcolor_overrides'] if config['volume_mco'] else None
+        vcolors = _updown_colors(vup,vdown,opens,closes,use_prev_close=style['marketcolors']['vcdopcod'],overrides=overrides)
 
         w  = config['_width_config']['volume_width']
         lw = config['_width_config']['volume_linewidth']
