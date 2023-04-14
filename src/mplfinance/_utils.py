@@ -178,21 +178,36 @@ def coalesce_volume_dates(in_volumes, in_dates, indexes):
     return volumes, dates
 
 
-def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False):
+def _updown_colors(upcolor,downcolor,opens,closes,use_prev_close=False,overrides=None):
     # -----------------------------------------------------
     # Note that `nan` values result in `opn < cls` == False
     # In other words, nans don't get plotted by collections
     # but this function will choose DOWN COLOR for nans.
+    #
+    # include overrides to overwrite the color of volume bars
+    # possible to support for other types by including `key` 
+    # in the arguments
     # -----------------------------------------------------
+    key = 'volume'
     if upcolor == downcolor:
         return [upcolor]*len(opens)
     cmap = {True : upcolor, False : downcolor}
     if not use_prev_close:
-        return [ cmap[opn < cls] for opn,cls in zip(opens,closes) ]
+        highlow = [ (opn < cls) for opn,cls in zip(opens,closes) ]
     else:
-        first = cmap[opens[0] < closes[0]]
-        _list = [ cmap[pre < cls] for cls,pre in zip(closes[1:], closes) ]
-        return [first] + _list
+        highlow = [opens[0] < closes[0]] + [ (pre < cls) for cls,pre in zip(closes[1:], closes) ]
+    #print("overrides,highlow.copy()",overrides,highlow.copy(),cmap)
+    if overrides is not None:
+        for ix,(mco,hl) in enumerate(zip(overrides,highlow.copy())):
+            if mco is None: continue
+            if mcolors.is_color_like(mco):
+                highlow[ix] = mco # only modify the relevant bars
+            elif hl:
+                highlow[ix] = mco[key][ 'up' ]
+            else:
+                highlow[ix] = mco[key]['down']
+    return [( cmap[hl] if (hl in cmap) else hl) for hl in highlow]
+
 
 def _make_updown_color_list(key,marketcolors,opens,closes,overrides=None):
     length = len(opens)
