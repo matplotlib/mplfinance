@@ -121,6 +121,10 @@ def _valid_plot_kwargs():
                                         'Description' : 'Moving Average window size(s); (int or tuple of ints)',
                                         'Validator'   : _mav_validator },
 
+        'indicators'                : { 'Default'     : None,
+                                        'Description' : 'Moving Average window size(s); (int or tuple of ints)',
+                                        'Validator'   : lambda value: isinstance(value,dict) or (isinstance(value,list) and all([isinstance(d,dict) for d in value])) },
+
         'ema'                       : { 'Default'     : None,
                                         'Description' : 'Exponential Moving Average window size(s); (int or tuple of ints)',
                                         'Validator'   : _mav_validator },
@@ -839,6 +843,64 @@ def plot( data, **kwargs ):
                            # working in `addplot`).
 
     axA1.set_ylabel(config['ylabel'])
+
+    indicator_list = config['indicators']
+
+    if indicator_list is not None: 
+        if isinstance(indicator_list,dict):
+            indicator_list = [indicator_list,]
+
+        elif not _list_of_dict(indicator_list):
+            raise TypeError('indicator must be `dict`, or `list of dict`, NOT '+str(type(indicator_list)))
+    else: 
+        indicator_list = []
+        
+    for indicator in indicator_list:
+        if indicator.get("kind") == "BBand":
+            if 'length' in indicator:
+                BBand_period = indicator['length']
+            else:
+                BBand_period = 21
+
+            if 'colors' in indicator:
+                colss = indicator['colors']
+            else:
+                prop_cycle = plt.rcParams['axes.prop_cycle']
+                colss = prop_cycle.by_key()['color']
+
+            rolling_mean = pd.Series(closes).rolling(window=BBand_period).mean()
+            rolling_std =  pd.Series(closes).rolling(window=BBand_period).std()
+            middle_band = pd.Series(closes).rolling(window=BBand_period).mean()
+            upper_band = rolling_mean + (rolling_std * 3)
+            lower_band = rolling_mean - (rolling_std * 3)
+
+            
+            if 'legend_label' in indicator:
+                label = indicator['legend_label']
+                axA1.plot(xdates,upper_band.values,color=colss[0],label=label[0])
+                axA1.plot(xdates,middle_band.values,color=colss[1],label=label[1])
+                axA1.plot(xdates,lower_band.values,color=colss[2],label=label[2])
+                axA1.legend()
+            else:
+                axA1.plot(xdates,upper_band.values,color=colss[0])
+                axA1.plot(xdates,middle_band.values,color=colss[1])
+                axA1.plot(xdates,lower_band.values,color=colss[2])
+            
+
+            upper = upper_band.values[-1].round(2)
+            middle = middle_band.values[-1].round(2)
+            lower = lower_band.values[-1].round(2)
+
+            yticks = [*axA1.get_yticks(), upper,middle,lower]
+            yticklabels = [*axA1.get_yticklabels(), float(upper),float(middle),float(lower)]
+            colors = {str(upper):colss[0],str(middle):colss[1],str(lower):colss[2]}
+
+            axA1.set_yticks(yticks, labels=yticklabels)
+            for xtic in axA1.get_yticklabels():
+                if xtic.get_text() in colors.keys():
+                    xtic.set_color(colors[xtic.get_text()])
+
+
 
     if config['volume']:
         if external_axes_mode:
