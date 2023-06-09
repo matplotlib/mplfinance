@@ -1196,6 +1196,8 @@ def _plot_mav(ax,config,xdates,prices,apmav=None,apwidth=None):
      
         mavc = config['_ma_color_cycle']
 
+        list_ploted_mav =[] 
+
         for idx,mav in enumerate(mavgs):
             mean = pd.Series(prices).rolling(mav).mean()
             if shift is not None:
@@ -1204,9 +1206,14 @@ def _plot_mav(ax,config,xdates,prices,apmav=None,apwidth=None):
             lw = config['_width_config']['line_width']
             if mavc:
                 ax.plot(xdates, mavprices, linewidth=lw, color=next(mavc))
+                list_ploted_mav.append(mean.values[-1].round(1))
             else:
                 ax.plot(xdates, mavprices, linewidth=lw)
+                list_ploted_mav.append(mean.values[-1].round(1))
             mavp_list.append(mavprices)
+        yticks = [*ax.get_yticks()] + list_ploted_mav
+        yticklabels = [*ax.get_yticklabels()]+list_ploted_mav
+        ax.set_yticks(yticks, labels=yticklabels)
     return mavp_list
 
 
