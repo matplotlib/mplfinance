@@ -888,7 +888,7 @@ def plot( data, **kwargs ):
                     else:
                         axA1.plot(xdates,iema_values,color=colss[i_id])
             else:
-                iema = pd.Series(closes).ewm(span=ilength,adjust=False).mean()
+                iema = pd.Series(closes).ewm(span=ema_period,adjust=False).mean()
                 iema_values = iema.values
                 yticks.append(iema_values[-1].round(2))
                 yticklabels.append(iema_values[-1].round(2))
@@ -936,7 +936,7 @@ def plot( data, **kwargs ):
                     else:
                         axA1.plot(xdates,isma_values,color=colss[i_id])
             else:
-                isma = pd.Series(closes).rolling(ema_period).mean()
+                isma = pd.Series(closes).rolling(sma_period).mean()
                 isma_values = isma.values
                 yticks.append(isma_values[-1].round(2))
                 yticklabels.append(isma_values[-1].round(2))
@@ -950,8 +950,8 @@ def plot( data, **kwargs ):
             axA1.set_yticks(yticks, labels=yticklabels)
             for xtic in axA1.get_yticklabels():
                 if xtic.get_text() in colors.keys():
-                    xtic.set_color(colors[xtic.get_text()])
-        
+                    xtic.set_color(colors[xtic.get_text()])   
+                    
         if indicator.get("kind") == "BBand":
             if 'length' in indicator:
                 BBand_period = indicator['length']
