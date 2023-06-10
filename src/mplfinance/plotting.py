@@ -876,7 +876,7 @@ def plot( data, **kwargs ):
 
             if isinstance(ema_period,tuple):
                 for i_id,ilength in enumerate(ema_period):
-                    iema = pd.Series(closes).rolling(ilength).mean()
+                    iema = pd.Series(closes).ewm(span=ilength,adjust=False).mean()
                     iema_values = iema.values
                     yticks.append(iema_values[-1].round(2))
                     yticklabels.append(float(iema_values[-1].round(2)))
@@ -888,7 +888,7 @@ def plot( data, **kwargs ):
                     else:
                         axA1.plot(xdates,iema_values,color=colss[i_id])
             else:
-                iema = pd.Series(closes).rolling(ema_period).mean()
+                iema = pd.Series(closes).ewm(span=ilength,adjust=False).mean()
                 iema_values = iema.values
                 yticks.append(iema_values[-1].round(2))
                 yticklabels.append(iema_values[-1].round(2))
@@ -899,6 +899,54 @@ def plot( data, **kwargs ):
                     axA1.legend()
                 else:
                     axA1.plot(xdates,iema_values,color=colss[0])
+            axA1.set_yticks(yticks, labels=yticklabels)
+            for xtic in axA1.get_yticklabels():
+                if xtic.get_text() in colors.keys():
+                    xtic.set_color(colors[xtic.get_text()])
+
+        
+        if indicator.get("kind") == "sma":  
+            if 'length' in indicator:
+                sma_period = indicator['length']
+            else:
+                sma_period = 7
+
+            if 'colors' in indicator:
+                colss = indicator['colors']
+
+            else:
+                prop_cycle = plt.rcParams['axes.prop_cycle']
+                colss = prop_cycle.by_key()['color']
+
+            yticks = [*axA1.get_yticks(),]
+            yticklabels = [*axA1.get_yticklabels(),]
+            colors = {}
+
+            if isinstance(sma_period,tuple):
+                for i_id,ilength in enumerate(sma_period):
+                    isma = pd.Series(closes).rolling(ilength).mean()
+                    isma_values = isma.values
+                    yticks.append(isma_values[-1].round(2))
+                    yticklabels.append(float(isma_values[-1].round(2)))
+                    colors.update({str(isma_values[-1].round(2)):colss[i_id]})
+                    if 'legend_label' in indicator:
+                        label = indicator['legend_label']
+                        axA1.plot(xdates,isma_values,color=colss[i_id],label=label[0])
+                        axA1.legend()
+                    else:
+                        axA1.plot(xdates,isma_values,color=colss[i_id])
+            else:
+                isma = pd.Series(closes).rolling(ema_period).mean()
+                isma_values = isma.values
+                yticks.append(isma_values[-1].round(2))
+                yticklabels.append(isma_values[-1].round(2))
+                colors.update({str(isma_values[-1].round(2)):colss[0]})
+                if 'legend_label' in indicator:
+                    label = indicator['legend_label']
+                    axA1.plot(xdates,isma_values,color=colss[0],label=label[0])
+                    axA1.legend()
+                else:
+                    axA1.plot(xdates,isma_values,color=colss[0])
             axA1.set_yticks(yticks, labels=yticklabels)
             for xtic in axA1.get_yticklabels():
                 if xtic.get_text() in colors.keys():
