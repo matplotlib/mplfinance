@@ -1001,7 +1001,79 @@ def plot( data, **kwargs ):
                 if xtic.get_text() in colors.keys():
                     xtic.set_color(colors[xtic.get_text()])
 
+        if indicator['kind'] == 'ichimoku':
+            if 'length' in indicator:
+                short_period = indicator['length'][0]
+                long_period = indicator['length'][1]
+                window_period = indicator['length'][2]
+            else:
+                short_period = 9
+                long_period = 26
+                window_period = 52
 
+            if 'colors' in indicator:
+                colss = indicator['colors']
+
+            else:
+                prop_cycle = plt.rcParams['axes.prop_cycle']
+                colss = prop_cycle.by_key()['color']
+            
+            yticks = [*axA1.get_yticks(),]
+            yticklabels = [*axA1.get_yticklabels(),]
+            colors = {}
+
+
+            Tenkan_sen = (pd.Series(closes).rolling(window=short_period).max() + pd.Series(closes).rolling(window=short_period).min()) / 2
+            Kijun_sen = (pd.Series(closes).rolling(window=long_period).max() + pd.Series(closes).rolling(window=long_period).min()) / 2
+            Senkou_Span_A = (Tenkan_sen + Kijun_sen) / 2
+            Senkou_Span_B = (pd.Series(highs).rolling(window=window_period).max() + pd.Series(lows).rolling(window=window_period).min()) / 2
+            Chikou_Span  = pd.Series(closes).shift(periods=-long_period)
+            Tenkan_sen_values = Tenkan_sen.values
+            yticks.append(Tenkan_sen_values[-1].round(2))
+            yticklabels.append(float(Tenkan_sen_values[-1].round(2)))
+            colors.update({str(Tenkan_sen_values[-1].round(2)):colss[0]})
+
+            Kijun_sen_values = Kijun_sen.values
+            yticks.append(Kijun_sen_values[-1].round(2))
+            yticklabels.append(float(Kijun_sen_values[-1].round(2)))
+            colors.update({str(Kijun_sen_values[-1].round(2)):colss[1]})
+
+            Senkou_Span_A_values =  Senkou_Span_A.values
+            yticks.append(Senkou_Span_A_values[-1].round(2))
+            yticklabels.append(float(Senkou_Span_A_values[-1].round(2)))
+            colors.update({str(Senkou_Span_A_values[-1].round(2)):colss[2]})
+
+            Senkou_Span_B_values = Senkou_Span_B.values
+            yticks.append(Senkou_Span_B_values[-1].round(2))
+            yticklabels.append(float(Senkou_Span_B_values[-1].round(2)))
+            colors.update({str(Senkou_Span_B_values[-1].round(2)):colss[3]})
+
+            Chikou_Span_values = Chikou_Span.values
+            yticks.append(Chikou_Span_values[-(long_period + 1)].round(2))
+            yticklabels.append(float(Chikou_Span_values[-(long_period + 1)].round(2)))
+            colors.update({str(Chikou_Span_values[-1].round(2)):colss[4]})
+
+            if 'legend_label' in indicator:
+                label = indicator['legend_label']
+                axA1.plot(xdates,Tenkan_sen_values,color=colss[0],label=label[0])
+                axA1.plot(xdates,Kijun_sen_values,color=colss[1],label=label[1])
+                axA1.plot(xdates,Senkou_Span_A_values,color=colss[2],label=label[2])
+                axA1.plot(xdates,Senkou_Span_B_values,color=colss[3],label=label[3])
+                axA1.plot(xdates,Chikou_Span_values,color=colss[4],label=label[4])
+                axA1.legend(title=script_title, title_fontsize='large',loc='upper left')
+            else:
+                axA1.plot(xdates,Tenkan_sen_values,color=colss[0])
+                axA1.plot(xdates,Kijun_sen_values,color=colss[1])
+                axA1.plot(xdates,Senkou_Span_A_values,color=colss[2])
+                axA1.plot(xdates,Senkou_Span_B_values,color=colss[3])
+                axA1.plot(xdates,Chikou_Span_values,color=colss[4])
+            
+            axA1.fill_between(xdates,Senkou_Span_A_values,Senkou_Span_B_values,where = Senkou_Span_A_values>= Senkou_Span_B_values, color='green',alpha=0.1)
+            axA1.fill_between(xdates,Senkou_Span_A_values,Senkou_Span_B_values,where = Senkou_Span_A_values<= Senkou_Span_B_values, color='red',alpha=0.1)
+            axA1.set_yticks(yticks, labels=yticklabels)
+            for xtic in axA1.get_yticklabels():
+                if xtic.get_text() in colors.keys():
+                    xtic.set_color(colors[xtic.get_text()])  
 
     if config['volume']:
         if external_axes_mode:
