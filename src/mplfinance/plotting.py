@@ -854,6 +854,11 @@ def plot( data, **kwargs ):
             raise TypeError('indicator must be `dict`, or `list of dict`, NOT '+str(type(indicator_list)))
     else: 
         indicator_list = []
+
+    if config['title']:
+        script_title = config['title']
+    else:
+        script_title = None
         
     for indicator in indicator_list:
 
@@ -884,7 +889,7 @@ def plot( data, **kwargs ):
                     if 'legend_label' in indicator:
                         label = indicator['legend_label']
                         axA1.plot(xdates,iema_values,color=colss[i_id],label=label[0])
-                        axA1.legend()
+                        axA1.legend(title=script_title, title_fontsize='large',loc='upper left')
                     else:
                         axA1.plot(xdates,iema_values,color=colss[i_id])
             else:
@@ -896,7 +901,7 @@ def plot( data, **kwargs ):
                 if 'legend_label' in indicator:
                     label = indicator['legend_label']
                     axA1.plot(xdates,iema_values,color=colss[0],label=label[0])
-                    axA1.legend()
+                    axA1.legend(title=script_title, title_fontsize='large',loc='upper left')
                 else:
                     axA1.plot(xdates,iema_values,color=colss[0])
             axA1.set_yticks(yticks, labels=yticklabels)
@@ -932,7 +937,7 @@ def plot( data, **kwargs ):
                     if 'legend_label' in indicator:
                         label = indicator['legend_label']
                         axA1.plot(xdates,isma_values,color=colss[i_id],label=label[0])
-                        axA1.legend()
+                        axA1.legend(title=script_title, title_fontsize='large',loc='upper left')
                     else:
                         axA1.plot(xdates,isma_values,color=colss[i_id])
             else:
@@ -944,14 +949,14 @@ def plot( data, **kwargs ):
                 if 'legend_label' in indicator:
                     label = indicator['legend_label']
                     axA1.plot(xdates,isma_values,color=colss[0],label=label[0])
-                    axA1.legend()
+                    axA1.legend(title=script_title, title_fontsize='large',loc='upper left')
                 else:
                     axA1.plot(xdates,isma_values,color=colss[0])
             axA1.set_yticks(yticks, labels=yticklabels)
             for xtic in axA1.get_yticklabels():
                 if xtic.get_text() in colors.keys():
                     xtic.set_color(colors[xtic.get_text()])   
-                    
+
         if indicator.get("kind") == "BBand":
             if 'length' in indicator:
                 BBand_period = indicator['length']
@@ -976,7 +981,7 @@ def plot( data, **kwargs ):
                 axA1.plot(xdates,upper_band.values,color=colss[0],label=label[0])
                 axA1.plot(xdates,middle_band.values,color=colss[1],label=label[1])
                 axA1.plot(xdates,lower_band.values,color=colss[2],label=label[2])
-                axA1.legend()
+                axA1.legend(title=script_title, title_fontsize='large',loc='upper left')
             else:
                 axA1.plot(xdates,upper_band.values,color=colss[0])
                 axA1.plot(xdates,middle_band.values,color=colss[1])
@@ -1068,7 +1073,10 @@ def plot( data, **kwargs ):
             title_kwargs.update(title_dict)  # allows override default values set by mplfinance above
         else:
             title = config['title']      # config['title'] is a string
-        fig.suptitle(title,**title_kwargs)
+        if config['indicators']:
+            pass
+        else:
+            fig.suptitle(title,**title_kwargs)
     
     
     if config['axtitle'] is not None:
