@@ -16,6 +16,7 @@ from mplfinance._styledata import checkers
 from mplfinance._styledata import binance
 from mplfinance._styledata import kenan
 from mplfinance._styledata import ibd
+from mplfinance._styledata import binancedark
 
 _style_names = [n for n in dir() if not n.startswith('_')]
 
