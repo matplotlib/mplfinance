@@ -502,6 +502,10 @@ def plot( data, **kwargs ):
                 panels.at[config['main_panel'],'used2nd'] = True
             else:
                 volumeAxes = panels.at[config['volume_panel'],'axes'][0]
+                if config['style']['base_mpf_style'] == 'tradingview':
+                    volumeAxes.grid(False)
+                else:
+                    pass
         else:
             volumeAxes = None
 
@@ -840,6 +844,11 @@ def plot( data, **kwargs ):
 
     axA1.set_ylabel(config['ylabel'])
 
+    if config['title']:
+        script_title = config['title']
+    else:
+        script_title = None
+
     if config['volume']:
         if external_axes_mode:
             volumeAxes.tick_params(axis='x',rotation=xrotation)
@@ -910,7 +919,10 @@ def plot( data, **kwargs ):
             title_kwargs.update(title_dict)  # allows override default values set by mplfinance above
         else:
             title = config['title']      # config['title'] is a string
-        fig.suptitle(title,**title_kwargs)
+        if config['style']['base_mpf_style'] == 'tradingview':
+            axA1.legend(['Price'],title=script_title, title_fontsize='large',loc='upper left',frameon=False)
+        else:
+            fig.suptitle(title,**title_kwargs)
     
     
     if config['axtitle'] is not None:

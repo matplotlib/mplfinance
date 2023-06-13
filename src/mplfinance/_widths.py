@@ -138,11 +138,21 @@ def _determine_width_config( xdates, config ):
         width_config['candle_linewidth'] = _dfinterpolate(_widths,datalen,'clw')
         width_config['line_width'      ] = _dfinterpolate(_widths,datalen,'lw')
 
+
+    if config['scale_width_adjustment'] is None:
+        if config['style']['base_mpf_style'] == 'tradingview':
+            width_config['volume_width']  *= 0.80
+        else:
+            pass
+
     if config['scale_width_adjustment'] is not None:
 
         scale = _process_kwargs(config['scale_width_adjustment'],_valid_scale_width_kwargs())
         if scale['volume'] is not None:
-            width_config['volume_width']  *= scale['volume']
+            if config['style']['base_mpf_style'] == 'tradingview':
+                width_config['volume_width']  *= 0.80
+            else:
+                width_config['volume_width']  *= scale['volume']
         if scale['ohlc'] is not None:
             width_config['ohlc_ticksize'] *= scale['ohlc']
         if scale['candle'] is not None:
