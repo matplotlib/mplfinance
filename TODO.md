@@ -5,7 +5,7 @@
 - how use configuration file
 - auto-pull updates for config file. possible?
 - collect anonymous data on feature usage
-- wrappers for technical studies.
+- wrappers for technical studies(Under Development..... Please Suggest a Wishlist of Technical Studies Required as enhancement ).
 - documentation (replace old `https://matplotlib.org/api/finance_api.html`)
 - make code more efficient (ex: tlines reconstructing data frame).
   - **daily plot slower than intraday ???**
