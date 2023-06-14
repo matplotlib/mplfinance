@@ -383,7 +383,7 @@ def _valid_plot_kwargs():
                                         'Validator'   : lambda value: isinstance(value, (list,tuple)) and len(value) == 2
                                                         and all([isinstance(v,(int,float)) for v in value])},
 
-        'volume_alpha'              : { 'Default'     : 1,  # alpha of Volume bars
+        'volume_alpha'              : { 'Default'     : None,  # alpha of Volume bars
                                         'Description' : 'opacity for Volume bar: 0.0 (transparent) to 1.0 (opaque)',
                                         'Validator'   : lambda value: isinstance(value,(int,float)) or
                                                         all([isinstance(v,(int,float)) for v in value]) },
@@ -673,7 +673,8 @@ def plot( data, **kwargs ):
 
     datalen = len(xdates)
     if config['volume']:
-        vup,vdown = style['marketcolors']['volume'].values()
+        mc = style['marketcolors']
+        vup,vdown = mc['volume'].values()
         #-- print('vup,vdown=',vup,vdown)
         vcolors = _updown_colors(vup, vdown, opens, closes, use_prev_close=style['marketcolors']['vcdopcod'])
         #-- print('len(vcolors),len(opens),len(closes)=',len(vcolors),len(opens),len(closes))
@@ -682,9 +683,21 @@ def plot( data, **kwargs ):
         w  = config['_width_config']['volume_width']
         lw = config['_width_config']['volume_linewidth']
 
-        adjc = _adjust_color_brightness(vcolors,0.90)
-        valp = config['volume_alpha']
-        volumeAxes.bar(xdates,volumes,width=w,linewidth=lw,color=vcolors,ec=adjc,alpha=valp)
+        veup, vedown = mc['vcedge'].values()
+        if mc['volume'] == mc['vcedge']:
+            edgecolors = _adjust_color_brightness(vcolors,0.90)
+        elif veup != vedown:
+            edgecolors = _updown_colors(veup, vedown, opens, closes, use_prev_close=style['marketcolors']['vcdopcod'])
+        else: 
+            edgecolors = veup 
+
+        if config['volume_alpha']:
+           valp = config['volume_alpha']
+        elif 'volume_alpha' in mc:
+           valp = mc['volume_alpha']
+        else:
+           valp = 1.0
+        volumeAxes.bar(xdates,volumes,width=w,linewidth=lw,color=vcolors,ec=edgecolors,alpha=valp)
         if config['volume_ylim'] is not None:
             vymin = config['volume_ylim'][0]
             vymax = config['volume_ylim'][1]
@@ -911,7 +924,7 @@ def plot( data, **kwargs ):
         else:
             title = config['title']      # config['title'] is a string
         fig.suptitle(title,**title_kwargs)
-    
+
     
     if config['axtitle'] is not None:
         axA1.set_title(config['axtitle'])
