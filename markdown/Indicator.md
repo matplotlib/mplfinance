@@ -22,7 +22,7 @@
   - Complex indicators can be handled.
   - Legend box fully supported
   - With one or more studies/indicators, such as:
-    - Ichimoku, MACD, DMI, RSI, Bollinger, Accumulation/Distribution Oscillator, Commodity Channel Index, Etc.
+    - Ichimoku Cloud, MACD, DMI, RSI, Bollinger, Accumulation/Distribution Oscillator, Commodity Channel Index, Etc.
 * [**See here for a tutorial and details on implementing the mplfinance for addplot method.**](https://github.com/matplotlib/mplfinance/blob/master/examples/addplot.ipynb)
 
 
