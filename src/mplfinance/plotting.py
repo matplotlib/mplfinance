@@ -49,6 +49,8 @@ from mplfinance._helpers import _determine_format_string
 from mplfinance._helpers import _list_of_dict
 from mplfinance._helpers import _num_or_seq_of_num
 from mplfinance._helpers import _adjust_color_brightness
+from mplfinance._indicators import _validate_indicator_para
+from mplfinance._indicators import _make_indicator_plot
 
 VALID_PMOVE_TYPES = ['renko', 'pnf']
 
@@ -120,6 +122,10 @@ def _valid_plot_kwargs():
         'mav'                       : { 'Default'     : None,
                                         'Description' : 'Moving Average window size(s); (int or tuple of ints)',
                                         'Validator'   : _mav_validator },
+
+        'indicators'                : { 'Default'     : None,
+                                        'Description' : 'Moving Average window size(s); (int or tuple of ints)',
+                                        'Validator'   : lambda value: isinstance(value,dict) or (isinstance(value,list) and all([isinstance(d,dict) for d in value])) },
 
         'ema'                       : { 'Default'     : None,
                                         'Description' : 'Exponential Moving Average window size(s); (int or tuple of ints)',
@@ -840,6 +846,30 @@ def plot( data, **kwargs ):
 
     axA1.set_ylabel(config['ylabel'])
 
+    indicator_list = config['indicators']
+
+    prop_cycle = plt.rcParams['axes.prop_cycle']
+    colss = prop_cycle.by_key()['color']
+
+    if indicator_list is not None: 
+        if isinstance(indicator_list,dict):
+            indicator_list = [indicator_list,]
+
+        elif not _list_of_dict(indicator_list):
+            raise TypeError('indicator must be `dict`, or `list of dict`, NOT '+str(type(indicator_list)))
+    else: 
+        indicator_list = []
+
+    for indict in indicator_list:
+        astudy = _validate_indicator_para(indict)
+        _make_indicator_plot(astudy,colss,axA1,closes,highs,lows,xdates,script_title)
+
+    if config['title']:
+        script_title = config['title']
+    else:
+        script_title = None
+        
+    
     if config['volume']:
         if external_axes_mode:
             volumeAxes.tick_params(axis='x',rotation=xrotation)
@@ -910,7 +940,10 @@ def plot( data, **kwargs ):
             title_kwargs.update(title_dict)  # allows override default values set by mplfinance above
         else:
             title = config['title']      # config['title'] is a string
-        fig.suptitle(title,**title_kwargs)
+        if config['indicators']:
+            pass
+        else:
+            fig.suptitle(title,**title_kwargs)
     
     
     if config['axtitle'] is not None:

@@ -69,6 +69,7 @@ def kwarg_help( func_name=None, kwarg_names=None, sort=False ):
         'lines'             : mpf._utils._valid_lines_kwargs,
         'scale_width_adjustment': mpf._widths._valid_scale_width_kwargs,
         'update_width_config': mpf._widths._valid_update_width_kwargs,
+        'indicators'         : mpf._indicators._valid_indicator_kwargs,
     }
 
     func_kwarg_aliases = {
