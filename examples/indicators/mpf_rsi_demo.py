@@ -1,7 +1,7 @@
 import pandas as pd
 import mplfinance as mpf
 
-infile = 'data/yahoofinance-SPY-20200901-20210113.csv'
+infile = '../data/yahoofinance-SPY-20200901-20210113.csv'
 
 df = pd.read_csv(infile, index_col=0, parse_dates=True).iloc[0:60]
 
