@@ -97,11 +97,14 @@ def _check_and_prepare_data(data, config):
 
 
 def _label_validator(label_value):
-    ''' Validates the input of label for the added plots.
-    label_value may be a str or a list of str.
+    ''' Validates the input of [legend] label for added plots.
+    label_value may be a str or a sequence of str.
     '''
     if isinstance(label_value,str):
         return True
+    if isinstance(label_value,(list,tuple,np.ndarray)):
+        if all([isinstance(v,str) for v in label_value]):
+            return True
     return False
 
 

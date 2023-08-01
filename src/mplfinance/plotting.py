@@ -777,12 +777,14 @@ def plot( data, **kwargs ):
                 else:
                     havedf = False      # must be a single series or array
                     apdata = [apdata,]  # make it iterable
+                colcount = 0
                 for column in apdata:
                     ydata = apdata.loc[:,column] if havedf else column
-                    ax = _addplot_columns(panid,panels,ydata,apdict,xdates,config)
+                    ax = _addplot_columns(panid,panels,ydata,apdict,xdates,config,colcount)
                     _addplot_apply_supplements(ax,apdict,xdates)
-                if apdict["label"]: # not supported for aptype == 'ohlc' or 'candle'
-                    contains_legend_label.append(ax)
+                    colcount += 1
+                    if apdict["label"]: # not supported for aptype == 'ohlc' or 'candle'
+                        contains_legend_label.append(ax)
         for ax in set(contains_legend_label): # there might be duplicates
             ax.legend()
 
@@ -1072,7 +1074,7 @@ def _addplot_collections(panid,panels,apdict,xdates,config):
     ax.autoscale_view()
     return ax
 
-def _addplot_columns(panid,panels,ydata,apdict,xdates,config):
+def _addplot_columns(panid,panels,ydata,apdict,xdates,config,colcount):
     external_axes_mode = apdict['ax'] is not None
     if not external_axes_mode:
         secondary_y = False
@@ -1094,7 +1096,10 @@ def _addplot_columns(panid,panels,ydata,apdict,xdates,config):
         ax = apdict['ax']
 
     aptype = apdict['type']
-    label = apdict['label']
+    if isinstance(apdict['label'],(list,tuple,np.ndarray)):
+        label = apdict['label'][colcount]
+    else: # isinstance(...,str)
+        label = apdict['label']
     if aptype == 'scatter':
         size  = apdict['markersize']
         mark  = apdict['marker']
