@@ -783,7 +783,7 @@ def plot( data, **kwargs ):
                     ax = _addplot_columns(panid,panels,ydata,apdict,xdates,config,colcount)
                     _addplot_apply_supplements(ax,apdict,xdates)
                     colcount += 1
-                    if apdict["label"]: # not supported for aptype == 'ohlc' or 'candle'
+                    if apdict['label']: # not supported for aptype == 'ohlc' or 'candle'
                         contains_legend_label.append(ax)
         for ax in set(contains_legend_label): # there might be duplicates
             ax.legend()
@@ -1383,7 +1383,7 @@ def _valid_addplot_kwargs():
         'fill_between': { 'Default'     : None,    # added by Wen
                           'Description' : " fill region",
                           'Validator'   : _fill_between_validator },
-        "label"      : { 'Default'     : None,
+        'label'      : {  'Default'     : None,
                           'Description' : 'Label for the added plot. One per added plot.',
                           'Validator'   : _label_validator },
 
