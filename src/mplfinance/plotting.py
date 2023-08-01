@@ -777,6 +777,18 @@ def plot( data, **kwargs ):
                 else:
                     havedf = False      # must be a single series or array
                     apdata = [apdata,]  # make it iterable
+                if havedf and apdict['label']:
+                    if not isinstance(apdict['label'],(list,tuple,np.ndarray)):
+                       nlabels = 1
+                    else:
+                       nlabels = len(apdict['label'])
+                    ncolumns = len(apdata.columns)
+                    #print('nlabels=',nlabels,'ncolumns=',ncolumns)
+                    if nlabels < ncolumns:
+                        warnings.warn('\n =======================================\n'+
+                                      ' addplot MISMATCH between data and labels:\n'+
+                                      ' have '+str(ncolumns)+' columns to plot \n'+
+                                      ' BUT  '+str(nlabels)+' labels for them.\n')
                 colcount = 0
                 for column in apdata:
                     ydata = apdata.loc[:,column] if havedf else column
