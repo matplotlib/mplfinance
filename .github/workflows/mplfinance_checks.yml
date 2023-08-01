@@ -5,7 +5,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: ['3.8', '3.9', '3.10' ]
     steps:
       - name: Preliminary Information
         run: |
@@ -27,7 +27,7 @@ jobs:
       - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 

@@ -6,17 +6,18 @@ import pandas as pd
 import mplfinance as mpf
 import sys
 
+import matplotlib
+print('backend=',matplotlib.get_backend())
+
 coin = 'BTC' 
 bot_status = 'trading'
 
 def limit():
-    timeout = 2.5
+    timeout = 0.5
     print(end='')
     rlist, _, _ = select([sys.stdin], [], [], timeout)
-    print('rlist=',rlist)
     if rlist:
         s = sys.stdin.readline().strip()
-        print('s=',s)
         if s == 'g':
             print('\033[1;34m show chart')
             chart()
@@ -41,8 +42,8 @@ def dataframe():
 
 def chart():
     df = dataframe()
-    df.index = pd.DatetimeIndex(df['timestamp'])
-    df = df.iloc[::-1]
+    #df.index = pd.DatetimeIndex(df['timestamp'])
+    #df = df.iloc[::-1]
     s = mpf.make_mpf_style(base_mpf_style='charles', gridcolor='#555555', gridstyle="--", rc={'axes.edgecolor': 'white', 'font.size': 5})
     fig, axlist = mpf.plot(df, type='candle', style=s, title= coin, ylabel = 'Price (€)', volume=True, warn_too_much_data=9999999, returnfig=True)
     mpf.show(block=True)

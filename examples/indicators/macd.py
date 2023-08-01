@@ -3,7 +3,7 @@ import mplfinance as mpf
 
 import matplotlib.dates as mdates
 
-idf = pd.read_csv('data/SPY_20110701_20120630_Bollinger.csv',index_col=0,parse_dates=True)
+idf = pd.read_csv('../data/SPY_20110701_20120630_Bollinger.csv',index_col=0,parse_dates=True)
 df = idf.loc['2011-07-01':'2011-12-30',:]
 
 
