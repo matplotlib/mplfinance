@@ -613,3 +613,11 @@ where `<method>` indicates the method you want to import, for example:
 ```python
     from mplfinance.original_flavor import candlestick_ohlc
 ```
+
+# Our Amazing Contributors ⭐
+
+<a href="https://github.com/matplotlib/mplfinance
+/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=matplotlib/mplfinance
+" />
+</a>
