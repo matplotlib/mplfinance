@@ -618,6 +618,5 @@ where `<method>` indicates the method you want to import, for example:
 
 <a href="https://github.com/matplotlib/mplfinance
 /graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=matplotlib/mplfinance
-" />
+  <img src="https://contrib.rocks/image?repo=matplotlib/mplfinance" />
 </a>
