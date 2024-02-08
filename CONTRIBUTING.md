@@ -31,6 +31,7 @@
 - I am not super strict about adhearing to every aspect of PEP 8, *nor am I lenient*.  I tend to walk the middle of the road: If something is a good and common, then it should be adheared to.  
 - Here are a few items that I (perhaps uniquely) tend to care about in particular:
   - If you write code, please don't use tabs; rather use spaces.
+  - If you work on a pre-existing code file, please try to more-or-less emulate the style that already exists in that file.
   - If you add a significant feature --that is, a feature for which explaining its usage takes more than just a few sentences-- please also create a "tutorial notebook" for that feature.  **[For examples of tutorial notebooks, please see the jupyter notebooks in the examples folder.](https://github.com/matplotlib/mplfinance/tree/master/examples)**
   - If you add a significant feature, please also create a regression test file **[in the tests folder](https://github.com/matplotlib/mplfinance/tree/master/tests)**, similar to the other regression tests that are there.  *Often, the simplest way to do this is to take a few of the examples from the feature's "tutorial notebook"* (see previous point).
-  - If you work on a pre-existing code file, please try to more-or-less emulate the style that already exists in that file.
+  
