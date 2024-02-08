@@ -9,7 +9,7 @@
 ## Fork Clone Workflow
 - The standard workflow for contributing on GitHub is called **Fork/Clone**.  For those who may not be familiar, here is a brief summary and some reference links.  
   - *We assume you are familiar with **git** basics: `git clone`, `git commit`, etc*.
-- Note: a "Fork" is just a `git clone` *that is created on, and that lives on, GitHub*.  You create a fork using the **Fork** button on GitHub: This allows GitHub to track the relationship between the original github repository, and your Fork.
+- Note: a "Fork" is just a `git clone` *that is created on, and that lives on, GitHub.com*.  You create a fork using the **Fork** button on GitHub: This allows GitHub to track the relationship between the original github repository, and your Fork.  (In that sense a "fork" is slightly more than just a plain "clone", but only as much as GitHub.com adds some tracking and other minor features to make integration easier).
 - The basic workflow is:
   1. Create a **Fork** of the mplfinance repository.  (See references below for details.)  The fork will exist under *your* github account.  
   2. **Clone** *your* Fork to your local machine (`git clone`).
