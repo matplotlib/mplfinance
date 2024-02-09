@@ -512,7 +512,8 @@ def _valid_lines_kwargs():
                         'Description' : 'Draw one or more TREND LINES by specifying one or more pairs of date[times]'+
                                         ' between which each trend line should be drawn.  May also be a dict with key'+
                                         ' `tlines` as just described, plus one or more of the following keys:'+
-                                        ' `colors`, `linestyle`, `linewidths`, `alpha`, `tline_use`,`tline_method`.',
+                                        ' `extend_start`, `extend_end`, `colors`,'+
+                                        ' `linestyle`, `linewidths`, `alpha`, `tline_use`,`tline_method`.',
                         'Validator'   : _bypass_kwarg_validation },
 
         'colors'    : { 'Default'     : None,
@@ -551,7 +552,15 @@ def _valid_lines_kwargs():
 
         'tline_method': { 'Default'     : 'point-to-point',
                           'Description' : 'method for TREND LINE determination: "point-to-point" or "least-squares"',
-                          'Validator'   : lambda value: value in ['point-to-point','least-squares'] }
+                          'Validator'   : lambda value: value in ['point-to-point','least-squares'] },
+        
+        'extend_start':  { 'Default'     : 0,
+                          'Description' : 'number of time points by which the tline is to be extended from start',
+                          'Validator'   : _bypass_kwarg_validation },
+
+        'extend_end':  { 'Default'     : 0,
+                          'Description' : 'number of time points by which the tline is to be extended from end',
+                          'Validator'   : _bypass_kwarg_validation }
     }
 
     _validate_vkwargs_dict(vkwargs)
@@ -1137,7 +1146,8 @@ def _construct_vline_collections(vlines,dtix,miny,maxy):
     lcollection = LineCollection(lines,colors=co,linewidths=lw,linestyles=ls,antialiaseds=(0,),alpha=al)
     return lcollection
 
-def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes):
+def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes, \
+        show_nontrading):
     """construct trend line collections
 
     Parameters
@@ -1152,10 +1162,14 @@ def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes
     tlines may also be a dict, containing
     the following keys:
 
-        'tlines'     : the same as defined above: sequence of pairs of date[time]s
-        'colors'     : colors for the above tlines
-        'linestyle'  : line types for the above tlines
-        'linewidths' : line widths for the above tlines
+        'tlines'      : the same as defined above: sequence of pairs of date[time]s
+        'colors'      : colors for the above tlines
+        'linestyle'   : line types for the above tlines
+        'linewidths'  : line widths for the above tlines
+        'extend_start': number of time points before the tlines start time point
+                        from where line has to be drawn (default = 0)
+        'extend_end'  : number of time points after the tlines end point till where 
+                       line has to be drawn (default = 0)
 
     dtix:  date index for the x-axis, used for converting the dates when
            x-values are 'evenly spaced integers' (as when skipping non-trading days)
@@ -1165,6 +1179,7 @@ def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes
     ret : list
         lines collections
     """
+
     if tlines is None:
         return None
 
@@ -1177,8 +1192,8 @@ def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes
     tline_use    = tconfig['tline_use']
     tline_method = tconfig['tline_method']
 
-    #print('tconfig=',tconfig)
-    #print('tlines=',tlines)
+    # print('tconfig=',tconfig)
+    # print('tlines=',tlines)
 
     # reconstruct the data frame:
     df = pd.DataFrame({'open':opens,'high':highs,'low':lows,'close':closes},
@@ -1192,11 +1207,43 @@ def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes
     def _tline_point_to_point(dfslice,tline_use):
         p1 = dfslice.iloc[ 0]
         p2 = dfslice.iloc[-1]
-        x1 = p1.name
+        
+        # import pdb
+        # pdb.set_trace()
+
+        dates_pos = np.arange(len(dates))
+        xs = mdates.date2num(dfslice.index.to_pydatetime())
+        
+        x1 = xs[0]
         y1 = p1[tline_use].mean()
-        x2 = p2.name
+        x2 = xs[-1]
         y2 = p2[tline_use].mean()
-        return ((x1,y1),(x2,y2))
+
+        if show_nontrading:
+            # m: slope of trend line
+            m = (y2 - y1) / (x2 - x1)
+            x0 = x1 - tconfig['extend_start']
+            x3 = x2 + tconfig['extend_end']
+            y0 = y1 - m * (x1 - x0)
+            y3 = y2 + m * (x3 - x2)
+        else:
+            # m: slope of trend line: len(xs) is the number of bars
+            m = (y2 - y1) / len(xs)
+            x1_pos = dates_pos[dates == x1]
+            x2_pos = dates_pos[dates == x2]
+            x0_pos = x1_pos - tconfig['extend_start']
+            x3_pos = x2_pos + tconfig['extend_end']
+            y0 = y1 - m * (x1_pos - x0_pos)
+            y3 = y2 + m * (x3_pos - x2_pos)
+            y0 = y0[0]
+            y3 = y3[0]
+            x0 = dates[x0_pos][0]
+            x3 = dates[x3_pos][0]
+             
+        x0 = mdates.num2date(x0)
+        x3 = mdates.num2date(x3)
+        
+        return ((x0,y0),(x3,y3))
 
     def _tline_lsq(dfslice,tline_use):
         '''
@@ -1215,10 +1262,14 @@ def _construct_tline_collections(tlines, dtix, dates, opens, highs, lows, closes
         a  = np.vstack([xs, np.ones(len(xs))]).T
         m, b  = np.dot(np.linalg.inv(np.dot(a.T,a)), np.dot(a.T,ys))
         x1, x2 = xs[0], xs[-1]
+        x0 = x1 - tconfig['extend_start']
+        x3 = x2 + tconfig['extend_end']
         y1 = m*x1 + b
         y2 = m*x2 + b
-        x1, x2 = mdates.num2date(x1).replace(tzinfo=None), mdates.num2date(x2).replace(tzinfo=None)
-        return ((x1,y1),(x2,y2))
+        y0 = m*x0 + b
+        y3 = m*x3 + b
+        x0, x3 = mdates.num2date(x0), mdates.num2date(x3)
+        return ((x0,y0),(x3,y3))
 
     if isinstance(tline_use,str):
         tline_use = [tline_use,]
