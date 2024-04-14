@@ -13,8 +13,8 @@ import warnings
 import statistics as stat
 
 from itertools import cycle
-#from pandas.plotting import register_matplotlib_converters
-#register_matplotlib_converters()
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
 
 from mplfinance._utils import _construct_aline_collections
 from mplfinance._utils import _construct_hline_collections
@@ -512,9 +512,11 @@ def plot( data, **kwargs ):
     if config['show_nontrading']:
         formatter = mdates.DateFormatter(fmtstring)
         xdates = dates
+        show_nontrading = True
     else:
         formatter = IntegerIndexDateTimeFormatter(dates, fmtstring)
         xdates = np.arange(len(dates))
+        show_nontrading = False
 
     # Will have to handle widths config separately for PMOVE types ??
     config['_width_config'] = _determine_width_config(xdates, config)
@@ -665,7 +667,8 @@ def plot( data, **kwargs ):
     else:
         tlines = [tlines,]
     for tline_item in tlines:
-        line_collections.append(_construct_tline_collections(tline_item, dtix, dates, opens, highs, lows, closes))
+        line_collections.append(_construct_tline_collections(tline_item, dtix, dates, opens, highs, lows, closes, \
+                show_nontrading))
      
     for collection in line_collections:
         if collection is not None:
