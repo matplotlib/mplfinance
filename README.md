@@ -1,4 +1,6 @@
 [![mplfinance Checks](https://github.com/matplotlib/mplfinance/actions/workflows/mplfinance_checks.yml/badge.svg?branch=master)](https://github.com/matplotlib/mplfinance/actions/workflows/mplfinance_checks.yml)
+[![pypi](https://img.shields.io/pypi/v/mplfinance.svg)](https://pypi.python.org/pypi/mplfinance)
+[![python](https://img.shields.io/pypi/pyversions/mplfinance.svg)](https://pypi.python.org/pypi/mplfinance)
 
 # mplfinance
 matplotlib utilities for the visualization, and visual analysis, of financial data
