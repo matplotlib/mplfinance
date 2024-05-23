@@ -260,6 +260,13 @@ def _valid_make_marketcolors_kwargs():
                                                           or isinstance(value,str)
                                                           or _mpf_is_color_like(value) },
 
+        'vcedge'        : { 'Default'   : None,
+			    'Description' : "color of volume bars edge; may be single color,"+
+					    " or may be dict with keys 'up' and 'down'",
+                            'Validator'   : lambda value: isinstance(value,dict)
+                                                          or isinstance(value,str)
+                                                          or _mpf_is_color_like(value) },
+
         'vcdopcod'      : { 'Default'     : False,
                             'Description' : 'True/False volume color depends on price change from previous day',
                             'Validator'   : lambda value: isinstance(value,bool) },
@@ -293,6 +300,8 @@ def make_marketcolors(**kwargs):
         ohlc   = color of ohlc bars when all the same color;
                  if ohlc == "inherit" then use up/down colors.
         volume = color of volume bars when all the same color;
+                 if volume == "inherit" then use up/down colors.
+        vcedge = color of volume bars edge when all the same color;
                  if volume == "inherit" then use up/down colors.
     '''
 
@@ -336,7 +345,7 @@ def make_marketcolors(**kwargs):
 
     candle = marketcolors['candle']
 
-    for kw in ['edge','volume','ohlc','wick']:
+    for kw in ['edge','volume','ohlc','wick','vcedge']:
         # `inherit=True` takes precedence:
         if config[kw] is not None or config['inherit'] == True:
             if config['inherit'] == True:
