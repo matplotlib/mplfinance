@@ -477,7 +477,7 @@ def plot( data, **kwargs ):
         _adjust_figsize(fig,config)
     else:
         fig = None
-
+        
     _adjust_fontsize(config)
 
     if config['volume'] and volumes is None:
@@ -986,6 +986,7 @@ def plot( data, **kwargs ):
             plt.close(fig)
     
     if config['returnfig']:
+        plt.show(block=config['block']) # https://stackoverflow.com/a/13361748/1639359
         if config['closefig'] == True: plt.close(fig)
         return (fig, axlist)
 
