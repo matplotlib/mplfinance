@@ -141,10 +141,10 @@ def _mav_validator(mav_value):
         if not isinstance(value,(tuple,list,int)):
             return False
         if isinstance(value,int):
-            return (value >= 2 or not is_period)
+            return (value >= 1 or not is_period)
         # Must be a tuple or list here:
         for num in value:
-            if not isinstance(num,int) or (is_period and num < 2):
+            if not isinstance(num,int) or (is_period and num < 1):
                 return False
         return True
 
