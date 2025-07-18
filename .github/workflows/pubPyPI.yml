@@ -1,4 +1,6 @@
 name: Upload Mplfinance to PyPI
+permissions:
+  contents: read
 
 on:
   workflow_dispatch:
@@ -10,14 +12,19 @@ on:
 
 jobs:
   build_and_deploy:
+    permissions:
+      id-token: write
+      attestations: write
+      contents: read
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v3
       with:
-        ref:  ${{ github.event.inputs.tag }}
+        ref: ${{ github.event.inputs.tag }}
+        persist-credentials: false
 
-    - name: Display Coded Version 
+    - name: Display Coded Version
       #run: git show ${{ github.sha }}:src/mplfinance/_version.py
       run: egrep 'version_info .*=' src/mplfinance/_version.py
 
@@ -31,7 +38,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools wheel twine
 
-    - name: Build 
+    - name: Build
       run: |
         python setup.py sdist bdist_wheel
         ls -l dist/*
