@@ -8,3 +8,4 @@ __pycache__
 .cache/
 *.code-workspace
 *.ipynb_checkpoints/
+build/
