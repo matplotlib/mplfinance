@@ -210,7 +210,7 @@ def _valid_plot_kwargs():
  
         'addplot'                   : { 'Default'     : None, 
                                         'Description' : 'addplot object or sequence of addplot objects (from `mpf.make_addplot()`)',
-                                        'Validator'   : lambda value: isinstance(value,dict) or (isinstance(value,list) and all([isinstance(d,dict) for d in value])) },
+                                        'Validator'   : lambda value: value is None or isinstance(value,dict) or (isinstance(value,list) and all([isinstance(d,dict) for d in value])) },
  
         'savefig'                   : { 'Default'     : None, 
                                         'Description' : 'file name, or BytesIO, or dict with key `fname` plus other keys allowed as '+
@@ -271,7 +271,7 @@ def _valid_plot_kwargs():
                                                         ' May also be a dict with key `alines` (as date/price pairs described above),'+
                                                         ' plus one or more of the following keys:'+
                                                         ' `colors`, `linestyle`, `linewidths`, `alpha`.',
-                                        'Validator'   : lambda value: _alines_validator(value) },
+                                        'Validator'   : lambda value: value is None or _alines_validator(value) },
  
         'tlines'                    : { 'Default'     : None, 
                                         'Description' : 'Draw one or more TREND LINES by specifying one or more pairs of date[times]'+
