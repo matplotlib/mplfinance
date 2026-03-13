@@ -346,6 +346,12 @@ def make_marketcolors(**kwargs):
             c   = _check_and_set_mktcolor(candle,**kwa)
             marketcolors.update([(kw,c)])
 
+    # Keep vcedge in sync with volume so that the auto-darkening
+    # logic in plotting.py still triggers after custom volume colors
+    # are applied (fixes issue #676).
+    if config['volume'] is not None or config['inherit'] == True:
+        marketcolors['vcedge'] = marketcolors['volume']
+
     if config['hollow'] is not None:
         marketcolors.update({'hollow':config['hollow']})
 
