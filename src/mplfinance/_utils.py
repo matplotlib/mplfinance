@@ -126,9 +126,9 @@ def _calculate_atr(atr_length, highs, lows, closes):
         raise ValueError("Specified atr_length is larger than the length of the dataset: " + str(len(closes)))
     atr = 0
     for i in range(len(highs)-atr_length, len(highs)):
-        high = highs[i]
-        low = lows[i]
-        close_prev = closes[i-1]
+        high = highs.iloc[i]
+        low = lows.iloc[i]
+        close_prev = closes.iloc[i-1]
         tr = max(abs(high-low), abs(high-close_prev), abs(low-close_prev))
         atr += tr
     return atr/atr_length
@@ -417,7 +417,7 @@ def _valid_pnf_kwargs():
     '''
     def _box_size_validator(v):
         if isinstance(v,(float,int)): return True
-        if v == 'atr': return True
+        if v in ['atr', 'traditional']: return True
         if ( isinstance(v,str) and
              v[-1:] == '%'     and
              v[:-1].replace('.','',1).isdigit()
@@ -1480,6 +1480,28 @@ def _construct_pnf_scatter(ax,ptype,dates,xdates,opens,highs,lows,closes,volumes
         if not (percent > 0 and percent < 50) :
             raise ValueError("Specified percent (for box_size) must be > 0. and < 50.")
         box_size = (percent/100.) * df.Close.iloc[-1] # percent of last close
+    elif box_size == 'traditional':
+        last_price = df.Close.iloc[-1]
+
+        if last_price < 0.25:
+            box_size = 0.0625
+        elif last_price < 1:
+            box_size = 0.125
+        elif last_price < 5:
+            box_size = 0.25
+        elif last_price < 20:
+            box_size = 0.5
+        elif last_price < 100:
+            box_size = 1
+        elif last_price < 200:
+            box_size = 2
+        elif last_price < 500:
+            box_size = 4
+        elif last_price < 1000:
+            box_size = 5
+        else:
+            box_size = 10
+
     else: # is an integer or float
         upper_limit = (max(df.Close) - min(df.Close)) / 2
         lower_limit = 0.01 * _calculate_atr(len(df.Close)-1, df.High, df.Low, df.Close)
@@ -1588,3 +1610,22 @@ def _construct_pnf_scatter(ax,ptype,dates,xdates,opens,highs,lows,closes,volumes
                        pnf_xdates=xdates)
 
     return pnf_results
+
+TRADITIONAL_TABLE = [
+    (0, 0.25, 0.0625),
+    (0.25, 1, 0.125),
+    (1, 5, 0.25),
+    (5, 20, 0.5),
+    (20, 100, 1),
+    (100, 200, 2),
+    (200, 500, 4),
+    (500, 1000, 5),
+    (1000, float('inf'), 10),
+]
+
+def _get_traditional_box_size(price):
+    for low, high, box in TRADITIONAL_TABLE:
+        if low <= price < high:
+            return box
+    return TRADITIONAL_TABLE[-1][2]
+
