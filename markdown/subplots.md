@@ -14,7 +14,7 @@
 ### [The Panels Method](https://github.com/matplotlib/mplfinance/blob/master/examples/panels.ipynb)
 * The Panels Method ***is easy to use and requires little or no knowledge of matplotlib***, and no need to import matplotlib.
 * The Panels Method handles 95% of the most common types of financial plots and market studies.
-* The Panels Method attains its simplicity, in part, by having certain limitations.<br>These limitiations are:
+* The Panels Method attains its simplicity, in part, by having certain limitations.<br>These limitations are:
    - Subplots are always stacked vertically.
    - All subplots share the same x-axis.
    - There is a maximum of 32 subplots.
@@ -37,14 +37,14 @@
   - plotting on as many subplots as desired, in any geometry desired.
   - plotting multiple ohlc/candlestick plots on the same Figure or Axes.
   - plotting multiple candlestick plots side-by-side, or in any other geometry desired.
-  - anitmating or updating plots in real time.
+  - animating or updating plots in real time.
   - event handling
 * Use method **`mpf.figure()`** to create Figures.<br>This method behaves exactly like [`pyplot.figure()`](https://matplotlib.org/3.3.0/api/_as_gen/matplotlib.pyplot.figure.html) except that **`mpf.figure()`** also accepts kwarg `style=` to set the mplfinance style.
 * Call the usual methods for creating Subplot Axes on the figure:
   - [fig.add_subplot()](https://matplotlib.org/3.3.0/api/_as_gen/matplotlib.figure.Figure.html#matplotlib.figure.Figure.add_subplot)
   - [fig.add_axes()](https://matplotlib.org/3.3.0/api/_as_gen/matplotlib.figure.Figure.html#matplotlib.figure.Figure.add_axes)
   - [fig.subplots()](https://matplotlib.org/3.3.0/api/_as_gen/matplotlib.figure.Figure.html#matplotlib.figure.Figure.subplots)
-* When calling the above subplot creation methods, if `fig` was creating using **`mpf.figure()`** then the Subplot Axes will inheret the mpfinance style information from the figure.  Alternatively the user may pass in kwarg `style=` to set different style information for an Axes than for the Figure or other Axes.
+* When calling the above subplot creation methods, if `fig` was creating using **`mpf.figure()`** then the Subplot Axes will inherit the mplfinance style information from the figure.  Alternatively the user may pass in kwarg `style=` to set different style information for an Axes than for the Figure or other Axes.
 * Please note the following:
   - Use kwarg **`ax=`** to pass **any matplotlib Axes** that you want into **`mpf.plot()`**
   - If you also want to plot volume, **then you must pass in an Axes instance for the volume**,<br>&nbsp; so instead of `volume=True`, use **`volume=<myVolumeAxesInstance>`**.
