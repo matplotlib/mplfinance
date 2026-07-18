@@ -152,6 +152,12 @@ def _valid_plot_kwargs():
         'mco_faceonly'              : { 'Default'     : False, # If True: Override only the face of the candle
                                         'Description' : 'True/False marketcolor_overrides only apply to face of candle.',
                                         'Validator'   : lambda value: isinstance(value,bool) },
+
+        'volume_color_updown_dependency'
+                                    : { 'Default'     : None,
+                                        'Description' : 'How volume bar up/down colors are decided: '
+                                                        '"Open vs Close" (default), "Previous Close", or "Previous Volume".',
+                                        'Validator'   : _styles._valid_volume_color_updown_dependency },
  
         'no_xgaps'                  : { 'Default'     : True,  # None means follow default logic below:
                                         'Description' : 'deprecated',
@@ -676,7 +682,30 @@ def plot( data, **kwargs ):
         mc = style['marketcolors']
         vup,vdown = mc['volume'].values()
         #-- print('vup,vdown=',vup,vdown)
-        vcolors = _updown_colors(vup, vdown, opens, closes, use_prev_close=style['marketcolors']['vcdopcod'])
+
+        # How the up/down color of each volume bar is decided:
+        #   'openvsclose'    : today's open vs close (default, same as the candles)
+        #   'previousclose'  : today's close vs the previous close  (legacy `vcdopcod=True`)
+        #   'previousvolume' : today's volume vs the previous volume
+        # A `volume_color_updown_dependency` kwarg passed directly to `plot()`
+        # takes precedence over the same setting in the style's marketcolors.
+        _vcdep = config['volume_color_updown_dependency']
+        if _vcdep is None:
+            _vcdep = mc.get('volume_color_updown_dependency', None)
+        if _vcdep is not None:
+            _vcmode = _vcdep.lower().replace(' ', '')
+        elif mc.get('vcdopcod', False):
+            _vcmode = 'previousclose'   # backward compatibility with legacy `vcdopcod`
+        else:
+            _vcmode = 'openvsclose'
+
+        def _volume_updown_colors(upcolor, downcolor):
+            if _vcmode == 'previousvolume':
+                return _updown_colors(upcolor, downcolor, volumes, volumes, use_prev_close=True)
+            return _updown_colors(upcolor, downcolor, opens, closes,
+                                  use_prev_close=(_vcmode == 'previousclose'))
+
+        vcolors = _volume_updown_colors(vup, vdown)
         #-- print('len(vcolors),len(opens),len(closes)=',len(vcolors),len(opens),len(closes))
         #-- print('vcolors=',vcolors)
 
@@ -687,7 +716,7 @@ def plot( data, **kwargs ):
         if mc['volume'] == mc['vcedge']:
             edgecolors = _adjust_color_brightness(vcolors,0.90)
         elif veup != vedown:
-            edgecolors = _updown_colors(veup, vedown, opens, closes, use_prev_close=style['marketcolors']['vcdopcod'])
+            edgecolors = _volume_updown_colors(veup, vedown)
         else: 
             edgecolors = veup 
 
