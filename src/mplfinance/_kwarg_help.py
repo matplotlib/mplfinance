@@ -18,7 +18,7 @@ def df_wrapcols(df,wrap_columns=None):
         column_data[col] = []
   
     for ix in df.index:
-        row = df.loc[ix,]
+        row = df.loc[ix]
         
         row_data = {}
         for col in row.index:
