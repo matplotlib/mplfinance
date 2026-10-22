@@ -124,6 +124,11 @@ def _calculate_atr(atr_length, highs, lows, closes):
         raise ValueError("Specified atr_length may not be less than 1")
     elif atr_length >= len(closes):
         raise ValueError("Specified atr_length is larger than the length of the dataset: " + str(len(closes)))
+    # Point & Figure passes DatetimeIndex Series. Integer keys on those
+    # Series are labels, not positions, so index by a plain array.
+    highs = np.asarray(highs)
+    lows = np.asarray(lows)
+    closes = np.asarray(closes)
     atr = 0
     for i in range(len(highs)-atr_length, len(highs)):
         high = highs[i]
